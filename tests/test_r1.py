@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """The R1 review, finding by finding (fast mode, the games' own generators):
- R1-01/07 哪个写对了: 1000 questions per level - every wrong variant looks different from the right one and from each
-          other (point distance > 8 % of the glyph); the glyph turns about its own centre (same box for all variants)
+ R1-01/07 哪个写对了: 1000 questions per level - no variant twice, and none that a symmetric glyph would
+          leave unchanged (point distance > 3 % of the glyph; which turns are shown is the hand-checked table of R2-01); the glyph turns about its own centre (same box for all variants)
  R1-02/10 缺了一笔: 1000 questions - the other strokes have other names than the missing one and than each other, none from
           the same character; the gap is outlined only at levels 1-2
  R1-03    every stroke name agrees with its stroke's direction (撇 ends lower left, 捺 lower right, 点 is short, ...)
@@ -25,16 +25,18 @@ with sync_playwright() as p, serve() as base:
     page.evaluate("() => { Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; }); Store.save(); }")
     r = page.evaluate("""() => {
       const G = { world: 'ultra', W: ISL.ultra, rng: RNG(7), bags: {} }, bad = [];
+      const chamfer = (A, B) => { const d = (X, Y) => X.reduce((s, a) => s + Math.min(...Y.map(b => Math.hypot(a[0] - b[0], a[1] - b[1]))), 0) / X.length; return (d(A, B) + d(B, A)) / 2; };
       for (let lv = 1; lv <= 5; lv++) for (let i = 0; i < 1000; i++) {
         const q = QMirror.gen(G, { level: lv, rng: G.rng }), P = Mirror.pts(q.glyph), xs = P.map(p => p[0]), ys = P.map(p => p[1]);
         const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
         const V = q.opts.map(t => Mirror.tf(P, t, c));
-        for (let a = 0; a < V.length; a++) for (let b = a + 1; b < V.length; b++) if (Mirror.chamfer(V[a], V[b]) <= 0.08 * size) bad.push([lv, q.glyph, q.opts[a], q.opts[b]]);
+        if (new Set(q.opts).size !== q.opts.length) bad.push([lv, q.glyph, 'twice', q.opts.join()]);
+        for (let a = 0; a < V.length; a++) for (let b = a + 1; b < V.length; b++) if (chamfer(V[a], V[b]) <= 0.03 * size) bad.push([lv, q.glyph, q.opts[a], q.opts[b]]);
         if (q.opts.filter(o => o === 'ok').length !== 1) bad.push([lv, q.glyph, 'ok count']);
       }
       return bad.slice(0, 10);
     }""")
-    log.check(not r, 'R1-01 哪个写对了: 5000 questions, every variant visibly different from the others %s' % r)
+    log.check(not r, 'R1-01 哪个写对了: 5000 questions, no variant twice, none that leaves the glyph unchanged %s' % r)
     page.evaluate("window.__go('ultra', 'ultra:quiz', 5, {seed: 3})"); wait_phase(page, timeout=20000); page.wait_for_timeout(500)
     boxes = page.evaluate("() => Session.st.cards.map(c => { const g = c.querySelector('svg'), b = g.getBoundingClientRect(), cb = c.getBoundingClientRect(); return [Math.round(b.x + b.width / 2 - cb.x - cb.width / 2), Math.round(b.y + b.height / 2 - cb.y - cb.height / 2)]; })")
     log.check(all(abs(x) <= 2 and abs(y) <= 2 for x, y in boxes), 'R1-07 the turned glyphs sit in the middle of their cards like the right one %s' % boxes)
