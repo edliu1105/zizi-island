@@ -1,0 +1,9 @@
+The character stroke data in hanzi.json (outlines and stroke centre lines) comes from the Make Me a Hanzi project
+(https://github.com/skishore/makemeahanzi) via the hanzi-writer-data package. Its graphics data is derived from fonts
+by Arphic Technology and is distributed under the Arphic Public License:
+
+  Copyright (C) 1999 Arphic Technology Co., Ltd. 11Fl. No.168, Yung Chi Rd., Taipei, 110 Taiwan. All rights reserved
+  except as specified below. Everyone is permitted to copy and distribute verbatim copies of this license document,
+  but changing it is not allowed. (Full text: https://github.com/skishore/makemeahanzi/blob/master/ARPHICPL.TXT)
+
+Only the 56 characters this app writes or shows are included, unchanged.

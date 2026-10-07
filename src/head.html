@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="字字岛">
+<meta name="application-name" content="字字岛">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#FFF4D6">
+<title>字字岛</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<style>
+/* ============================================================
+   字字岛 · one visual language
+   ink #2B2118 · paper #FFF8EC · 3 radii · 1 sticker shadow · 3 easings
+   ============================================================ */
+:root{
+  --ink:#2B2118; --paper:#FFF8EC; --cream:#FFF4D6;
+  --sun:#FFC93C; --coral:#FF6B5B; --sky:#4FB3FF; --grass:#5CC46E; --grape:#8E6CFF; --orange:#FF9F43; --pink:#FF7FA8; --teal:#27C3C8;
+  --world:#FFC93C; --world2:#FF9F43;
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  --stk: 0 0 0 4px var(--ink), 0 7px 0 4px rgba(43,33,24,.22), 0 14px 26px 4px rgba(43,33,24,.18);
+  --stk-sm: 0 0 0 3px var(--ink), 0 5px 0 3px rgba(43,33,24,.22), 0 10px 18px 3px rgba(43,33,24,.16);
+  --pop: cubic-bezier(.2,.9,.3,1.25);
+  --glide: cubic-bezier(.45,0,.2,1);
+  --drop: cubic-bezier(.5,0,.9,.4);
+  --st: env(safe-area-inset-top,0px); --sr: env(safe-area-inset-right,0px);
+  --sb: env(safe-area-inset-bottom,0px); --sl: env(safe-area-inset-left,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--cream);color:var(--ink);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;overscroll-behavior:none;-webkit-text-size-adjust:100%;
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif}
+body{position:fixed;inset:0}
+img{-webkit-user-drag:none;user-select:none;pointer-events:none;display:block}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none}
+::-webkit-scrollbar{display:none}
+.scr{position:fixed;inset:0;display:none;overflow:hidden}
+.scr.on{display:block}
+.fade-in{animation:fadeIn .32s var(--glide) both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.gone{display:none!important}
+
+/* ---------- sticker buttons ---------- */
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:#fff;border:3px solid #fff;box-shadow:var(--stk);transition:transform .12s var(--pop),filter .12s;touch-action:none}
+.btn.press,.tgt.press{transform:scale(.9);filter:brightness(1.06)}
+.btn svg{width:62%;height:62%;overflow:visible}
+.tgt{touch-action:none}
+.tgt::before{content:"";position:absolute;inset:calc(-1 * var(--hy, 10px)) -10px}
+.actor.tgt::before{inset:-10px calc(-1 * var(--hx, 10px))}
+
+/* ---------- entry ---------- */
+#entry{background:radial-gradient(120% 90% at 50% 18%,#FFFDF5 0%,#FFF4D6 55%,#FFE7B5 100%)}
+#entry .sea{position:absolute;left:-5%;right:-5%;bottom:-2%;height:26%;background:#4EC6F0;border-radius:50% 50% 0 0/28% 28% 0 0;
+  box-shadow:inset 0 10px 0 rgba(255,255,255,.45)}
+#entry .sea::after{content:"";position:absolute;left:0;right:0;top:18%;height:10px;background:repeating-radial-gradient(circle at 20px 0,rgba(255,255,255,.7) 0 6px,transparent 7px 40px);opacity:.6;animation:drift 6s linear infinite}
+@keyframes drift{from{background-position:0 0}to{background-position:80px 0}}
+#entry .logo{position:absolute;left:50%;top:7%;width:min(34vmin,290px);transform:translateX(-50%)}
+#entry .logo img{width:100%;border-radius:23%;box-shadow:0 0 0 5px var(--ink),0 10px 0 5px rgba(43,33,24,.2),0 26px 40px rgba(43,33,24,.22);animation:bob 3.2s ease-in-out infinite}
+#entry .word{position:absolute;left:50%;top:calc(7% + min(34vmin,290px) + 18px);transform:translateX(-50%)}
+#entry .word svg{height:min(11vmin,84px);width:auto;overflow:visible;display:block}
+#play{left:50%;bottom:calc(9% + var(--sb));width:min(20vmin,150px);height:min(20vmin,150px);transform:translateX(-50%);background:var(--grass);animation:breatheBtn 1.6s ease-in-out infinite}
+#play.press{transform:translateX(-50%) scale(.9)}
+#play svg{width:46%;height:46%;margin-left:8%}
+@keyframes breatheBtn{0%,100%{box-shadow:var(--stk)}50%{box-shadow:0 0 0 4px var(--ink),0 7px 0 4px rgba(43,33,24,.22),0 0 0 22px rgba(92,196,110,.22)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-10px) rotate(1.5deg)}}
+#entry .chars{position:absolute;left:0;right:0;bottom:calc(17% + var(--sb));height:0}
+#entry .chars img{position:absolute;bottom:0;height:min(17vmin,150px);filter:drop-shadow(0 6px 0 rgba(43,33,24,.12))}
+
+/* ---------- map ---------- */
+#map{background:#34C0EE}
+#mapbg{position:absolute;inset:0;background-size:cover;background-position:center}
+#mapsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.isl{position:absolute;width:0;height:0}
+.isl .hit{position:absolute;border-radius:50%;touch-action:none}
+.isl .land{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transition:filter .6s}
+.isl.locked .land{filter:saturate(.35) brightness(.96)}
+.isl.gate.locked .land{opacity:0}
+.isl.gate.sky .land{filter:hue-rotate(-75deg) saturate(1.5) brightness(1.08) drop-shadow(0 0 18px rgba(255,214,90,.95))}
+.isl .hero{position:absolute;transform-origin:50% 100%}
+.isl .cloudcover{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;transition:opacity .8s,transform .8s}
+.isl:not(.locked) .cloudcover{opacity:0;transform:translate(-50%,-70%) scale(1.3)}
+.lantern{position:absolute;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:7px 9px;border-radius:16px;background:rgba(255,248,236,.94);
+  box-shadow:var(--stk-sm);transform:translateX(-50%)}
+.lantern i{display:block;width:20px;height:20px;border-radius:50%;background:rgba(43,33,24,.1);box-shadow:inset 0 2px 0 rgba(43,33,24,.08)}
+.lantern i.on{background:none;box-shadow:none}
+.lantern i.on::after{content:"";display:block;width:100%;height:100%;background:url(assets/props/ui_star.png) center/contain no-repeat}
+.bigstars{position:absolute;display:flex;gap:2px;transform:translateX(-50%)}
+.isl .deco{position:absolute;display:flex;align-items:flex-end;gap:2px;pointer-events:none}
+.isl .deco > div{height:100%;aspect-ratio:1/1;filter:drop-shadow(0 3px 0 rgba(43,33,24,.25))}
+.isl .deco .pen{aspect-ratio:2/3}
+.bigstars img{width:34px;height:34px;filter:drop-shadow(0 3px 0 rgba(43,33,24,.25))}
+.flagpole{position:absolute;width:6px;height:70px;background:var(--ink);border-radius:3px;transform-origin:50% 100%}
+.flagpole .cloth{position:absolute;left:4px;top:0;width:60px;height:42px;animation:flag 1.8s ease-in-out infinite;transform-origin:0 50%}
+.flagpole .cloth svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.flagpole .cloth img{position:absolute;left:15px;top:7px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--ink)}
+.flagpole .finial{position:absolute;left:50%;top:-17px;width:24px;height:24px;transform:translateX(-50%)}
+@keyframes flag{0%,100%{transform:skewY(0)}50%{transform:skewY(-8deg) scaleX(.94)}}
+#gear{right:calc(10px + var(--sr));bottom:calc(10px + var(--sb));width:88px;height:88px;background:transparent;border:0;box-shadow:none;border-radius:50%}
+#gear .g{position:absolute;inset:26px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 2px rgba(43,33,24,.35)}
+#gear svg{position:absolute;inset:30px;width:28px;height:28px;opacity:.6}
+#gear .ring{position:absolute;inset:18px;width:52px;height:52px;transform:rotate(-90deg)}
+#nosound{position:fixed;left:50%;top:calc(14px + var(--st));width:104px;height:104px;margin-left:-52px;background:#FFE08A;z-index:45;display:none;animation:breatheBtn 1.6s ease-in-out 4}
+#nosound svg{width:66%;height:66%}
+html.nosound body[data-scr="map"] #nosound{display:flex}
+/* no sound: only the big speaker calls (four pulses); the avatar stays still - one thing at a time */
+html.nosound #avatar .ear{background:#FFE08A;width:46px;height:46px;right:-18px;bottom:-15px}
+#toast{position:absolute;right:calc(20px + var(--sr));bottom:calc(110px + var(--sb));padding:12px 18px;border-radius:var(--r-md);background:#fff;box-shadow:var(--stk-sm);font-size:16px;font-weight:700;display:none}
+#toast.on{display:block;animation:fadeIn .2s both}
+
+/* ---------- loading ---------- */
+#load{background:var(--world)}
+#load::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 120%,rgba(255,255,255,.5),transparent 60%)}
+#load .track{position:absolute;left:0;right:0;top:58%;height:14px;background:rgba(43,33,24,.12);border-radius:7px}
+#load .runner{position:absolute;top:58%;height:min(30vmin,240px);transform:translate(-50%,-100%)}
+#load .runner img{height:100%;animation:runHop .36s ease-in-out infinite alternate}
+@keyframes runHop{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-16px) rotate(4deg)}}
+#load .dust{position:absolute;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.8)}
+
+/* ---------- game ---------- */
+#game{background:#222}
+#gbg{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .4s;filter:saturate(.84) contrast(.94) brightness(1.03)}
+#gbg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 58%,rgba(255,255,255,0) 52%,rgba(40,26,12,.18) 100%);pointer-events:none}
+/* one material per world: the task card and the answer cards wear the world's colours (the math stays the brightest thing) */
+#game.w-peppa{--mat1:#FFF6F9;--mat2:#FFE2ED;--rim:#FF8DB3;--card:#FFFCFD;--cardrim:#FFD0E1}
+#game.w-bluey{--mat1:#F0F9FF;--mat2:#D6ECFF;--rim:#6BB9F2;--card:#FBFDFF;--cardrim:#CBE6FB}
+#game.w-huluwa{--mat1:#FCF6E2;--mat2:#EFDFAE;--rim:#6FA548;--card:#FFFDF6;--cardrim:#DCEBC8}
+#game.w-paw{--mat1:#EEF4FF;--mat2:#D3E1FF;--rim:#E8554A;--card:#FBFCFF;--cardrim:#CFDDFA}
+#game.w-xiyou{--mat1:#FFF8E6;--mat2:#FBE5B4;--rim:#D63B2F;--card:#FFFDF6;--cardrim:#F6DDA2}
+#game.w-avengers{--mat1:#EEF7FF;--mat2:#CFE5FF;--rim:#3A5CC0;--card:#FAFCFF;--cardrim:#BFE8FF}
+#gbg.blur{filter:blur(14px)}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0}
+#stage > *{position:absolute}
+/* one depth order on the stage: the scene <= 30 (ground furniture low; characters and things - the nearer in front) <
+   cards, task card, done button 40 < a thing under the finger 45 < notes - numbers, rings, flags, badges, pairing
+   lines, marks 50 (never covered) < the ghost hand 60 */
+#stage > .card, #stage > .task, #stage > .done{z-index:40}
+#stage > .badge, #stage > .ringo, #stage > .flagb, #stage > .note, #stage > svg.lines:not(.scene){z-index:50 !important}
+.hud{position:absolute;z-index:40}
+#home{left:calc(14px + var(--sl));top:calc(14px + var(--st));width:96px;height:96px;background:#FFE08A}
+#home img{width:74%;height:74%;object-fit:contain}
+#avatar{left:calc(134px + var(--sl));top:calc(14px + var(--st));width:96px;height:96px;background:var(--world)}
+/* the face fills the round picture (tools/make_thumbs.py puts it up-left of the middle); the speaker badge sits
+   OUTSIDE at the lower right, so it never covers the face and is never cut by the circle */
+#avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#avatar .ear{position:absolute;right:-13px;bottom:-11px;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:var(--stk-sm);display:flex;align-items:center;justify-content:center}
+#avatar .ear svg{width:23px;height:23px}
+#tray{right:calc(14px + var(--sr));top:calc(18px + var(--st));display:flex;gap:6px;padding:10px 12px;border-radius:24px;background:rgba(255,248,236,.95);box-shadow:var(--stk-sm)}
+#tray i{width:40px;height:40px;border-radius:50%;background:rgba(43,33,24,.1);box-shadow:inset 0 3px 0 rgba(43,33,24,.08);position:relative}
+#tray i.on{background:none;box-shadow:none}
+#tray i.on::after{content:"";position:absolute;inset:-3px;background:url(assets/props/ui_star.png) center/contain no-repeat}
+#ff{position:absolute;inset:0;z-index:35;display:none}
+#ff.on{display:block}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+#fx > *{position:absolute}
+
+/* banner */
+.banner{left:50%;top:50%;transform:translate(-50%,-50%);font-weight:900;font-size:min(26vmin,220px);line-height:1;color:#fff;letter-spacing:.02em;
+  -webkit-text-stroke:14px var(--ink);paint-order:stroke fill;text-shadow:0 12px 0 rgba(43,33,24,.25);white-space:nowrap}
+.banner span{display:inline-block}
+
+/* actors */
+.actor{transform-origin:50% 100%;will-change:transform}
+.actor > .body{position:absolute;inset:0;transform-origin:50% 100%;animation:breathe 3.4s ease-in-out infinite}
+.actor img.spr{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 0 rgba(43,33,24,.13))}
+.actor .lid{position:absolute;border-radius:50%;transform:scaleY(0);transform-origin:50% 0;opacity:0}
+.actor .lid::after{content:"";position:absolute;left:8%;right:8%;top:38%;height:30%;border-bottom:3px solid var(--ink);border-radius:0 0 50% 50%}
+.actor.blink .lid{animation:blink .16s ease-in-out}
+@keyframes blink{0%{transform:scaleY(0);opacity:1}45%,60%{transform:scaleY(1);opacity:1}100%{transform:scaleY(0);opacity:1}}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.028)}}
+.actor .hat{position:absolute;pointer-events:none}
+.actor .bubble{position:absolute;left:50%;top:-8%;transform:translate(-50%,-100%);width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:var(--stk-sm);display:flex;align-items:center;justify-content:center}
+.actor .shadow{position:absolute;left:18%;right:18%;bottom:-2%;height:7%;border-radius:50%;background:rgba(43,33,24,.14);z-index:-1}
+
+/* math representations */
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--card,#fff);border-radius:var(--r-lg);border:4px solid var(--cardrim,#fff);box-shadow:var(--stk);touch-action:none;transition:transform .14s var(--pop),filter .14s}
+.card.press{transform:scale(.92)}
+.card .d{display:block;flex-shrink:0}
+.card.hi{filter:drop-shadow(0 0 18px rgba(255,201,60,.95))}
+.card.dim{opacity:.35}
+.badge{width:48px;height:48px;border-radius:50%;background:var(--sun);box-shadow:var(--stk-sm);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.badge svg{overflow:visible}
+.flagb{pointer-events:none}
+.task{left:50%;display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:var(--r-lg);background:linear-gradient(var(--mat1,#FFF8EC),var(--mat2,#FFF1D6));box-shadow:0 0 0 3px var(--ink),0 0 0 7px var(--rim,#FFC93C),0 7px 0 7px rgba(43,33,24,.18);transform:translateX(-50%);pointer-events:none}
+.task .it{display:flex;align-items:center;justify-content:center;gap:4px}
+.task img{height:54px;width:auto}
+.task .arw{width:34px;height:34px}
+.task .goal .tap{animation:goalTap 1.2s ease-in-out 3;transform-box:fill-box;transform-origin:50% 0}
+@keyframes goalTap{0%,55%,100%{transform:translateY(0) scale(1)}70%{transform:translateY(-6px) scale(1)}85%{transform:translateY(2px) scale(.9)}}
+.task .qboth{display:flex;align-items:center;gap:6px}
+.task .linkpic{display:flex;gap:6px}
+.task .linkpic .lk{display:flex;flex-direction:column;align-items:center}
+.task .linkpic img{height:30px;width:auto}
+.task .qdots{position:relative;display:flex;align-items:center;justify-content:center;min-width:46px;min-height:46px;perspective:200px}
+.task .qflap{position:absolute;inset:-3px;display:flex;align-items:center;justify-content:center;background:#FFE08A;border-radius:12px;box-shadow:0 0 0 3px var(--ink);transform-origin:50% 0}
+.task .qflap svg{width:38px;height:38px}
+.done{border-radius:50%;background:var(--grass);border:3px solid #fff;box-shadow:var(--stk);display:flex;align-items:center;justify-content:center;touch-action:none;transition:transform .12s var(--pop)}
+.done.press{transform:scale(.9)}
+.done svg{width:58%;height:58%;overflow:visible}
+.done .ring{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);transform:rotate(-90deg);pointer-events:none}
+.done.ready{animation:readyPulse 1.2s ease-in-out 2.4s 2}   /* "done?" only after a pause, twice (single focus) */
+@keyframes readyPulse{0%,100%{box-shadow:var(--stk)}50%{box-shadow:0 0 0 4px var(--ink),0 7px 0 4px rgba(43,33,24,.22),0 0 0 18px rgba(255,255,255,.55)}}
+.glow{filter:drop-shadow(0 0 14px rgba(255,236,140,1)) drop-shadow(0 0 4px rgba(255,255,255,1))}
+.yellowflash{animation:yflash .5s ease-in-out 3}
+@keyframes yflash{0%,100%{filter:none}50%{filter:drop-shadow(0 0 16px #FFD93C) brightness(1.15)}}
+.wiggle{animation:wig .42s ease-in-out}
+@keyframes wig{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
+.item{touch-action:none;transform-origin:50% 60%}
+.item:not(.tgt){pointer-events:none}   /* a picture that is not a target never swallows a tap meant for what lies under it */
+.item img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 0 rgba(43,33,24,.14))}
+.hand{width:96px;height:96px;z-index:60;pointer-events:none;transform-origin:30% 10%}
+.spark{width:14px;height:14px;border-radius:50%}
+svg.lines{left:0;top:0;overflow:visible;pointer-events:none}
+.ringo{border:5px dashed var(--ink);border-radius:999px;pointer-events:none}
+
+/* ---------- parent ---------- */
+#parent{background:rgba(43,33,24,.55);z-index:100}
+#parent .sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,760px);max-height:92vh;overflow:auto;background:var(--paper);border-radius:var(--r-lg);box-shadow:var(--stk);padding:22px 26px;font-size:16px;line-height:1.5}
+#parent h2{margin:0 0 10px;font-size:22px}
+#parent h3{margin:18px 0 8px;font-size:17px}
+#parent table{border-collapse:collapse;width:100%;font-size:14px}
+#parent td,#parent th{border-bottom:1px solid rgba(43,33,24,.12);padding:6px 4px;text-align:left}
+#parent .pbtn{display:inline-flex;align-items:center;justify-content:center;min-width:88px;min-height:52px;padding:0 16px;margin:4px 6px 4px 0;border-radius:14px;background:#fff;box-shadow:var(--stk-sm);font-weight:700}
+#parent .pbtn.warn{background:#FFE1DC}
+#parent .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:16px}
+#parent .opts button{height:96px;border-radius:18px;background:#fff;box-shadow:var(--stk-sm);font-size:30px;font-weight:800}
+#parent select{font-size:15px;padding:8px;border-radius:10px;max-width:100%}
+#parent .x{position:absolute;right:14px;top:14px;width:88px;height:52px}
+#parent .q{font-size:34px;font-weight:800;margin-top:8px}
+#parent .mut{color:rgba(43,33,24,.6);font-size:13px}
+
+/* ---------- finale ---------- */
+#finale{background:#0B1F5C}
+#finale .fbg{position:absolute;inset:-2%;background-size:cover;background-position:center}
+#finale .crowd{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:50% 65%}
+#finale canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#finale .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+/* ---------- 字字岛: glyph cards, writing paper, the treasure book, practice ---------- */
+.card .gly{display:block;pointer-events:none}
+.card.pic img{width:84%;height:84%;object-fit:contain;pointer-events:none}
+.paper{background:#FFFDF7;border-radius:22px;box-shadow:0 0 0 4px var(--ink),0 9px 0 4px rgba(43,33,24,.2),0 18px 34px 4px rgba(43,33,24,.18);touch-action:none}
+.paper.sxg{border-radius:18px}
+.paper svg{display:block;pointer-events:none}
+.objpop{pointer-events:none;z-index:32}
+.objpop img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 0 rgba(43,33,24,.18))}
+.wordtag{z-index:33;pointer-events:none;display:flex;align-items:center;gap:10px;padding:6px 16px;border-radius:18px;background:#fff;box-shadow:var(--stk-sm);font:900 34px/1 system-ui,-apple-system,sans-serif;color:var(--ink);white-space:nowrap}
+.sign{display:flex;align-items:center;justify-content:center;background:#FFF8EC;border-radius:16px;box-shadow:0 0 0 3.5px var(--ink),0 5px 0 3px rgba(43,33,24,.2);pointer-events:none}
+.sign svg{pointer-events:none}
+#bookbtn{left:calc(14px + var(--sl));bottom:calc(14px + var(--sb));width:112px;height:112px;background:#FFF3C4;border-radius:28px}
+#bookbtn img{width:86%;height:86%;object-fit:contain}
+#bookbtn .cnt{position:absolute;right:-12px;top:-12px;min-width:46px;height:46px;padding:0 8px;border-radius:23px;background:var(--coral);color:#fff;font:900 22px/46px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 3px var(--ink)}
+#book{background:radial-gradient(130% 100% at 50% 0%,#FFF8E1 0%,#FFE9B8 60%,#F9D58A 100%)}
+#book .top{position:absolute;left:0;right:0;top:calc(16px + var(--st));height:100px}
+#book .bk{left:calc(14px + var(--sl));top:0;width:96px;height:96px;background:#FFE08A}
+#book .bk img{width:74%;height:74%;object-fit:contain}
+#book .tabs{position:absolute;left:50%;top:4px;transform:translateX(-50%);display:flex;gap:14px}
+#book .tab{position:relative;min-width:120px;height:88px;padding:0 18px;border-radius:24px;background:#fff;box-shadow:var(--stk-sm);display:flex;align-items:center;justify-content:center;font:900 36px/1 system-ui,-apple-system,sans-serif;color:var(--ink)}
+#book .tab.on{background:var(--sun);transform:translateY(-4px)}
+#book .meter{position:absolute;right:calc(18px + var(--sr));top:16px;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--stk-sm);font:900 26px/1 system-ui,sans-serif}
+#book .meter img{width:36px;height:36px}
+#book .grid{position:absolute;left:0;right:0;top:calc(132px + var(--st));bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:10px calc(26px + var(--sr)) 40px calc(26px + var(--sl));display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px;align-content:start}
+#book .grid h4{grid-column:1/-1;margin:14px 0 0;font:900 24px/1.2 system-ui,-apple-system,sans-serif;color:rgba(43,33,24,.75);display:flex;align-items:center;gap:10px}
+#book .grid h4 img{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--ink)}
+#book .tile{position:relative;height:182px;border-radius:24px;background:#fff;box-shadow:var(--stk-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:pan-y}
+#book .tile.gold{box-shadow:0 0 0 4px var(--ink),0 0 0 10px #FFC93C,0 8px 18px rgba(43,33,24,.25)}
+#book .tile.locked{background:rgba(255,255,255,.45);box-shadow:0 0 0 3px rgba(43,33,24,.25)}
+#book .tile .pic{width:62px;height:62px;object-fit:contain}
+#book .tile.locked .pic{filter:brightness(0) opacity(.16)}
+#book .tile.locked .gly{opacity:.18}
+#book .tile .en{font:800 18px/1 system-ui,sans-serif;color:rgba(43,33,24,.65)}
+#book .tile .fl{position:absolute;top:8px;right:8px;display:flex;gap:2px}
+#book .tile .fl i{width:20px;height:20px;border-radius:50%;background:rgba(43,33,24,.12)}
+#book .tile .fl i.on{background:#FF6B8B;box-shadow:0 0 0 2px var(--ink)}
+#book .tile .lk{position:absolute;right:8px;bottom:8px;width:34px;height:34px}
+@media (orientation:portrait){ #book .meter{top:112px;right:50%;transform:translateX(50%)} #book .grid{top:calc(186px + var(--st))} }
+
+</style>
+</head>
+<body>
+<div id="entry" class="scr on">
+  <div class="sea"></div>
+  <div class="logo"><img src="assets/logo.jpg" alt=""></div>
+  <div class="word" aria-hidden="true"></div>
+  <div class="chars"></div>
+  <button id="play" class="btn" aria-label="开始"><svg viewBox="0 0 40 40"><path d="M9 5 L34 20 L9 35 Z" fill="#fff" stroke="#2B2118" stroke-width="5" stroke-linejoin="round"/></svg></button>
+</div>
+
+<div id="map" class="scr">
+  <div id="mapbg"></div>
+  <svg id="mapsvg"></svg>
+  <div id="islands"></div>
+  <button id="bookbtn" class="btn" aria-label="我的字宝盒"><img alt=""><span class="cnt">0</span></button>
+  <button id="gear" class="btn" aria-label="家长"><span class="g"></span>
+    <svg viewBox="0 0 24 24"><path fill="#2B2118" d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8zm8.9 4.9-1.9.3a7 7 0 0 1-.8 1.9l1.1 1.6-1.9 1.9-1.6-1.1a7 7 0 0 1-1.9.8l-.3 1.9h-2.7l-.3-1.9a7 7 0 0 1-1.9-.8l-1.6 1.1-1.9-1.9 1.1-1.6a7 7 0 0 1-.8-1.9L3 13.5v-2.7l1.9-.3a7 7 0 0 1 .8-1.9L4.6 7l1.9-1.9 1.6 1.1a7 7 0 0 1 1.9-.8l.3-1.9H13l.3 1.9a7 7 0 0 1 1.9.8l1.6-1.1L18.7 7l-1.1 1.6a7 7 0 0 1 .8 1.9l1.9.3z"/></svg>
+    <svg class="ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23" fill="none" stroke="#FF9F43" stroke-width="6" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/></svg>
+  </button>
+  <div id="toast">家长你好：请按住小齿轮</div>
+</div>
+
+<div id="load" class="scr"><div class="track"></div><div class="runner"><img alt=""></div></div>
+
+<div id="game" class="scr">
+  <div id="gbg"></div>
+  <div id="stage"></div>
+  <div id="ff"></div>
+  <button id="home" class="btn hud" aria-label="回地图"><img alt=""></button>
+  <button id="avatar" class="btn hud" aria-label="再听一遍"><img alt=""><span class="ear"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#FFC93C" stroke="#2B2118" stroke-width="2" stroke-linejoin="round"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="#2B2118" stroke-width="2" stroke-linecap="round"/></svg></span></button>
+  <div id="tray" class="hud"></div>
+</div>
+
+<div id="book" class="scr">
+  <div class="top"><button class="btn bk" aria-label="回地图"><img alt=""></button><div class="tabs"></div><div class="meter"></div></div>
+  <div class="grid"></div>
+</div>
+
+<div id="finale" class="scr"><div class="fbg"></div><div class="crowd"></div><canvas></canvas><div class="flash"></div></div>
+
+<button id="nosound" class="btn" aria-label="再试声音"><svg viewBox="0 0 24 24"><path d="M3.5 9h4l5-4v14l-5-4h-4z" fill="#FFC93C" stroke="#2B2118" stroke-width="2" stroke-linejoin="round"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#2B2118" stroke-width="2" stroke-linecap="round"/></svg></button>
+<div id="parent" class="scr"><div class="sheet"></div></div>
+<div id="fx"></div>

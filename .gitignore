@@ -1,0 +1,7 @@
+raw/
+batches/
+tests/logs/
+review/
+__pycache__/
+*.pyc
+.claude/
