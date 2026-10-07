@@ -73,14 +73,12 @@ const ZX = {
     await sc.anim(pic, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, easing: EASE.pop });
     Voice.say(isEn(k) ? '看，它变成字母！' : '看，它变成字！', { tag: 'meet' });
     await sc.wait(700);
-    const box = this.thing(st, sz, sz, 36, ''); place(box, x - sz / 2, y - sz / 2, sz, sz);
-    const g = isEn(k) ? Glyph.en(k, sz * 0.92, '#E8414B') : Glyph.zh(k, sz * 0.92, '#E8414B');
-    Object.assign(g.style, { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' });
-    box.appendChild(g);
-    const parts = Array.from(g.querySelectorAll('path'));
-    parts.forEach(p => { p.style.opacity = 0; });
+    /* the brush writes it over the picture, stroke by stroke in its order (R1-09) */
     sc.anim(pic, [{ opacity: 1 }, { opacity: 0.28 }], { duration: 900, fill: 'forwards' });
-    for (const p of parts) { if (sc.dead) return; p.style.opacity = 1; sc.anim(p, [{ opacity: 0, transform: 'scale(1.06)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 260 }); Sfx.mar(1046.5 + parts.indexOf(p) * 90, 0, 0.25, 0.3); await sc.wait(isEn(k) ? 380 : 330); }
+    const W = new Writer(st, { kind: isEn(k) ? 'en' : 'zh', glyph: k, level: 1, x, y, size: sz * (isEn(k) ? 1.05 : 0.95), bare: true, z: 36 });
+    const box = W.el;
+    await W.demo(st, null, true, '#E8414B');
+    if (sc.dead) return;
     sayItem(k, { tag: 'meet' });
     await sc.guard(Voice.afterSay(400));
     await sc.wait(300);
@@ -154,9 +152,9 @@ const FindBase = {
     st.opts = q.opts.slice();
     this.targets(st);
     this.place(st);
-    /* the task card: the thing to find (levels 1-2 show its picture) */
-    const parts = st.level <= 2 ? ['assets/obj/' + ITEM[q.answer].obj + '.png', 'q'] : ['eye', 'q'];
-    K.task(st, [parts]);
+    /* the task card: level 1 shows the thing to find; from level 2 it is heard - and its picture comes as the second
+       hint (10 s stuck): the question said completely, never the answer (R1-04) */
+    st.taskEl = K.task(st, [st.level <= 1 ? ['assets/obj/' + ITEM[q.answer].obj + '.png', 'q'] : ['eye', 'q']]);
     K.say(st, (isEn(q.answer) ? '找到' : '哪个是') + q.answer + (isEn(q.answer) ? '！' : '？'));
     if (isEn(q.answer)) { st.prompt = '找字母'; st.tail = [ITEM[q.answer].say]; Voice.say(ITEM[q.answer].say, { tag: 'prompt' }); }
   },
@@ -168,6 +166,14 @@ const FindBase = {
     await st.scope.guard(Voice.afterSay(200));
   },
   workEls(st) { return st.cards || []; },
+  gestureHint(st) {
+    if (st.picShown || !st.taskEl || st.level <= 1) return;
+    st.picShown = true;
+    const it = st.taskEl.querySelector('.it'), im = img('assets/obj/' + ITEM[st.q.answer].obj + '.png', '');
+    im.style.height = '54px'; it.replaceChild(im, it.firstChild);
+    st.scope.anim(im, [{ transform: 'scale(.2)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 420, easing: EASE.pop });
+    Sfx.sparkle();
+  },
 };
 function findGame(play, spec) { return zGame(Object.assign({}, FindBase, play), spec); }
 
@@ -390,6 +396,7 @@ const WriteBase = {
   async present(st) {
     const q = st.q, G = st.G, k = q.answer, it = ITEM[k], g = this.geo(st);
     st.prompt = it.line; st.noPraise = true;
+    if (!G.practice) { await ZX.meet(st, k); if (!Session.alive(st)) return; }        /* a letter is first met here: the apple, then the A */
     const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); ZX.pic('assets/obj/' + it.obj + '.png', pic); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
     K.pop(st, pic);
     const lv = G.practice ? 1 : st.level;
@@ -545,33 +552,43 @@ const QOrder = {
   },
   iconNode() { return Glyph.en(this.lower ? 'b' : 'B', 60); },
 };
-/* 葫芦娃 · 缺了一笔: which stroke makes it whole? */
+/* 葫芦娃 · 缺了一笔: which stroke makes it whole? The other strokes on offer have other names (not a second 撇 for a
+   missing 撇) and come from other characters; every stroke is drawn at its real size and place in a little 田字格, so
+   where it goes and how long it is can be seen. The gap is outlined only at levels 1-2 (R1-02, R1-10) */
 const QMissing = {
   kind0: 'missing', verb: '补！', intro: '少了一笔！', props: [],
   gen(G, o) {
     const lv = o.level, answer = PICK(G, 'ans', poolOf(G, 'zh', lv >= 4));
-    const n = (Hanzi.data[answer] || { s: [] }).s.length, miss = G.rng.int(0, n - 1);
-    /* the other options: strokes of the same character (another place) and of other characters */
-    const pool = poolOf(G, 'zh', true).filter(k => k !== answer), fo = [];
-    const sameOther = G.rng.int(0, n - 1); if (sameOther !== miss) fo.push([answer, sameOther]);
-    G.rng.shuffle(pool).slice(0, 3).forEach(k => fo.push([k, G.rng.int(0, Hanzi.data[k].s.length - 1)]));
-    const opts = [[answer, miss]].concat(fo.slice(0, lv >= 3 ? 3 : 2));
+    const names = (STROKE_NAMES[answer] || '').split(' '), n = names.length, miss = G.rng.int(0, n - 1), want = names[miss];
+    const pool = G.rng.shuffle(poolOf(G, 'zh', true).filter(k => k !== answer)), fo = [], used = new Set([want]);
+    for (const k of pool) {
+      const nm = (STROKE_NAMES[k] || '').split(' '), cand = G.rng.shuffle(nm.map((x, i) => [x, i])).find(([x]) => !used.has(x));
+      if (cand) { used.add(cand[0]); fo.push([k, cand[1]]); }
+      if (fo.length >= (lv >= 3 ? 3 : 2)) break;
+    }
+    const opts = [[answer, miss]].concat(fo);
     const pos = PICK(G, 'pos' + opts.length, opts.map((_, i) => i)); const right = opts.shift(); opts.splice(pos, 0, right);
-    return { k: [answer, miss], answer: answer + miss, ch: answer, miss, opts };
+    return { k: [answer, miss], answer: answer + miss, ch: answer, miss, opts, outline: lv <= 2 };
   },
   async present(st) {
-    const q = st.q, L = K.L();
+    const q = st.q;
     const big = st.big = ZX.thing(st, 330, 330, 6, 'paper tzg');
     const s = svg('svg', { viewBox: '0 0 1024 1024', width: '100%', height: '100%' }, big);
     svg('rect', { x: 8, y: 8, width: 1008, height: 1008, fill: 'none', stroke: '#E8414B', 'stroke-width': 12 }, s);
     svg('path', { d: 'M512 20V1004M20 512H1004', stroke: '#E8414B', 'stroke-width': 5, 'stroke-dasharray': '26 18', opacity: 0.5, fill: 'none' }, s);
     const g = svg('g', { transform: 'translate(0,900) scale(1,-1)' }, s);
-    Hanzi.data[q.ch].s.forEach((o, i) => { const p = svg('path', { d: o, fill: i === q.miss ? 'none' : INK, stroke: i === q.miss ? '#E8414B' : 'none', 'stroke-width': i === q.miss ? 10 : 0, 'stroke-dasharray': '30 22' }, g); if (i === q.miss) st.gap = p; });
+    Hanzi.data[q.ch].s.forEach((o, i) => { const p = svg('path', { d: o, fill: i === q.miss ? 'none' : INK, stroke: i === q.miss && q.outline ? '#E8414B' : 'none', 'stroke-width': 10, 'stroke-dasharray': '30 22' }, g); if (i === q.miss) st.gap = p; });
     const pic = st.pic = ZX.thing(st, 150, 150, 6, 'objpop'); ZX.pic('assets/obj/' + ITEM[q.ch].obj + '.png', pic);
     st.opts = q.opts.map(o => o[0] + o[1]);
-    /* each stroke on its own card, cropped to its own extent (its centre line) and drawn big */
-    K.cards(st, q.opts.map(([c, k]) => { const m = Hanzi.data[c].m[k].map(([x, y]) => [x, 900 - y]), xs = m.map(p => p[0]), ys = m.map(p => p[1]), pad = 90, x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad, w = Math.max(...xs) - x0 + pad, h = Math.max(...ys) - y0 + pad, S = Math.max(w, h, 360); const sv = svg('svg', { viewBox: [x0 + w / 2 - S / 2, y0 + h / 2 - S / 2, S, S].map(v => v.toFixed(0)).join(' '), width: 116, height: 116, class: 'gly' }); svg('path', { d: Hanzi.data[c].s[k], fill: INK, transform: 'translate(0,900) scale(1,-1)' }, sv); return sv; }), st.opts, Object.assign({ size: 150, gap: 28 }, this.cardSpot()));
+    K.cards(st, q.opts.map(([c, k]) => {
+      const sv = svg('svg', { viewBox: '0 0 1024 1024', width: 124, height: 124, class: 'gly' });
+      svg('path', { d: 'M512 30V994M30 512H994', stroke: '#E8414B', 'stroke-width': 8, 'stroke-dasharray': '30 24', opacity: 0.35, fill: 'none' }, sv);
+      svg('path', { d: Hanzi.data[c].s[k], fill: INK, transform: 'translate(0,900) scale(1,-1)' }, sv);
+      return sv;
+    }), st.opts, Object.assign({ size: 150, gap: 28 }, this.cardSpot()));
     this.place(st);
+    st.lead = ITEM[q.ch].line;
+    Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '少了哪一笔？');
   },
   cardSpot() { return K.L() ? { cx: 650, cy: 560 } : { cx: 352, cy: 820 }; },
@@ -584,13 +601,13 @@ const QMissing = {
   },
   async reveal(st) {
     const card = st.cards[st.opts.indexOf(st.q.answer)], bb = box(st.big), cb = box(card);
-    await K.flyTo(st, card, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 420, 50, bb.w / cb.w * 0.95);
+    await K.flyTo(st, card, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 420, 50, bb.w / cb.w);
     card.style.opacity = 0; st.gap.setAttribute('fill', '#E8414B'); st.gap.setAttribute('stroke', 'none');
     Sfx.reveal(); this.cheerAll(st);
     sayItem(st.q.ch);
     await st.scope.guard(Voice.afterSay(200));
   },
-  async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say('放上去不对哦', { tag: 'wrong' }); await st.scope.wait(800); },
+  async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const o = st.q.opts[st.tapped], nm = o && (STROKE_NAMES[o[0]] || '').split(' ')[o[1]]; Voice.say(nm ? '这是' + nm : '放上去不对哦', { tag: 'wrong' }); await st.scope.wait(900); },
   iconNode() { return Glyph.zh('山', 56, '#46C27A'); },
 };
 /* 汪汪队 · 听音找字母: the pup badges - which one did you hear? */
@@ -677,24 +694,50 @@ const QConnect = {
   snap(st) { return { pairs: Object.keys(st.pairs || {}).length }; },
   iconNode() { return Glyph.zh('马', 56); },
 };
-/* 奥特曼 · 哪个写对了: one is right, the others are mirrored / upside down */
+/* 奥特曼 · 哪个写对了: one is right, the others mirrored / upside down / turned round. A wrong one must LOOK different:
+   every variant is compared point by point with the right one and with the others (B upside down is still B, S turned
+   round is still S - such a variant is never offered); glyphs turn about their own centre (R1-01, R1-07) */
+const Mirror = {
+  cache: {},
+  pts(k) {
+    if (isEn(k)) return LETTERS[k].flatMap(st => Geo.resample(st, 14));
+    return Hanzi.data[k].m.flatMap(m => Geo.resample(m.map(([x, y]) => [x, 900 - y]), 14));
+  },
+  tf(P, t, c) { return P.map(([x, y]) => t === 'flipX' ? [2 * c[0] - x, y] : t === 'flipY' ? [x, 2 * c[1] - y] : t === 'rot' ? [2 * c[0] - x, 2 * c[1] - y] : [x, y]); },
+  chamfer(A, B) { const d = (X, Y) => X.reduce((s, a) => s + Math.min(...Y.map(b => Math.hypot(a[0] - b[0], a[1] - b[1]))), 0) / X.length; return (d(A, B) + d(B, A)) / 2; },
+  /* the wrong variants that really look wrong (and unlike each other), in a fixed order of preference */
+  wrongs(k) {
+    if (this.cache[k]) return this.cache[k];
+    const P = this.pts(k), xs = P.map(p => p[0]), ys = P.map(p => p[1]);
+    const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    const shown = [P], out = [];
+    for (const t of ['flipX', 'flipY', 'rot']) { const V = this.tf(P, t, c); if (shown.every(S => this.chamfer(V, S) > 0.08 * size)) { out.push(t); shown.push(V); } }
+    return (this.cache[k] = out);
+  },
+};
 const QMirror = {
   kind0: 'mirror', verb: '看！', intro: '哪个写对了？', props: [],
-  ASYM: 'BCDEFGJKLNPQRSZ',
+  /* characters whose turned shape is another real character (上 / 下) are left out */
+  ZH: '手月火牛石马鸟门车灯羊米禾',
   gen(G, o) {
-    const lv = o.level, known = poolOf(G, 'up', true).filter(k => this.ASYM.includes(k)), zh = poolOf(G, 'zh', true).filter(k => '手月火牛石马鸟上下门车伞灯'.includes(k));
-    const useZh = lv >= 3 && G.rng.chance(0.4) && zh.length;
-    const answer = useZh ? G.rng.pick(zh) : G.rng.pick(known.length ? known : this.ASYM.split(''));
-    const kinds = ['ok', 'flipX', lv >= 2 ? 'flipY' : 'rot'].concat(lv >= 4 ? ['rot'] : []);
-    const pos = PICK(G, 'pos' + kinds.length, kinds.map((_, i) => i)); const rest = G.rng.shuffle(kinds.slice(1)); rest.splice(pos, 0, 'ok');
-    return { k: [answer, rest.join()], answer: 'ok', glyph: answer, opts: rest };
+    const lv = o.level, n = lv >= 4 ? 3 : 2;
+    /* letters whose turned shape is another real letter (P -> b d q, M -> W, u -> n) are left out too */
+    const pool = poolOf(G, 'up', true).filter(k => !'PMWNbdpqmnuw'.includes(k)).concat(lv >= 3 ? poolOf(G, 'zh', true).filter(k => this.ZH.includes(k)) : []).filter(k => Mirror.wrongs(k).length >= n);
+    const glyph = PICK(G, 'g' + lv, pool.length ? pool : ['R', 'F', 'G']);
+    const wr = G.rng.shuffle(Mirror.wrongs(glyph)).slice(0, n);
+    const pos = PICK(G, 'pos' + (n + 1), Array.from({ length: n + 1 }, (_, i) => i)); wr.splice(pos, 0, 'ok');
+    return { k: [glyph, wr.join()], answer: 'ok', glyph, opts: wr };
   },
   async present(st) {
     const q = st.q, tf = { ok: '', flipX: 'scaleX(-1)', flipY: 'scaleY(-1)', rot: 'rotate(180deg)' };
-    K.cards(st, q.opts.map(t => { const g = Glyph.any(q.glyph, 120); g.style.transform = tf[t]; return g; }), q.opts, Object.assign({ size: 170, gap: 34 }, this.cardSpot()));
+    K.cards(st, q.opts.map(t => { const g = Glyph.fit(q.glyph, 124); g.style.transform = tf[t]; return g; }), q.opts, Object.assign({ size: 170, gap: 34 }, this.cardSpot()));
+    const it = ITEM[q.glyph];
+    if (it.obj) K.task(st, [['assets/obj/' + it.obj + '.png', 'q']]);
+    st.lead = isEn(q.glyph) ? it.say : it.line;           /* which one it is about (an A? the 手?) */
+    Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '哪个写对了？');
   },
-  cardSpot() { return K.L() ? { cx: 560, cy: 380 } : { cx: 352, cy: 560 }; },
+  cardSpot() { return K.L() ? { cx: 560, cy: 400 } : { cx: 352, cy: 560 }; },
   place(st) { K.cardsPlace(st, Object.assign({ gap: 34 }, this.cardSpot())); },
   decor(G) { const L = K.L(), a = G.actors.ultraman; if (a) showActor(a, L ? 120 : 600, L ? 690 : 1016, L ? 280 : 200); },
   async reveal(st) { const e = st.cards[st.opts.indexOf('ok')]; K.hop(st, e, 30); Sfx.reveal(); sayItem(st.q.glyph); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },

@@ -35,6 +35,25 @@ const Glyph = {
     return s;
   },
   any(g, size, color) { return /^[A-Za-z]$/.test(g) ? this.en(g, size, color) : this.zh(g, size, color); },
+  /* a word: its letters on one shared base line, each as wide as it is (never touching) */
+  word(w, h, color) {
+    let x = 0; const g = svg('g', {});
+    w.split('').forEach(c => { const b = letterBox(c), dx = x - b.x0; LETTERS[c].forEach(p => svg('path', { d: p.map((q, i) => (i ? 'L' : 'M') + (q[0] + dx).toFixed(1) + ' ' + q[1].toFixed(1)).join(''), fill: 'none', stroke: color || INK, 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g)); x += b.x1 - b.x0 + 18; });
+    const W = x - 18 + 26, s = svg('svg', { viewBox: '-13 -8 ' + W + ' 136', width: Math.round(h * W / 136), height: h, class: 'gly' });
+    s.appendChild(g);
+    return s;
+  },
+  /* a glyph in a square around its own extent (a CSS turn / mirror then happens about the glyph's own centre) */
+  fit(g, size, color) {
+    const en = /^[A-Za-z]$/.test(g);
+    const P = en ? LETTERS[g].flat() : Hanzi.data[g].m.flat().map(([x, y]) => [x, 900 - y]);
+    const xs = P.map(p => p[0]), ys = P.map(p => p[1]), pad = en ? 12 : 110;
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2, S = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) + 2 * pad;
+    const s = svg('svg', { viewBox: [cx - S / 2, cy - S / 2, S, S].map(v => v.toFixed(1)).join(' '), width: size, height: size, class: 'gly' });
+    if (en) LETTERS[g].forEach(p => svg('path', { d: p.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(''), fill: 'none', stroke: color || INK, 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, s));
+    else { const gg = svg('g', { transform: 'translate(0,900) scale(1,-1)' }, s); Hanzi.data[g].s.forEach(o => svg('path', { d: o, fill: color || INK }, gg)); }
+    return s;
+  },
   obj(id) { const i = img('assets/obj/' + id + '.png', ''); Object.assign(i.style, { width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }); return i; },
 };
 
@@ -591,8 +610,12 @@ const MapView = {
     const p = this.panel = el('div', '', $('#map'));
     Object.assign(p.style, { position: 'absolute', inset: 0, zIndex: 30, background: this.set === 'w2' ? 'rgba(14,22,64,.74)' : 'rgba(12,44,74,.6)' });
     tapify(p, () => this.closePanel(), { silent: true });
-    const vw = window.innerWidth, vh = window.innerHeight, S = Math.min(vw, vh), port = vh > vw * 1.02;
-    const cx = vw / 2, cy = vh * (port ? 0.46 : 0.44);
+    const vw = window.innerWidth, vh = window.innerHeight, port = vh > vw * 1.02;
+    /* the whole panel (host, island, games, stars, words) fits the screen and is centred: no head cut by the top (R1-06) */
+    let S = Math.min(vw, vh);
+    const tall = s => 0.48 * s + 0.16 * s + Math.max(112, Math.round(s * 0.15)) / 2 + 34 + Math.round(Math.min(84, s * 0.1));
+    if (tall(S) > vh - 32) S *= (vh - 32) / tall(S);
+    const cx = vw / 2, cy = 16 + 0.48 * S + Math.max(0, (vh - 32 - tall(S)) / 2);
     const land = img('assets/isl/' + id + '.png', '', p);
     Object.assign(land.style, { position: 'absolute', width: S * 0.4 + 'px', left: (cx - S * 0.2) + 'px', top: (cy - S * 0.38) + 'px', pointerEvents: 'none' });
     land.animate([{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: T(360) + 1, easing: EASE.pop });
@@ -807,7 +830,10 @@ const Book = {
       tapify(b, () => { if (this.tab === k) return; this.tab = k; this.render(); Voice.sayNow(k === 'zh' ? '汉字' : k === 'up' ? '大写字母' : '小写字母', { tag: 'map' }); });
     });
     const nZh = ITEMS.filter(x => x.kind === 'zh' && learned(x.k)).length, nEn = ITEMS.filter(x => x.kind !== 'zh' && learned(x.k)).length;
-    meter.innerHTML = ''; img('assets/props/chest.png', '', meter); el('span', '', meter, { text: nZh + ' 个字 · ' + nEn + ' 个字母' });
+    meter.innerHTML = '';
+    const top = el('div', 'mt', meter); img('assets/props/chest.png', '', top); el('span', '', top, { text: nZh + ' 个字 · ' + nEn + ' 个字母' });
+    /* the two seas as bars, one segment an island, filling as its characters and letters are learned (R1-08) */
+    ['w1', 'w2'].forEach(w => { const row = el('div', 'bar', meter); ORDER[w].forEach(id => { const its = ITEMS.filter(x => x.isl === id), f = its.filter(x => learned(x.k)).length / its.length, seg = el('i', '', row); seg.style.setProperty('--f', (f * 100).toFixed(0) + '%'); seg.style.setProperty('--c', ISL[id].color); if (f >= 1) seg.classList.add('full'); }); });
     grid.innerHTML = '';
     let focusEl = null;
     ALL_ISL().forEach(id => {

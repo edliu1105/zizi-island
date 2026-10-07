@@ -9,11 +9,11 @@
    Character data: Make Me a Hanzi (Arphic Public License, assets/data/LICENSE-hanzi.txt) - outlines + centre lines. */
 const STROKE_NAMES = {
   人: '撇 捺', 口: '竖 横折 横', 目: '竖 横折 横 横 横', 手: '撇 横 横 竖钩', 日: '竖 横折 横 横', 月: '撇 横折钩 横 横', 云: '横 横 撇折 点', 木: '横 竖 撇 捺',
-  山: '竖 竖折 竖', 水: '竖钩 横撇 撇 捺', 火: '点 撇 撇 捺', 石: '横 撇 竖 横折 横', 田: '竖 横折 横 竖 横', 禾: '撇 横 竖 撇 点', 米: '点 撇 横 竖 撇 点', 瓜: '撇 撇 竖提 点 捺',
-  牛: '撇 横 横 竖', 羊: '点 撇 横 横 横 竖', 马: '横折 竖折折钩 横', 鸟: '撇 横折钩 点 竖折折钩 横', 大: '横 撇 捺', 小: '竖钩 点 点', 上: '竖 横 横', 下: '横 竖 点',
+  山: '竖 竖折 竖', 水: '竖钩 横撇 撇 捺', 火: '点 撇 撇 捺', 石: '横 撇 竖 横折 横', 田: '竖 横折 横 竖 横', 禾: '撇 横 竖 撇 捺', 米: '点 撇 横 竖 撇 捺', 瓜: '撇 撇 竖提 点 捺',
+  牛: '撇 横 横 竖', 羊: '点 撇 横 横 横 竖', 马: '横折 竖折折钩 横', 鸟: '撇 横折钩 点 竖折折钩 横', 大: '横 撇 捺', 小: '竖钩 撇 点', 上: '竖 横 横', 下: '横 竖 点',
   车: '横 撇折 横 竖', 门: '点 竖 横折钩', 灯: '点 撇 撇 点 横 竖钩', 伞: '撇 捺 点 撇 横 竖', 书: '横折 横折钩 竖 点', 本: '横 竖 撇 捺 横', 尺: '横折 横 撇 捺', 包: '撇 横折钩 横折 横 竖弯钩',
   床: '点 横 撇 横 竖 撇 捺', 衣: '点 横 撇 竖提 撇 捺', 巾: '竖 横折钩 竖', 杯: '横 竖 撇 点 横 撇 竖 点', 风: '撇 横折斜钩 撇 点', 雨: '横 竖 横折钩 竖 点 点 点 点', 电: '竖 横折 横 横 竖弯钩', 光: '竖 点 撇 横 撇 竖弯钩',
-  从: '撇 点 撇 捺', 休: '撇 竖 横 竖 撇 点', 林: '横 竖 撇 点 横 竖 撇 捺', 明: '竖 横折 横 横 撇 横折钩 横 横', 花: '横 竖 竖 撇 竖 撇 竖弯钩', 叶: '竖 横折 横 横 竖', 果: '竖 横折 横 横 横 竖 撇 捺', 竹: '撇 横 竖 撇 横 竖钩',
+  从: '撇 点 撇 捺', 休: '撇 竖 横 竖 撇 捺', 林: '横 竖 撇 点 横 竖 撇 捺', 明: '竖 横折 横 横 撇 横折钩 横 横', 花: '横 竖 竖 撇 竖 撇 竖弯钩', 叶: '竖 横折 横 横 竖', 果: '竖 横折 横 横 横 竖 撇 捺', 竹: '撇 横 竖 撇 横 竖钩',
   龙: '横 撇 竖弯钩 撇 点', 兔: '撇 横撇 竖 横折 横 撇 竖弯钩 点', 狗: '撇 弯钩 撇 撇 横折钩 竖 横折 横', 鸡: '横撇 点 撇 横折钩 点 竖折折钩 横', 饭: '撇 横钩 竖提 撇 撇 横撇 捺', 汤: '点 点 提 横折折折钩 撇 撇', 肉: '竖 横折钩 撇 点 撇 点', 勺: '撇 横折钩 点',
 };
 const Hanzi = {
@@ -101,15 +101,15 @@ class Writer {
   }
   build() {
     const st = this.st, opt = this.opt, zh = this.kind === 'zh';
-    const pap = this.el = el('div', 'paper ' + (zh ? 'tzg' : 'sxg'), Stage.el);
-    pap.style.position = 'absolute'; pap.style.zIndex = 12;
+    const pap = this.el = el('div', opt.bare ? '' : 'paper ' + (zh ? 'tzg' : 'sxg'), Stage.el);
+    pap.style.position = 'absolute'; pap.style.zIndex = opt.z || 12;
     st.els.push(pap);
     const s = this.svg = svg('svg', { viewBox: this.vb.join(' '), width: '100%', height: '100%' }, pap);
     s.style.overflow = 'visible';
     const defs = svg('defs', {}, s);
-    /* the grid */
+    /* the grid (none on a bare frame: the brush writing over a picture) */
     const g0 = svg('g', {}, s);
-    if (zh) {
+    if (opt.bare) { /* nothing */ } else if (zh) {
       svg('rect', { x: 8, y: 8, width: 1008, height: 1008, fill: 'none', stroke: '#E8414B', 'stroke-width': 12 }, g0);
       [['M512 20V1004'], ['M20 512H1004'], ['M20 20L1004 1004'], ['M1004 20L20 1004']].forEach(([d], i) => svg('path', { d, stroke: '#E8414B', 'stroke-width': i < 2 ? 5 : 3, 'stroke-dasharray': i < 2 ? '26 18' : '14 22', opacity: i < 2 ? 0.55 : 0.28, fill: 'none' }, g0));
     } else {
@@ -135,6 +135,7 @@ class Writer {
     });
     this.setGuide();
     this.place();
+    if (opt.bare) { this.gGuide.style.display = 'none'; return; }
     const self = this;
     K.reg(st, 'paper', pap, { draw: { start: p => self.dStart(p), move: p => self.dMove(p), end: () => {}, cancel: () => self.clearTrail() }, tap: false });
     this.cue();
@@ -197,7 +198,7 @@ class Writer {
     return p;
   }
   /* the brush shows strokes (all from k on, or just one), in the highlight colour, then they fade */
-  async demo(st, only) {
+  async demo(st, only, keep, color) {
     const sc = st.scope, ids = only != null ? [only] : this.strokes.map((_, i) => i).filter(i => i >= this.k);
     this.paused = true; this.gCue.style.opacity = 0;
     const brush = img('assets/props/brush.png', '', Stage.el); brush.style.position = 'absolute'; brush.style.zIndex = 30; brush.style.pointerEvents = 'none';
@@ -207,7 +208,7 @@ class Writer {
     for (const i of ids) {
       if (st.scope.dead) return;
       const sk = this.strokes[i], dur = Math.max(420, Math.min(900, sk.L / this.S * 1400));
-      shown.push(this.ink(i, '#FF9F43', dur));
+      shown.push(this.ink(i, color || '#FF9F43', dur));
       Sfx.nz(0, dur / 1000, 1400, 900, 0.6, 0.05);
       /* the brush tip follows the centre line */
       const pts = Geo.resample(sk.med, 10).map(q => this.toStage(q));
@@ -217,6 +218,7 @@ class Writer {
       await sc.wait(160);
     }
     brush.remove();
+    if (keep) { this.paused = false; return; }
     await sc.wait(250);
     shown.forEach(p => p.animate([{ opacity: 1 }, { opacity: 0 }], { duration: T(300) + 1, fill: 'forwards' }).onfinish = () => p.remove());
     await sc.wait(320);

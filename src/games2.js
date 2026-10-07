@@ -245,7 +245,7 @@ const QSpell = {
   next(st, strat) { if (st.got >= st.q.word.length) return null; const want = st.q.word[st.got]; const i = strat === 'wrong' ? st.q.tiles.findIndex((c, j) => c !== want && !st.used.includes(j)) : st.q.tiles.findIndex((c, j) => c === want && !st.used.includes(j)); return { g: 'tap', p: { id: 'T' + i } }; },
   workEls(st) { return st.tileEls || []; },
   snap(st) { return { got: st.got || 0 }; },
-  iconNode() { const d = el('div'); d.style.display = 'flex'; 'cat'.split('').forEach(c => d.appendChild(Glyph.en(c, 36))); return d; },
+  iconNode() { return Glyph.word('cat', 44); },
 };
 /* Bluey · 大小写找朋友: which small letter belongs to this big one? */
 const QCase = {
@@ -365,7 +365,8 @@ const QRead = {
   },
   async present(st) {
     const q = st.q;
-    K.cards(st, q.opts.map(w => { const d = el('div'); Object.assign(d.style, { display: 'flex', marginTop: '-10px' }); w.split('').forEach(c => { const g = Glyph.en(c, 86); g.style.margin = '0 -9px'; d.appendChild(g); }); return d; }), q.opts, Object.assign({ size: 190, gap: 24 }, this.cardSpot()));
+    /* the letters side by side on one line of the four, never touching (R1-05) */
+    K.cards(st, q.opts.map(w => Glyph.word(w, 96)), q.opts, Object.assign({ size: 190, gap: 24 }, this.cardSpot()));
     K.task(st, [['speaker', 'q']]);
     st.prompt = q.answer; st.lead = '听一听';
     Voice.say('听一听', { tag: 'prompt' }); Voice.say(q.answer, { tag: 'prompt' });
@@ -374,7 +375,7 @@ const QRead = {
   place(st) { K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], b = box(e); K.hop(st, e, 30); Sfx.reveal(); const d = ZX.thing(st, 150, 150, 32, 'objpop'); ZX.pic('assets/obj/' + CVC_OBJ[st.q.answer] + '.png', d); place(d, b.x + b.w / 2 - 75, b.y - 170, 150, 150); K.pop(st, d); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say(ans, { tag: 'wrong' }); await st.scope.wait(900); },
-  iconNode() { const d = el('div'); d.style.display = 'flex'; 'dog'.split('').forEach(c => d.appendChild(Glyph.en(c, 36))); return d; },
+  iconNode() { return Glyph.word('dog', 44); },
 };
 
 /* ---------------------------------------------------------------- every island's four games */

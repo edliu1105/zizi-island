@@ -68,6 +68,9 @@ def data_lines():
     for comp in '木口日月人火田':
         out.add('哪个字里有' + comp + '？')
     out |= set(EXTRA)
+    w = open(os.path.join(ROOT, 'src', 'writer.js'), encoding='utf-8').read()
+    for v in re.findall(r":\s*'([^']+)'", re.search(r"const STROKE_NAMES = \{(.+?)\n\};", w, re.S).group(1)):
+        out |= {'这是' + nm for nm in v.split()}            # the missing-stroke challenge names what was picked
     for n in range(1, 15):
         out.add('插上旗子啦！' if n == 1 else CNQ(n) + '面旗子啦！')
     return out

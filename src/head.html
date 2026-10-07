@@ -14,6 +14,20 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (orientation: portrait)" href="assets/splash/splash-1536x2048.png">
+<link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (orientation: landscape)" href="assets/splash/splash-2048x1536.png">
+<link rel="apple-touch-startup-image" media="(device-width: 810px) and (device-height: 1080px) and (orientation: portrait)" href="assets/splash/splash-1620x2160.png">
+<link rel="apple-touch-startup-image" media="(device-width: 810px) and (device-height: 1080px) and (orientation: landscape)" href="assets/splash/splash-2160x1620.png">
+<link rel="apple-touch-startup-image" media="(device-width: 820px) and (device-height: 1180px) and (orientation: portrait)" href="assets/splash/splash-1640x2360.png">
+<link rel="apple-touch-startup-image" media="(device-width: 820px) and (device-height: 1180px) and (orientation: landscape)" href="assets/splash/splash-2360x1640.png">
+<link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1112px) and (orientation: portrait)" href="assets/splash/splash-1668x2224.png">
+<link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1112px) and (orientation: landscape)" href="assets/splash/splash-2224x1668.png">
+<link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1194px) and (orientation: portrait)" href="assets/splash/splash-1668x2388.png">
+<link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1194px) and (orientation: landscape)" href="assets/splash/splash-2388x1668.png">
+<link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (orientation: portrait)" href="assets/splash/splash-2048x2732.png">
+<link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (orientation: landscape)" href="assets/splash/splash-2732x2048.png">
+<link rel="apple-touch-startup-image" media="(device-width: 744px) and (device-height: 1133px) and (orientation: portrait)" href="assets/splash/splash-1488x2266.png">
+<link rel="apple-touch-startup-image" media="(device-width: 744px) and (device-height: 1133px) and (orientation: landscape)" href="assets/splash/splash-2266x1488.png">
 <style>
 /* ============================================================
    字字岛 · one visual language
@@ -263,8 +277,13 @@ svg.lines{left:0;top:0;overflow:visible;pointer-events:none}
 #book .tabs{position:absolute;left:50%;top:4px;transform:translateX(-50%);display:flex;gap:14px}
 #book .tab{position:relative;min-width:120px;height:88px;padding:0 18px;border-radius:24px;background:#fff;box-shadow:var(--stk-sm);display:flex;align-items:center;justify-content:center;font:900 36px/1 system-ui,-apple-system,sans-serif;color:var(--ink)}
 #book .tab.on{background:var(--sun);transform:translateY(-4px)}
-#book .meter{position:absolute;right:calc(18px + var(--sr));top:16px;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--stk-sm);font:900 26px/1 system-ui,sans-serif}
-#book .meter img{width:36px;height:36px}
+#book .meter{position:absolute;right:calc(18px + var(--sr));top:6px;display:flex;flex-direction:column;gap:6px;padding:8px 14px;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--stk-sm);font:900 24px/1 system-ui,sans-serif}
+#book .meter .mt{display:flex;align-items:center;gap:8px}
+#book .meter img{width:34px;height:34px}
+#book .meter .bar{display:flex;gap:3px}
+#book .meter .bar i{position:relative;width:30px;height:13px;border-radius:7px;background:rgba(43,33,24,.12);overflow:hidden}
+#book .meter .bar i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--f);background:var(--c)}
+#book .meter .bar i.full{box-shadow:0 0 0 2px var(--ink)}
 #book .grid{position:absolute;left:0;right:0;top:calc(132px + var(--st));bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:10px calc(26px + var(--sr)) 40px calc(26px + var(--sl));display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px;align-content:start}
 #book .grid h4{grid-column:1/-1;margin:14px 0 0;font:900 24px/1.2 system-ui,-apple-system,sans-serif;color:rgba(43,33,24,.75);display:flex;align-items:center;gap:10px}
 #book .grid h4 img{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--ink)}
@@ -279,7 +298,7 @@ svg.lines{left:0;top:0;overflow:visible;pointer-events:none}
 #book .tile .fl i{width:20px;height:20px;border-radius:50%;background:rgba(43,33,24,.12)}
 #book .tile .fl i.on{background:#FF6B8B;box-shadow:0 0 0 2px var(--ink)}
 #book .tile .lk{position:absolute;right:8px;bottom:8px;width:34px;height:34px}
-@media (orientation:portrait){ #book .meter{top:112px;right:50%;transform:translateX(50%)} #book .grid{top:calc(186px + var(--st))} }
+@media (orientation:portrait){ #book .meter{top:108px;right:50%;transform:translateX(50%)} #book .grid{top:calc(222px + var(--st))} }
 
 </style>
 </head>
