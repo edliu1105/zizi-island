@@ -208,7 +208,7 @@ const QSpell = {
     const lv = o.level, w = PICK(G, 'w', CVC_WORDS.map(x => x[0])), extra = lv >= 4 ? 2 : 1;
     const letters = w.split(''), pool = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => !letters.includes(c));
     const tiles = G.rng.shuffle(letters.concat(G.rng.shuffle(pool).slice(0, extra)));
-    return { k: [w, tiles.join('')], word: w, tiles, answer: w, hint: lv <= 2 };
+    return { k: [w, tiles.join('')], word: w, tiles, answer: w, hint: lv <= 2 || Prog.stars(G.world, G.id) < 5 };      /* R2-03: the first session always has them */
   },
   async present(st) {
     const q = st.q, obj = CVC_OBJ[q.word];
@@ -241,7 +241,7 @@ const QSpell = {
     return 'ok';
   },
   async reveal(st) { Sfx.reveal(); K.hop(st, st.pic, 40); Voice.say(st.q.word, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
-  async feedback(st) { const d = st.tileEls[st.tapped]; if (d) K.wiggle(st, d); Voice.say(ITEM[st.q.tiles[st.tapped].toUpperCase()].say, { tag: 'wrong' }); await st.scope.wait(900); },
+  async feedback(st) { const d = st.tileEls[st.tapped]; if (d) K.wiggle(st, d); Voice.say(ITEM[st.q.tiles[st.tapped].toUpperCase()].say, { tag: 'wrong' }); Voice.say(st.q.word, { tag: 'wrong' }); await st.scope.wait(1200); },
   next(st, strat) { if (st.got >= st.q.word.length) return null; const want = st.q.word[st.got]; const i = strat === 'wrong' ? st.q.tiles.findIndex((c, j) => c !== want && !st.used.includes(j)) : st.q.tiles.findIndex((c, j) => c === want && !st.used.includes(j)); return { g: 'tap', p: { id: 'T' + i } }; },
   workEls(st) { return st.tileEls || []; },
   snap(st) { return { got: st.got || 0 }; },

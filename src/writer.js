@@ -55,21 +55,41 @@ const Geo = {
     const A = this.resample(drawn, 24), B = this.resample(want, 24), m = this.mean(A, B), mRev = this.mean(A, B.slice().reverse());
     /* the drawn stroke is clearly nearer one of the strokes still to come (a dot of 雨 for the one beside it): order */
     const closer = (others || []).some(o => { const d = this.mean(A, this.resample(o, 24)); return d < m * 0.75 && d < 0.15 * S; });
-    if (short) {                                     /* a dot-sized stroke: where, and roughly which way */
+    /* which way it goes, left or right / up or down: a 撇 goes left, a 捺 / 点 right - the mirror one is another stroke (R2-02) */
+    const vd = [d1[0] - d0[0], d1[1] - d0[1]], vw = [w1[0] - w0[0], w1[1] - w0[1]];
+    const sideOk = (a, b) => Math.abs(b) < 0.06 * S || Math.sign(a) === Math.sign(b) || Math.abs(a) < 0.025 * S;
+    const wayOk = sideOk(vd[0], vw[0]) && sideOk(vd[1], vw[1]);
+    if (short) {                                     /* a dot-sized stroke: where, and which way */
       const c = drawn.reduce((a, q) => [a[0] + q[0] / drawn.length, a[1] + q[1] / drawn.length], [0, 0]);
       const wc = [(w0[0] + w1[0]) / 2, (w0[1] + w1[1]) / 2], near = Math.hypot(c[0] - wc[0], c[1] - wc[1]) < 0.17 * S;
-      const vd = [d1[0] - d0[0], d1[1] - d0[1]], vw = [w1[0] - w0[0], w1[1] - w0[1]];
-      const dirOk = Ld < 0.05 * S || vd[0] * vw[0] + vd[1] * vw[1] > 0;
+      const dirOk = Ld < 0.05 * S || (vd[0] * vw[0] + vd[1] * vw[1] > 0 && wayOk);
       if (near && dirOk && Ld < 0.45 * S && !closer) return { ok: true };
       return { ok: false, why: closer ? 'order' : near && !dirOk ? 'back' : 'start' };
     }
     /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame */
     const tol = Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
-    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer) return { ok: true };
+    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && this.bendOk(drawn, want)) return { ok: true };
     if (mRev < tol && dsRev < 0.22 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
+    if (m < tol && ds < 0.22 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
     if (closer || this.which(drawn, others, S)) return { ok: false, why: 'order' };
     if (ds >= 0.22 * S) return { ok: false, why: 'start' };
     return { ok: false, why: 'shape' };
+  },
+  /* a stroke with a real turn (横折, the arch of n, the bowl of R) has to be written with a turn, on the same side and
+     about as deep: the deepest point off the line from start to end, on each side, as a share of the stroke length.
+     A wobbly finger keeps the turn; a straight line instead of 横折 does not (R2-02). Closed shapes (O) are left to the
+     distance test. */
+  bulge(p) {
+    const a = p[0], b = p[p.length - 1], cx = b[0] - a[0], cy = b[1] - a[1], ch = Math.hypot(cx, cy) || 1, L = this.len(p) || 1;
+    let pos = 0, neg = 0;
+    p.forEach(q => { const d = ((q[0] - a[0]) * cy - (q[1] - a[1]) * cx) / ch; if (d > pos) pos = d; if (-d > neg) neg = -d; });
+    return { pos: pos / L, neg: neg / L, closed: ch < 0.3 * L };
+  },
+  bendOk(drawn, want) {
+    const w = this.bulge(this.resample(want, 32)), d = this.bulge(this.resample(drawn, 32));
+    if (w.closed) return true;
+    const side = (wv, dv) => wv < 0.12 || dv >= 0.45 * wv;
+    return side(w.pos, d.pos) && side(w.neg, d.neg);
   },
   /* the drawn stroke is (a good match of) a later stroke: the order is what went wrong */
   which(drawn, others, S) {

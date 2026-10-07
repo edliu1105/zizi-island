@@ -21,7 +21,7 @@ def literals():
             out.add(m.group(1))
         for m in re.finditer(r"K\.say\(st,\s*'([^'\\]+)'\)", s):
             out.add(m.group(1))
-        for m in re.finditer(r"(?:intro|hi|line|bye):\s*'([^'\\]+)'", s):
+        for m in re.finditer(r"(?:intro|hi|line|bye|again):\s*'([^'\\]+)'", s):
             out.add(m.group(1))
         for name in ('PRAISE', 'AGAIN', 'CHEER'):
             m = re.search(r'const ' + name + r" = \[([^\]]+)\]", s)

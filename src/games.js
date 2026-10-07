@@ -4,6 +4,8 @@
 const LOOK = { 日: '目田月口', 目: '日田', 田: '日目口', 口: '日田', 人: '大从', 大: '人', 木: '禾米本', 禾: '木米', 米: '木禾', 牛: '手', 手: '牛', 马: '鸟', 鸟: '马', 上: '下', 下: '上', 月: '日明', 本: '木', 林: '木休', 从: '人', 休: '林', 明: '日月', 风: '电', 电: '田日', 包: '勺', 勺: '包', 兔: '龙', 杯: '林', 床: '林', 叶: '口', 果: '田', 车: '牛', 门: '口', 衣: '农', 巾: '中', 光: '火', 火: '光' };
 const LOOKEN = { E: 'F', F: 'E', M: 'NW', N: 'M', O: 'QC', Q: 'O', P: 'RB', R: 'P', B: 'PD', U: 'V', V: 'U', b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'm', i: 'j', j: 'i', u: 'n', w: 'v', C: 'G', G: 'C', I: 'L', L: 'I' };
 const PICK = (G, name, items) => bagPick(G, name, items);
+/* characters that hold another one inside (明 holds 月): never a look-alike option for it */
+const HOLDS = { 月: '明', 日: '明', 木: '林休本果杯床', 人: '从休', 口: '叶', 火: '灯', 田: '果' };
 /* the characters / letters the child can be asked about here (this island + the islands before it, for review) */
 function poolOf(G, kind, review) {
   const isl = G.W, mine = kind === 'zh' ? isl.chars.map(c => c.c) : isl.letters.map(l => l.l);
@@ -16,7 +18,8 @@ function poolOf(G, kind, review) {
    look-alikes first (level >= 3), then the island's own, then review; the answer's place from a position bag */
 function optsFor(G, kind, level, n, answer) {
   const own = poolOf(G, kind, false), rev = poolOf(G, kind, true).filter(k => !own.includes(k));
-  const look = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => ITEM[k]);
+  const known = poolOf(G, kind, true), holds = HOLDS[answer] || '';
+  const look = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => ITEM[k] && known.includes(k) && !holds.includes(k));      /* R2-04 */
   const cand = [];
   if (level >= 3) look.forEach(k => cand.push(k));
   G.rng.shuffle(own).forEach(k => cand.push(k));
@@ -154,7 +157,7 @@ const FindBase = {
     this.place(st);
     /* the task card: level 1 shows the thing to find; from level 2 it is heard - and its picture comes as the second
        hint (10 s stuck): the question said completely, never the answer (R1-04) */
-    st.taskEl = K.task(st, [st.level <= 1 ? ['assets/obj/' + ITEM[q.answer].obj + '.png', 'q'] : ['eye', 'q']]);
+    st.taskEl = K.task(st, [st.level <= 1 ? ['assets/obj/' + ITEM[q.answer].obj + '.png', 'q'] : ['speaker', 'q']]);
     K.say(st, (isEn(q.answer) ? '找到' : '哪个是') + q.answer + (isEn(q.answer) ? '！' : '？'));
     if (isEn(q.answer)) { st.prompt = '找字母'; st.tail = [ITEM[q.answer].say]; Voice.say(ITEM[q.answer].say, { tag: 'prompt' }); }
   },
@@ -445,6 +448,7 @@ const WriteBase = {
   },
   evaluate(st, ans) { return ans === 'clean' || st.G.practice; },
   async reveal(st) { this.cheerAll(st); if (st.G.practice) { Voice.say(PICKP(), { tag: 'praise' }); } },
+  again: '再写一个！',
   async feedback(st) { Voice.say('下次每笔都写对', { tag: 'wrong' }); await st.scope.wait(600); },
   next(st, strat) { if (!st.w || st.w.done) return null; const pts = st.w.expected(strat === 'wrong'); return pts ? { g: 'stroke', p: { id: 'paper', pts } } : null; },
   gestureHint(st) { if (st.w && !st.w.done && !st.w.paused) st.w.demo(st, st.w.k); },
@@ -591,7 +595,8 @@ const QMissing = {
     Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '少了哪一笔？');
   },
-  cardSpot() { return K.L() ? { cx: 650, cy: 560 } : { cx: 352, cy: 820 }; },
+  cardSpot() { return K.L() ? { cx: 600, cy: 560 } : { cx: 352, cy: 780 }; },
+  decor(G) { const L = K.L(), a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L ? 96 : 76, L ? 698 : 1016, L ? 190 : 140); },      /* one friend: four cards keep clear (R2-07) */
   place(st) {
     if (!st.big) return;
     const L = K.L();
@@ -698,31 +703,25 @@ const QConnect = {
    every variant is compared point by point with the right one and with the others (B upside down is still B, S turned
    round is still S - such a variant is never offered); glyphs turn about their own centre (R1-01, R1-07) */
 const Mirror = {
-  cache: {},
+  /* which turns of a glyph clearly look wrong (and unlike each other) - checked by eye, glyph by glyph (R2-01):
+     symmetric ones keep only the turn that changes them (A upside down; B, C, D, E mirrored); letters whose turned shape
+     is another real letter (M W N P U and the small letters) and characters like 上 / 下 / 车 / 米 are not in the table */
+  T: { A: 'flipY', B: 'flipX', C: 'flipX', D: 'flipX', E: 'flipX', F: 'flipX flipY rot', G: 'flipX flipY rot', J: 'flipX flipY rot', K: 'flipX', L: 'flipX flipY rot',
+       Q: 'flipX flipY rot', R: 'flipX flipY rot', S: 'flipX', T: 'flipY', V: 'flipY', Y: 'flipY', Z: 'flipX',
+       月: 'flipX flipY rot', 手: 'flipX flipY', 牛: 'flipX flipY rot', 石: 'flipX flipY rot', 马: 'flipX flipY rot', 鸟: 'flipX flipY rot', 门: 'flipX flipY rot', 灯: 'flipX flipY rot', 禾: 'flipX flipY', 火: 'flipY', 羊: 'flipY' },
+  wrongs(k) { return (this.T[k] || '').split(' ').filter(Boolean); },
   pts(k) {
     if (isEn(k)) return LETTERS[k].flatMap(st => Geo.resample(st, 14));
     return Hanzi.data[k].m.flatMap(m => Geo.resample(m.map(([x, y]) => [x, 900 - y]), 14));
   },
   tf(P, t, c) { return P.map(([x, y]) => t === 'flipX' ? [2 * c[0] - x, y] : t === 'flipY' ? [x, 2 * c[1] - y] : t === 'rot' ? [2 * c[0] - x, 2 * c[1] - y] : [x, y]); },
-  chamfer(A, B) { const d = (X, Y) => X.reduce((s, a) => s + Math.min(...Y.map(b => Math.hypot(a[0] - b[0], a[1] - b[1]))), 0) / X.length; return (d(A, B) + d(B, A)) / 2; },
-  /* the wrong variants that really look wrong (and unlike each other), in a fixed order of preference */
-  wrongs(k) {
-    if (this.cache[k]) return this.cache[k];
-    const P = this.pts(k), xs = P.map(p => p[0]), ys = P.map(p => p[1]);
-    const c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2], size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-    const shown = [P], out = [];
-    for (const t of ['flipX', 'flipY', 'rot']) { const V = this.tf(P, t, c); if (shown.every(S => this.chamfer(V, S) > 0.08 * size)) { out.push(t); shown.push(V); } }
-    return (this.cache[k] = out);
-  },
 };
 const QMirror = {
   kind0: 'mirror', verb: '看！', intro: '哪个写对了？', props: [],
-  /* characters whose turned shape is another real character (上 / 下) are left out */
-  ZH: '手月火牛石马鸟门车灯羊米禾',
+  /* how many wrong ones: 1 (levels 1-2: is it this one or that one), 2 (level 3), 3 (levels 4-5) */
   gen(G, o) {
-    const lv = o.level, n = lv >= 4 ? 3 : 2;
-    /* letters whose turned shape is another real letter (P -> b d q, M -> W, u -> n) are left out too */
-    const pool = poolOf(G, 'up', true).filter(k => !'PMWNbdpqmnuw'.includes(k)).concat(lv >= 3 ? poolOf(G, 'zh', true).filter(k => this.ZH.includes(k)) : []).filter(k => Mirror.wrongs(k).length >= n);
+    const lv = o.level, n = lv <= 2 ? 1 : lv === 3 ? 2 : 3;
+    const pool = poolOf(G, 'up', true).concat(lv >= 3 ? poolOf(G, 'zh', true) : []).filter(k => Mirror.wrongs(k).length >= n);
     const glyph = PICK(G, 'g' + lv, pool.length ? pool : ['R', 'F', 'G']);
     const wr = G.rng.shuffle(Mirror.wrongs(glyph)).slice(0, n);
     const pos = PICK(G, 'pos' + (n + 1), Array.from({ length: n + 1 }, (_, i) => i)); wr.splice(pos, 0, 'ok');

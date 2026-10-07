@@ -293,7 +293,7 @@ const Session = {
       st.phase = 'correcting';
       await g.feedback(st, ans);                 /* says what is wrong (never "you are wrong", never the answer) */
       if (!this.alive(my)) return 'dead';
-      if (!G.practice) Voice.say(AGAIN[(G.again = (G.again || 0) + 1) % AGAIN.length], { tag: 'again' });
+      if (!G.practice) Voice.say(g.again || AGAIN[(G.again = (G.again || 0) + 1) % AGAIN.length], { tag: 'again' });      /* writing: 再写一个！ (a new character comes, R2-06) */
       await st.scope.guard(Voice.afterSay(200));
       if (!this.alive(my)) return 'dead';
       this.ffOff();

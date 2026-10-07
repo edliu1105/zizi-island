@@ -20,6 +20,7 @@ run() {
 }
 run core      tests/test_core.py
 run r1        tests/test_r1.py
+run r2        tests/test_r2.py
 run pointer   tests/test_pointer.py
 run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py
