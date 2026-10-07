@@ -48,7 +48,12 @@ const Geo = {
   },
   mean(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += Math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]); return s / a.length; },
   /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size) */
-  judge(drawn, want, S, others) {
+  judge(drawn, want, S, others, opt) {
+    /* a hook (竖钩, 横折钩 ...) may be left off: the stroke without it is judged too - one rule for every hook (R3-03) */
+    if (opt && opt.hook) {
+      const r = this.judge(drawn, want, S, others), u = this.unhook(want);
+      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others).ok ? { ok: true } : r);
+    }
     const L = this.len(want), Ld = this.len(drawn), short = L < 0.16 * S;
     const d0 = drawn[0], d1 = drawn[drawn.length - 1], w0 = want[0], w1 = want[want.length - 1];
     const ds = Math.hypot(d0[0] - w0[0], d0[1] - w0[1]), dsRev = Math.hypot(d0[0] - w1[0], d0[1] - w1[1]);
@@ -90,6 +95,19 @@ const Geo = {
     if (w.closed) return true;
     const side = (wv, dv) => wv < 0.12 || dv >= 0.45 * wv;
     return side(w.pos, d.pos) && side(w.neg, d.neg);
+  },
+  /* the stroke without its hook: cut at the sharpest turn in its last 30 % (a hook is short and turns hard) */
+  unhook(m) {
+    const L = this.len(m), cum = [0];
+    for (let i = 1; i < m.length; i++) cum.push(cum[i - 1] + Math.hypot(m[i][0] - m[i - 1][0], m[i][1] - m[i - 1][1]));
+    let best = -1, bestA = 50;
+    for (let i = 1; i < m.length - 1; i++) {
+      if (cum[i] < 0.7 * L) continue;
+      const a = [m[i][0] - m[i - 1][0], m[i][1] - m[i - 1][1]], b = [m[i + 1][0] - m[i][0], m[i + 1][1] - m[i][1]];
+      const ang = Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]) || 1)))) * 180 / Math.PI;
+      if (ang > bestA) { bestA = ang; best = i; }
+    }
+    return best > 0 ? m.slice(0, best + 1) : m;
   },
   /* the drawn stroke is (a good match of) a later stroke: the order is what went wrong */
   which(drawn, others, S) {
@@ -255,7 +273,7 @@ class Writer {
     const drawn = pts.map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
     if (!this.trail) { this.trail = drawn; this.trailEl = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); }
     const sk = this.strokes[this.k];
-    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med));
+    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || '') });
     if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(res.ok ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
     this.trail = null;
     if (res.ok) {

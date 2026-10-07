@@ -89,6 +89,7 @@ const ZX = {
     sc.anim(box, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.3)', opacity: 0 }], { duration: 320, fill: 'forwards' });
     await sc.anim(pic, [{ transform: 'scale(1)', opacity: 0.28 }, { transform: 'scale(.3)', opacity: 0 }], { duration: 320, fill: 'forwards' });
     veil.remove(); box.remove(); pic.remove();
+    return true;
   },
 };
 const MOTION = { fish: 'swim', bird: 'fly', sun: 'rise', moon: 'rise', fire: 'flicker', water: 'sway', tree: 'sway', riceplant: 'sway', car: 'drive', van: 'drive', bus: 'drive', train: 'drive', big: 'grow', small: 'shrink', up: 'up', down: 'down', wind: 'spin', pinwheel: 'spin', ball: 'hop', kite: 'fly', dragon: 'fly', owl: 'fly', light: 'flicker', lamp: 'flicker', lightning: 'flicker', insect: 'fly', frog: 'hop', rabbit: 'hop', cloud: 'sway', rain: 'down', flower: 'grow', leaf: 'sway' };
@@ -374,7 +375,8 @@ const PlayPark = {
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 150, y: 300, w: 720, h: n > 3 ? 330 : 220 } : { x: 60, y: 320, w: 584, h: n > 3 ? 540 : 300 };
     const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
-    spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 105, p.y - 95, 210, 190));
+    const cw = Math.min(210, Math.floor(r.w / cols) - 14), ch = Math.round(cw * 190 / 210);     /* three in a portrait row: smaller, apart (R3-06) */
+    spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - cw / 2, p.y - ch / 2, cw, ch));
   },
   nope(st) { Sfx.mar(392, 0, 0.4, 0.2); Sfx.mar(392, 0.25, 0.4, 0.2); },
   async win(st, i) {
@@ -399,14 +401,15 @@ const WriteBase = {
   async present(st) {
     const q = st.q, G = st.G, k = q.answer, it = ITEM[k], g = this.geo(st);
     st.prompt = it.line; st.noPraise = true;
-    if (!G.practice) { await ZX.meet(st, k); if (!Session.alive(st)) return; }        /* a letter is first met here: the apple, then the A */
+    let met = false;                                     /* a letter is first met here: the apple, then the A */
+    if (!G.practice) { met = await ZX.meet(st, k); if (!Session.alive(st)) return; }
     const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); ZX.pic('assets/obj/' + it.obj + '.png', pic); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
     K.pop(st, pic);
     const lv = G.practice ? 1 : st.level;
     const W = st.w = new Writer(st, { kind: this.lang === 'zh' ? 'zh' : 'en', glyph: k, level: lv, x: g.x, y: g.y, size: g.size });
     if (G.practice) W.free = true;
     K.pop(st, W.el);
-    Voice.say(it.line, { tag: 'prompt' });
+    if (!met) Voice.say(it.line, { tag: 'prompt' });       /* just said by the meeting: straight on to the brush (R3-04) */
     if (isEn(k)) st.prompt = it.line;
     /* the first time (or level 1, or practice): the brush shows the whole character / letter first */
     if (lv <= 1 || !learned(k)) {

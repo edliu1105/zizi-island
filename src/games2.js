@@ -269,12 +269,14 @@ const QCase = {
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.en('A', 44)); d.appendChild(Glyph.en('a', 44)); return d; },
 };
 /* 睡衣小英雄 · 组词: 火 + ? = 火车 - which character is missing? */
+/* other words a child knows that start the same way (雨水, 小狗, 大人 ...): such a character is never a wrong one (R3-05) */
+const WORD_ALSO = { 火: '光', 雨: '水', 电: '车光', 大: '人小雨风火水手', 风: '雨', 木: '瓜', 小: '米雨手狗鸡兔牛羊马花人车山' };
 const QWord2 = {
   kind0: 'word', verb: '组！', intro: '两个字变一个词！', props: [],
   gen(G, o) {
     const lv = o.level, ok = WORDS2_LIST.filter(w => ITEM[w[0]] && ITEM[w[1]]);
     const w = PICK(G, 'w', ok.map(x => x[0] + x[1])), [a, b] = w.split('');
-    const pool = poolOf(G, 'zh', true).filter(k => k !== b && k !== a), n = lv <= 2 ? 3 : 4;
+    const pool = poolOf(G, 'zh', true).filter(k => k !== b && k !== a && !ok.some(x => x[0] === a && x[1] === k) && !(WORD_ALSO[a] || '').includes(k)), n = lv <= 2 ? 3 : 4;
     const others = G.rng.shuffle(pool).slice(0, n - 1);
     const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, b);
     return { k: [w, others.join('')], word: w, a, answer: b, opts: others };
@@ -329,7 +331,9 @@ const QFuse = {
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('日', 36)); d.appendChild(Glyph.zh('月', 36)); return d; },
 };
 /* 葫芦娃 · 找部件: which character has 木 inside? */
-const PART_IN = { 木: '林休本果杯床', 口: '叶狗', 日: '明', 月: '明', 人: '从', 火: '灯', 田: '果' };
+const PART_IN = { 木: '林休本果杯床', 口: '叶狗', 日: '明', 月: '明', 人: '从休', 火: '灯', 田: '果' };
+/* characters that also show the part (or a shape a child would take for it) - never offered as a wrong one (R3-01) */
+const PART_ALSO = { 木: '禾米', 口: '石兔日目田电', 日: '电目田果', 人: '伞肉大火', 田: '电' };
 const QPart = {
   kind0: 'part', verb: '找！', intro: '找藏起来的部件！', props: [],
   gen(G, o) {
@@ -337,7 +341,7 @@ const QPart = {
     const comps = Object.keys(PART_IN).filter(c => ITEM[c] && PART_IN[c].split('').some(k => known.includes(k)));
     const comp = PICK(G, 'c', comps), withIt = PART_IN[comp].split('').filter(k => known.includes(k));
     const answer = G.rng.pick(withIt), n = lv <= 2 ? 3 : 4;
-    const others = G.rng.shuffle(known.filter(k => !PART_IN[comp].includes(k) && k !== comp)).slice(0, n - 1);
+    const others = G.rng.shuffle(known.filter(k => !PART_IN[comp].includes(k) && !(PART_ALSO[comp] || '').includes(k) && k !== comp)).slice(0, n - 1);
     const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, answer);
     return { k: [comp, answer, others.join('')], comp, answer, opts: others };
   },
