@@ -377,7 +377,10 @@ const Keys = {
   avail() { const k = Store.s.key; return k.day !== DAY(); },
   /* the key round: the most overdue items first (A.13); a long break -> the first day back is free */
   start() {
-    const k = Store.s.key, due = Mem.due(), n = Math.min(Store.s.key.short ? 3 : 5, due.length), gap = Store.s.lastDay ? DAY() - Store.s.lastDay : 0;
+    { const S = Store.s, d = DAY(), quits = [d, d - 1, d - 2].map(x => S.days[x]).filter(Boolean).reduce((a, x) => a + Math.max(0, x.keyGo - x.keyEnd), 0); if (quits >= 2 && !S.key.short) { S.key.short = true; Store.save(); } }     /* V2R3-03 */
+    /* the characters first, letters after (the key is for 认字 first, V2R3-06) - each group most overdue first */
+    const all = Mem.due(), due = all.filter(k => ITEM[k] && ITEM[k].kind === 'zh').concat(all.filter(k => !ITEM[k] || ITEM[k].kind !== 'zh'));
+    const k = Store.s.key, n = Math.min(Store.s.key.short ? 3 : 5, due.length), gap = Store.s.lastDay ? DAY() - Store.s.lastDay : 0;
     if (!n || gap > 7) { this.grant('free'); return; }
     const isl = MapView.recommend && ISL[MapView.recommend()] ? MapView.recommend() : ORDER.w1[0];
     const id = isl + ':find';
@@ -461,7 +464,7 @@ const Report = {
     const days = Object.keys(S.days).map(Number).filter(x => x > d - 7).map(x => Math.round(S.days[x].ms / 60000) + '分').join(' ');
     const [r7, n7] = Mem.keep(7, 13), [r30, n30] = Mem.keep(30, 59);
     const where = ALL_ISL().filter(id => Store.w(id).unlocked).slice(-1)[0];
-    return ['字字岛进度报告（' + new Date().toLocaleDateString() + '，版本 ' + (window.__ver || '') + '）',
+    return ['字字岛进度报告（' + new Date().toLocaleDateString() + '，版本 ' + (window.__ver || document.lastModified || '') + '）',
       '位置：' + (where ? ISL[where].name + '（' + WORLDS_INFO[ISL[where].w].name + '）' : '-') + '；旗子 ' + S.flags.length + ' 面；已装世界 ' + Object.keys(ORDER).length + ' 个',
       '认识（隔 7 天还对）：' + cnt('known'), '学习中：' + cnt('learning'), '见过：' + cnt('seen'), '待复测：' + cnt('stale'),
       '老忘的：' + (weak || '无'), '今天到期：' + Mem.due().length + '；逾期：' + Mem.overdue(),

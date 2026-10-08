@@ -118,7 +118,7 @@ const Store = {
   /* a character / letter written (w) or practised (p) */
   learn(k, field) { const x = this.s.learned[k] || (this.s.learned[k] = { w: 0, p: 0 }); x[field || 'w']++; this.save(); },
 };
-const learned = k => !!(Store.s.learned[k] && Store.s.learned[k].w > 0);
+const learned = k => !!(Store.s.learned[k] && Store.s.learned[k].w > 0) || (typeof NOWRITE !== 'undefined' && NOWRITE.includes(k) && Mem.passed(k));      /* 是 is read, never written (V2R3-01) */
 
 /* ---------------------------------------------------------------- progress: 5 stars a game, 4 games an island, 7 islands a world */
 const Prog = {
@@ -179,7 +179,7 @@ const Session = {
     const G = this.G = {
       world: islandId, W, ws, id: gameId, game, scope: new Scope(APP), rng: RNG(seed), seed, practice: !!opt.practice, item: opt.item || null,
       level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Prog.level(islandId, gameId)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
-      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).map(k => ({ k, at: 1 })),
+      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).slice(0, 2).map((k, i) => ({ k, at: 1 + 2 * i })),
       t0: Clock.t(), stars: 0, streak: 0, bags: {}, dead: false, errors: 0,
     };
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
@@ -282,6 +282,7 @@ const Session = {
       if (res === 'dead') return 'dead';
       if (res === 'error') { if (++G.errors >= 3) return 'stop'; continue; }
       this.remember(G, st, res);
+      if (res === 'wrong' && G.wfMode === 2 && !st.review) return 'ok';           /* the fallback's 2nd step starts at once (V2R3-02) */
       if (!G.key && !G.ws.played.includes(G.id)) { G.ws.played.push(G.id); Store.save(); }
       /* a star: the child's own first try - not after the 2nd hint, not in the key round, not when a character was tapped
          to be heard in 读一读 (A.12) */
@@ -444,7 +445,7 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
-    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save(); }
+    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 2); Store.save(); }
     this.ffOn();
     const sc = G.scope;
     if (!G.practice) {
@@ -468,8 +469,8 @@ const Session = {
     MapView.useSet(G.W.w);
     MapView.update();
     await MapView.celebrate(wid, stars);
-    if (Screens.cur === 'map' && !this.G && StopGo.maybe()) return;
     if (!newGame && Prog.gamesDone(wid) && !flagged(wid) && Screens.cur === 'map' && !this.G) { MapView.openPanel(wid, '再玩一局插旗子！'); return; }
+    if (Screens.cur === 'map' && !this.G && StopGo.maybe()) return;
     if (newGame && Screens.cur === 'map' && !this.G) MapView.openPanel(wid, '新游戏开啦！');
   },
   teardown(G) {

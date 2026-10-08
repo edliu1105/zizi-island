@@ -22,6 +22,7 @@ const MapV2 = {
   hello() {
     const D = Mem.today();
     if (!Keys.avail() || D.hello || fast()) return;
+    if (MapView.ids().some(o => (flagged(o) && !Store.s.flags.includes(o)) || Store.w(o).justOpened)) return;      /* a flag / a new island first; hello next time (V2R3-05) */
     D.hello = 1;
     setTimeout(() => { if (Screens.cur !== 'map' || Session.G || MapView.panel) return; Voice.say('找回老朋友！', { tag: 'map' }); const b = $('#chestbtn'); if (b) b.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-12deg)' }, { transform: 'rotate(12deg)' }, { transform: 'rotate(0)' }], { duration: 600, iterations: 2 }); }, T(2600));
   },
@@ -97,7 +98,7 @@ const ParentV2 = {
       b(x.k ? '认得' : '读对了', () => { if (x.k) { res.n++; res.yes++; } else res.sent = 1; });
       b(x.k ? '不认得' : '没读对', () => { if (x.k) { res.n++; res.no.push(x.k); Mem.parentNo(x.k); } else res.sent = 0; });
       b('没测', () => {});
-      const q = el('button', 'pbtn', ov, { text: '结束' }); q.addEventListener('click', () => { i = list.length; show(); });
+      const q = el('button', 'pbtn', ov, { text: '结束' }); Object.assign(q.style, { fontSize: '22px', padding: '12px 28px', minHeight: '88px', minWidth: '120px', borderRadius: '18px', border: '3px solid #2B2118' }); q.addEventListener('click', () => { i = list.length; show(); });
     };
     Parent.close(); show();
   },
