@@ -390,6 +390,7 @@ const QUIZ = { peppa: QMemory, bluey: QOrder, huluwa: QMissing, paw: QHear, xiyo
 const CASTS = { peppa: ['peppa', 'george'], bluey: ['bluey', 'bingo'], huluwa: ['gourd1', 'grandpa'], paw: ['chase', 'rubble'], xiyou: ['wukong', 'bajie'], ultra: ['ultraman'], robot: ['optimus', 'bumblebee'],
   peppa2: ['peppa', 'george'], bluey2: ['bluey', 'bingo'], pj: ['catboy', 'owlette'], ultra2: ['zero'], huluwa2: ['gourd7', 'gourd2'], xiyou2: ['wukong', 'dragon_horse'], robot2: ['bumblebee'] };
 ALL_ISL().forEach(id => {
+  if (!PLAYS[id]) return;                        /* the sentence islands: src/v2.js */
   const W = ISL[id], cast = CASTS[id], host = cast[0], w2 = W.w === 'w2', first = W.chars[0].c, firstL = W.letters[0].l;
   findGame(PLAYS[id], { id: id + ':find', world: id, bg: id + '_find', chars: cast, host, title: '认字', iconNode: () => Glyph.zh(first, 60) });
   writeGame({ id: id + ':write', world: id, lang: 'zh', bg: id + '_write', chars: cast.slice(0, 1), host, title: '写字', intro: '写一写！', iconNode: () => { const d = el('div'); d.style.position = 'relative'; d.appendChild(Glyph.zh(first, 60, '#E8414B')); return d; }, decor: writeDecor });

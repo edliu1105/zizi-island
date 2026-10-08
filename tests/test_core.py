@@ -117,7 +117,7 @@ with sync_playwright() as p, serve() as base:
     log.check(st['learned'] >= 6, 'the treasure book counts the characters and letters written (%d)' % st['learned'])
     page.wait_for_timeout(3000)
     log.check(page.evaluate("Store.s.flags.includes('peppa')"), 'the flag is planted with its show on the map')
-    page.evaluate("() => { ORDER.w1.forEach(id => { const ws = Store.w(id); ws.unlocked = true; ISL[id].games.forEach(g => { ws.gstars[g] = 5; }); }); Prog.check(true); Store.save(); MapView.update(); MapView.after(10); }")
+    page.evaluate("() => { ORDER.w1.forEach(id => { const ws = Store.w(id); ws.unlocked = true; ISL[id].games.forEach(g => { ws.gstars[g] = 5; }); ws.pok = true; }); Prog.check(true); Store.save(); MapView.update(); MapView.after(10); }")
     page.wait_for_function("Screens.cur === 'finale'", timeout=60000)
     log.check(page.evaluate("Store.s.fin.w1 === 'seen'"), 'all seven flags -> the festival island and the finale (group photo)')
     page.click('#fhome')
@@ -125,7 +125,7 @@ with sync_playwright() as p, serve() as base:
     log.check(True, 'home from the photo -> the gate turns gold')
     page.wait_for_timeout(1500); page.evaluate("MapView.tapIsland('gate')")
     page.wait_for_function("MapView.set === 'w2' && !MapView.sailing", timeout=20000)
-    log.check(page.evaluate("Store.w('peppa2').unlocked && !Store.w('bluey2').unlocked"), 'through the gate: the starlight sea, its first island open')
+    log.check(page.evaluate("Store.w('s1').unlocked && !Store.w('s2').unlocked"), 'through the gate: the starlight sea, its first island (the sentence island) open')
     # 5 voice coverage
     miss = page.evaluate("Array.from(window.__vmiss || [])")
     log.check(not miss, 'every sentence said has a recording %s' % miss[:10])

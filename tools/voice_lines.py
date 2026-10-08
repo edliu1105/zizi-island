@@ -5,7 +5,7 @@ praise strings) and the sentences made from data (every character's line, "哪�
 Chinese lines must stay within 8 characters (the client's rule). usage: python tools/voice_lines.py"""
 import os, re, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content import W1, W2, CVC, WORDS2
+from content import W1, W2, W3, CVC, WORDS2, FW_SENTS, READ, BOOKS
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
 CNQ = lambda n: '两' if n == 2 else CN[n]
@@ -15,7 +15,7 @@ EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字'
 
 def literals():
     out = set()
-    for f in ('app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js'):
+    for f in ('app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js'):
         s = open(os.path.join(ROOT, 'src', f), encoding='utf-8').read()
         for m in re.finditer(r"(?:Voice\.say|Voice\.sayNow|K\.say\(st,|W2X\.say|say)\(\s*'([^'\\]+)'", s):
             out.add(m.group(1))
@@ -44,16 +44,16 @@ def literals():
             out |= {m.group(1), m.group(2)}
     # drop code-ish strings (css, paths) and words of the parent panel that are only shown
     junk = {'\u5173', '\u5f00', '\u5f00\u653e', '\u5df2\u63d2\u65d7', '\u54ea\u4e2a\u662f', '\u627e\u5230', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'flipY', 'flipX', 'ok', 'rot'}
-    return {t for t in out if re.search(r'[\u4e00-\u9fff]', t) and not re.search(r'[#(/]|rgba|px|assets', t) and '+' not in t and t not in junk}
+    return {t for t in out if re.search(r'[\u4e00-\u9fff]', t) and not re.search(r'[#(/（]|rgba|px|assets|四关已过', t) and '+' not in t and t not in junk}
 
 
 def data_lines():
     out = set()
-    for lst in (W1, W2):
+    for lst in (W1, W2, W3):
         for d in lst:
             out.add(d['hi'])
             for c, line, obj, en in d['chars']:
-                out |= {line, '哪个是' + c + '？', c + '在哪里？', en}
+                out |= {line, '哪个是' + c + '？', c + '在哪里？'} | ({en} if en else set())
             for l, word, obj in d['letters']:
                 out |= {'%s, %s!' % (l.upper(), word), word}
     for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
@@ -68,6 +68,11 @@ def data_lines():
     for comp in '木口日月人火田':
         out.add('哪个字里有' + comp + '？')
     out |= set(EXTRA)
+    for k, lst in FW_SENTS.items():
+        out |= {t for t, _ in lst}
+    out |= {r[0] for r in READ}
+    for b in BOOKS:
+        out.add(b["title"]); out |= {t for t, _ in b["pages"]}
     w = open(os.path.join(ROOT, 'src', 'writer.js'), encoding='utf-8').read()
     for v in re.findall(r":\s*'([^']+)'", re.search(r"const STROKE_NAMES = \{(.+?)\n\};", w, re.S).group(1)):
         out |= {'这是' + nm for nm in v.split()}            # the missing-stroke challenge names what was picked

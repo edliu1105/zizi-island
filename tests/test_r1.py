@@ -8,7 +8,7 @@
  R1-04    认字: level 1 shows the picture; level >= 2 hears it, and the picture comes with the second hint
  R1-05    读单词: the letters of a word never touch
  R1-06    the island panel: the host's head and everything else on screen, 4 sizes
- R1-08    the treasure book cover: two bars, one segment an island, filling with what is learned
+ R1-08    the treasure book cover: a bar for every sea, one segment an island, filling with what is learned
  R1-09    字从画里来: the brush writes the strokes (they are inked one after another)
 usage: python tests/test_r1.py"""
 import os, sys
@@ -59,7 +59,7 @@ with sync_playwright() as p, serve() as base:
         let ok = true;
         if (n === '撇') ok = dx < -20 && dy > 20;
         else if (n === '捺') ok = dx > 60 && dy > 60 && L > 230;
-        else if (n === '点') ok = L < 420 && dy > 0;          /* a long dot (长点: 云 风 鸡) is still a dot */
+        else if (n === '点') ok = L < 440 && dy > 0;          /* a long dot (长点: 云 风 鸡 这) is still a dot */
         else if (n === '横') ok = Math.abs(dx) > 2.5 * Math.abs(dy) && dx > 0;
         else if (n === '竖') ok = Math.abs(dy) > 2.5 * Math.abs(dx) && dy > 0;
         else if (n === '提') ok = dx > 0 && dy < 0;
@@ -83,7 +83,7 @@ with sync_playwright() as p, serve() as base:
     page.evaluate("() => { Store.learn('人'); Store.learn('口'); ['人','口','目','手','A','B','C','D'].forEach(k => Store.learn(k)); }")
     page.evaluate("Book.open()"); page.wait_for_timeout(400)
     bars = page.evaluate("() => Array.from(document.querySelectorAll('#book .meter .bar')).map(b => Array.from(b.children).map(i => i.style.getPropertyValue('--f')))")
-    log.check(len(bars) == 2 and len(bars[0]) == 7 and bars[0][0] == '100%' and bars[0][1] == '0%', 'R1-08 the book cover: two bars of seven, the first island full %s' % bars)
+    log.check(len(bars) == 3 and len(bars[0]) == 7 and len(bars[1]) == 7 and bars[0][0] == '100%' and bars[0][1] == '0%', 'R1-08 the book cover: a bar for every sea, one segment an island, the first island full %s' % bars)
     page.evaluate("Book.close()"); page.wait_for_timeout(300)
     page.context.close()
     for ori, vw, vh in (('L', 1180, 820), ('P', 820, 1180), ('L2', 1024, 768), ('P2', 768, 1024)):

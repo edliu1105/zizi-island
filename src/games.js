@@ -41,11 +41,11 @@ const ZX = {
   /* the object a character / letter names, popping out of a point (stage), with its own little motion */
   async alive(st, k, x, y, size) {
     const it = ITEM[k], d = this.thing(st, size, size, 32, 'objpop');
-    this.pic('assets/obj/' + it.obj + '.png', d);
+    if (it.obj) this.pic('assets/obj/' + it.obj + '.png', d); else d.appendChild(Scene.node(FW_SENTS[k][0][1], size));
     place(d, x - size / 2, y - size / 2, size, size);
     Sfx.sparkle(); Fx.burst(x, y, { n: 14, dist: 110 });
     await st.scope.anim(d, [{ transform: 'scale(.1) translateY(30px)', opacity: 0 }, { transform: 'scale(1.18) translateY(-20px)', opacity: 1, offset: 0.55 }, { transform: 'scale(1) translateY(0)', opacity: 1 }], { duration: 560, easing: EASE.pop });
-    const mo = MOTION[it.obj] || 'hop';
+    const mo = MOTION[it.obj] || (it.obj ? 'hop' : 'grow');
     const kf = {
       hop: [{ transform: 'translateY(0)' }, { transform: 'translateY(-34px)' }, { transform: 'translateY(0)' }, { transform: 'translateY(-16px)' }, { transform: 'translateY(0)' }],
       swim: [{ transform: 'translateX(0) rotate(0)' }, { transform: 'translateX(-40px) rotate(-8deg)' }, { transform: 'translateX(40px) rotate(8deg)' }, { transform: 'translateX(0) rotate(0)' }],
@@ -66,6 +66,7 @@ const ZX = {
   },
   /* "字从画里来": the first time a character / letter is met - the thing, then the glyph writes itself over it */
   async meet(st, k) {
+    if (ITEM[k] && ITEM[k].fw) return this.meetFw(st, k);
     if (Store.s.met[k]) return;
     Store.s.met[k] = true; Store.save();
     const it = ITEM[k], L = K.L(), sz = L ? 330 : 380, x = Stage.W / 2, y = L ? Stage.H * 0.5 : Stage.H * 0.46, sc = st.scope;
@@ -145,7 +146,8 @@ const FindBase = {
   kind0: 'find', verb: '找！',
   gen(G, o) {
     const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 5;
-    const answer = PICK(G, 'ans', poolOf(G, this.lang || 'zh', false));
+    const pool = poolOf(G, this.lang || 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
+    const answer = need.length && G.rng.chance(0.6) ? G.rng.pick(need) : PICK(G, 'ans', pool);
     const opts = optsFor(G, this.lang || 'zh', lv, Math.min(n, this.maxN || 9), answer);
     return { k: [answer, opts.join('')], answer, opts };
   },
@@ -403,7 +405,7 @@ const WriteBase = {
     st.prompt = it.line; st.noPraise = true;
     let met = false;                                     /* a letter is first met here: the apple, then the A */
     if (!G.practice) { met = await ZX.meet(st, k); if (!Session.alive(st)) return; }
-    const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); ZX.pic('assets/obj/' + it.obj + '.png', pic); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
+    const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); if (it.obj) ZX.pic('assets/obj/' + it.obj + '.png', pic); else pic.appendChild(Scene.node(FW_SENTS[k][0][1], g.os)); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
     K.pop(st, pic);
     const lv = G.practice ? 1 : st.level;
     const W = st.w = new Writer(st, { kind: this.lang === 'zh' ? 'zh' : 'en', glyph: k, level: lv, x: g.x, y: g.y, size: g.size });
