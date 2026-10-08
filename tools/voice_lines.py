@@ -42,6 +42,8 @@ def literals():
             pass
         for m in re.finditer(r"\?\s*'([^'\\]+)'\s*:\s*'([^'\\]+)'", s):
             out |= {m.group(1), m.group(2)}
+        for m in re.finditer(r"'([^'\\\n]{2,14}[！？])'", s):            # every spoken-looking literal: openPanel lines, nested ternaries (V2R1-07)
+            out.add(m.group(1))
     # drop code-ish strings (css, paths) and words of the parent panel that are only shown
     junk = {'\u5173', '\u5f00', '\u5f00\u653e', '\u5df2\u63d2\u65d7', '\u54ea\u4e2a\u662f', '\u627e\u5230', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'flipY', 'flipX', 'ok', 'rot'}
     return {t for t in out if re.search(r'[\u4e00-\u9fff]', t) and not re.search(r'[#(/（]|rgba|px|assets|四关已过', t) and '+' not in t and t not in junk}

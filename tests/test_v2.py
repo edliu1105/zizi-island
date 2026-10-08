@@ -57,8 +57,8 @@ with sync_playwright() as p, serve() as base:
       const s = Store.validate(JSON.parse(JSON.stringify(old)));
       return { m: s.mem['人'], mA: s.mem.A, pok: !!s.worlds.peppa.pok, pokB: !!s.worlds.bluey.pok, stars: s.worlds.bluey.gstars['bluey:find'], flags: s.flags, v2: s.v2 };
     }""")
-    log.check(r['m'] and r['m']['b'] == 0 and r['mA']['b'] == 0 and r['pok'] and not r['pokB'] and r['stars'] == 3 and r['flags'] == ['peppa'] and r['v2'] == 1,
-              'V-01 an old save: written -> "seen" (box 0), four ✓ keeps its flag, stars kept %s' % r)
+    log.check(r['m'] and r['m']['b'] == 1 and r['mA']['b'] == 1 and r['pok'] and not r['pokB'] and r['stars'] == 3 and r['flags'] == ['peppa'] and r['v2'] == 1,
+              'V-01 an old save: written -> box 1 (learning, first tests over a week), four ✓ keeps its flag, stars kept %s' % r)
     # V-02
     r = page.evaluate("""() => {
       Store.reset(); const d = DAY(), out = [];
@@ -77,7 +77,7 @@ with sync_playwright() as p, serve() as base:
       out.push(Review.plan(G).pos.length);
       ['人', '口'].forEach(k => { const m = Mem.touch(k); m.b = 2; m.due = d; }); out.push(Review.plan(G).pos.length);
       ['目', '手', '日', '月'].forEach(k => { const m = Mem.touch(k); m.b = 2; m.due = d; }); out.push(Review.plan(G).pos.length);
-      Object.keys(ITEM).filter(k => ITEM[k].isl).slice(0, 16).forEach(k => { const m = Mem.touch(k); m.b = 2; m.due = d - 2; }); out.push(Review.plan(G).pos.length);
+      Object.keys(ITEM).filter(k => ITEM[k].isl && ITEM[k].kind === 'zh').slice(0, 16).forEach(k => { const m = Mem.touch(k); m.b = 2; m.due = d - 2; }); out.push(Review.plan(G).pos.length);
       return out;
     }""")
     log.check(r == [0, 1, 2, 3], 'V-03 review slots by what is due: 0, 1, 2, and 3 while braking %s' % r)
@@ -168,7 +168,7 @@ with sync_playwright() as p, serve() as base:
     }""")
     log.check(r == [3, 1, 1, 2, 2, 3, 0, 2], 'V-09 writing: 3 misses -> tracing (L1), 3 more -> reading cards; the next island writes for real; the parent switch -> reading cards %s' % r)
     kinds = play(page, 'huluwa', 'huluwa:write', 3, seed=3, n=12, finish=False)
-    log.check(kinds and all(k == 'review' for k, a in kinds) and all(a in '山水火石' for k, a in kinds), 'V-09 in that mode the writing game asks its own characters as reading cards %s' % kinds[:4])
+    log.check(kinds and all(k in ('review', 'write') for k, a in kinds) and any(k == 'review' for k, a in kinds) and all(a in '山水火石' for k, a in kinds), 'V-09 in that mode the writing game asks its own characters as reading cards (tracing practice between them) %s' % kinds[:6])
     # V-10 books
     r = page.evaluate("""() => {
       Store.reset(); const a = Books.open().length; ISL.s1.games.forEach(g => { Store.w('s1').gstars[g] = 5; }); Store.w('s1').pok = true; const b = Books.open().map(x => x.id);

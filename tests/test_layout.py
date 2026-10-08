@@ -29,7 +29,7 @@ with sync_playwright() as p, serve() as base:
     for ori, vw, vh in [s for s in SIZES if len(sys.argv) < 2 or s[0] in sys.argv[1].split(',')]:
         page = new_page(br, base, vw, vh)
         enter(page)
-        games = page.evaluate("ORDER.w1.concat(ORDER.w2).flatMap(i => ISL[i].games.map(g => [i, g]))")
+        games = page.evaluate("ALL_ISL().flatMap(i => ISL[i].games.map(g => [i, g]))")
         problems = []
         for isl, g in games:
             for lv in (1, 3, 5):

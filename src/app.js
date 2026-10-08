@@ -62,7 +62,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0 }, flagDays: [], lastDay: 0, checks: [], v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -101,11 +101,13 @@ const Store = {
     if (o.stat && typeof o.stat === 'object') d.stat = { clean: num(o.stat.clean, 0, 0, 1e6), wfDown: num(o.stat.wfDown, 0, 0, 1e6) };
     if (Array.isArray(o.flagDays)) d.flagDays = o.flagDays.filter(x => typeof x === 'number').slice(-200);
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
+    if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
     if (Array.isArray(o.checks)) d.checks = o.checks.filter(x => x && typeof x === 'object' && typeof x.day === 'number').slice(-60);
     /* once, for a save from before v2: what was written becomes "seen" (never "known"); islands whose four games were
        already done keep their flag (the pass condition is not asked of them) */
     if (o.v2 !== 1) {
-      for (const k in d.learned) if (d.learned[k].w > 0 && !d.mem[k]) d.mem[k] = { b: 0, due: 0, last: 0, up: -1, seen: 0, pass: [], n: 0, ok: 0 };
+      let i = 0; const today = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+      for (const k in d.learned) if (d.learned[k].w > 0 && !d.mem[k]) d.mem[k] = { b: 1, due: today + (i++ % 7), last: 0, up: -1, seen: 0, pass: [], n: 0, ok: 0 };
       ALL_ISL().forEach(id => { if (ISL[id].games.every(g => (d.worlds[id].gstars[g] || 0) >= 5)) d.worlds[id].pok = true; });
     }
     return d;
@@ -163,7 +165,7 @@ const Clock = {
   show() { if (this.hiddenAt) { this.lost += now() - this.hiddenAt; this.hiddenAt = 0; } },
 };
 /* the 2nd hint (the picture / the brush shows this stroke) was given: the answer is no longer the child's own (A.12) */
-const helped = st => (st.assists || []).some(a => /^hint[23]/.test(a));
+const helped = st => !(st.game && st.game.softHint) && (st.assists || []).some(a => /^hint[23]/.test(a));
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -177,7 +179,7 @@ const Session = {
     const G = this.G = {
       world: islandId, W, ws, id: gameId, game, scope: new Scope(APP), rng: RNG(seed), seed, practice: !!opt.practice, item: opt.item || null,
       level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Prog.level(islandId, gameId)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
-      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: [],
+      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).map(k => ({ k, at: 0 })),
       t0: Clock.t(), stars: 0, streak: 0, bags: {}, dead: false, errors: 0,
     };
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
@@ -236,8 +238,8 @@ const Session = {
     const a = b.animate([{ transform: 'translate(-50%,-50%) scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.08) rotate(3deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%,-50%) scale(1) rotate(0)', opacity: 1, offset: 0.75 }, { transform: 'translate(-50%,-60%) scale(.7)', opacity: 0 }], { duration: T(800) + 1, easing: EASE.out, fill: 'forwards' });
     a.onfinish = () => b.remove();
     sc.add(() => b.remove());
-    const story = G.practice ? { line: null } : Story.intro(G);
-    Voice.say(story.line || g.intro, { tag: 'intro', owner: G });
+    const story = G.practice || G.key ? { line: null } : Story.intro(G);
+    Voice.say(G.key ? '找回老朋友！' : (story.line || g.intro), { tag: 'intro', owner: G });
     await sc.wait(700);
     if (story.play) await sc.guard(story.play());
   },
@@ -295,6 +297,7 @@ const Session = {
     Mem.today().q++;
     const g = st.game, k = g.itemOf ? g.itemOf(st) : (ITEM[st.q.answer] ? st.q.answer : null);
     if (k && (res === 'ok' || res === 'wrong')) Mem.answer(k, res === 'ok' ? (helped(st) ? 'help' : 'ok') : 'wrong', G.sid);
+    if (g.itemsOf && res === 'ok' && !st.noStar && !helped(st)) g.itemsOf(st).forEach(c => Mem.answer(c, 'ok', G.sid));
     if (k && res === 'wrong' && g.kind0 !== 'write' && !G.key) G.miss.push({ k, at: G.round + 2 });
     WriteFallback.after(G, st, res);
   },
@@ -440,7 +443,7 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
-    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.save(); }
+    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save(); }
     this.ffOn();
     const sc = G.scope;
     if (!G.practice) {
@@ -465,6 +468,7 @@ const Session = {
     MapView.update();
     await MapView.celebrate(wid, stars);
     if (Screens.cur === 'map' && !this.G && StopGo.maybe()) return;
+    if (!newGame && Prog.gamesDone(wid) && !flagged(wid) && Screens.cur === 'map' && !this.G) { MapView.openPanel(wid, '再玩一局插旗子！'); return; }
     if (newGame && Screens.cur === 'map' && !this.G) MapView.openPanel(wid, '新游戏开啦！');
   },
   teardown(G) {
@@ -492,7 +496,7 @@ const Session = {
     if (!this.G) return;
     const G = this.G, wid = G.world, opened = G.nx && !G.nxWas && Prog.gameOpen(wid, G.nx);
     if (G.practice) { this.teardown(G); Book.open(G.item && G.item.tab, G.item && G.item.k); return; }
-    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.save();
+    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save();
     Prog.check(true);
     this.teardown(this.G);
     Screens.show('map');
@@ -544,7 +548,7 @@ const MapView = {
       tapify(hit, () => this.tapIsland(id));
       this.isl[id] = { d, glow, land, hero, cloud, lan, big, flag, hit, deco };
       if (sp) { lan.remove(); big.remove(); flag.remove(); }
-      if (/^soon/.test(id)) { hero.src = 'assets/props/ui_star.png'; }
+      if (/^soon/.test(id)) { hero.src = 'assets/chars/' + ['hulk', 'thor', 'panther', 'widow', 'hawkeye'][Number(id.slice(4)) % 5] + '.png'; hero.style.filter = 'brightness(0) opacity(.55)'; }
       if (id === 'gate') d.classList.add('gate');
     });
     this.layout();
@@ -908,7 +912,7 @@ const Book = {
         const on = learned(it.k), lv = (Store.s.learned[it.k] || {}).p || 0;
         const t = el('div', 'tile' + (on ? '' : ' locked') + (lv >= 3 ? ' gold' : ''), grid);
         t.appendChild(it.kind === 'zh' ? Glyph.zh(it.k, 78) : Glyph.en(it.k, 70));
-        const pic = it.obj ? img('assets/obj/' + it.obj + '.png', 'pic', t) : (() => { const n = Scene.of(it.k, 60); n.classList.add('pic'); t.appendChild(n); return n; })();
+        const pic = it.obj ? img('assets/obj/' + it.obj + '.png', 'pic', t) : null;
         el('div', 'en', t, { text: it.en || '' });
         if (on) { const fl = el('div', 'fl', t); for (let i = 0; i < 3; i++) el('i', i < lv ? 'on' : '', fl); }
         else { const lk = el('div', 'lk', t); lk.innerHTML = '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect x="9" y="18" width="22" height="17" rx="4" fill="#FFC93C" stroke="#2B2118" stroke-width="3"/><path d="M13 18V13a7 7 0 0 1 14 0v5" fill="none" stroke="#2B2118" stroke-width="3.5"/></svg>'; }

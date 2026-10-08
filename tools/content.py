@@ -87,10 +87,10 @@ def pair(a, b, ka=.5, kb=.5): return [(a, .28, .58, ka), (b, .72, .6, kb)]
 FW_SENTS = {
     '我': [('我的车。', withp('car')), ('我有伞。', withp('umbrella')), ('我在山上。', on('person', 'mountain'))],
     '你': [('你的伞。', withp('umbrella')), ('你有马。', withp('horse')), ('你在门口。', pair('person', 'door', .62, .62))],
-    '他': [('他是大人。', big('person')), ('他的牛。', withp('cow')), ('他在木下。', under('person', 'tree'))],
-    '是': [('这是月。', alone('moon')), ('马是大的。', big('horse')), ('他是大人。', big('person'))],
+    '他': [('他的马。', withp('horse')), ('他的牛。', withp('cow')), ('他在木下。', under('person', 'tree'))],
+    '是': [('这是月。', alone('moon')), ('马是大的。', big('horse')), ('牛是小的。', small('cow'))],
     '的': [('我的车。', withp('car')), ('你的伞。', withp('umbrella')), ('他的牛。', withp('cow'))],
-    '了': [('火大了。', big('fire')), ('车来了。', alone('car')), ('鸟来了。', alone('bird'))],
+    '了': [('火大了。', big('fire')), ('羊大了。', big('sheep')), ('月上山了。', on('moon', 'mountain'))],
     '不': [('羊不大。', small('sheep')), ('鸟不在木上。', under('bird', 'tree')), ('这不是马。', alone('cow'))],
     '有': [('山上有羊。', on('sheep', 'mountain')), ('我有伞。', withp('umbrella')), ('木上有鸟。', on('bird', 'tree'))],
     '在': [('鸟在木上。', on('bird', 'tree')), ('羊在山上。', on('sheep', 'mountain')), ('我在山上。', on('person', 'mountain'))],
@@ -115,13 +115,19 @@ READ = [
     ('我有伞。', withp('umbrella'), [withp('car'), alone('umbrella')]),
     ('这是我的车。', withp('car'), [withp('lamp'), withp('horse')]),
     ('马在门下。', under('horse', 'door'), [on('horse', 'door'), under('cow', 'door')]),
+    ('马是我的。', withp('horse'), [withp('cow'), withp('car')]),
+    ('你的门。', withp('door'), [withp('lamp'), withp('umbrella')]),
+    ('他的牛。', withp('cow'), [withp('horse'), withp('sheep')]),
+    ('羊是大的。', big('sheep'), [small('sheep'), big('horse')]),
+    ('鸟是小的。', small('bird'), [big('bird'), small('cow')]),
+    ('我的灯。', withp('lamp'), [withp('door'), withp('car')]),
 ]
 # story books: six pages, one sentence (<= 8 characters) and one picture a page, only characters taught before they open
 BOOKS = [
     dict(id='b1', title='小马的车', after='s1', pages=[
         ('我是小马。', small('horse')), ('我的车大。', [('horse', .26, .62, .4), ('car', .68, .62, .62)]),
         ('你是小牛。', small('cow')), ('你的车小。', [('cow', .3, .58, .5), ('car', .72, .74, .3)]),
-        ('他是大人。', big('person')), ('他的车大！', [('person', .26, .55, .62), ('car', .7, .66, .56)])]),
+        ('他是大牛。', big('cow')), ('他的车大！', [('cow', .26, .6, .5), ('car', .7, .66, .56)])]),
     dict(id='b2', title='山上有羊', after='s2', pages=[
         ('这是木。', alone('tree')), ('木上有鸟。', on('bird', 'tree')), ('鸟不大。', small('bird')),
         ('这是山。', alone('mountain')), ('山上有羊。', on('sheep', 'mountain')), ('月在山上了。', on('moon', 'mountain'))]),

@@ -23,6 +23,7 @@ run r1        tests/test_r1.py
 run r2        tests/test_r2.py
 run r3        tests/test_r3.py
 run v2        tests/test_v2.py
+run v2r1      tests/test_v2r1.py
 run pointer   tests/test_pointer.py
 run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py

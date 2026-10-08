@@ -147,7 +147,7 @@ const FindBase = {
   gen(G, o) {
     const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 5;
     const pool = poolOf(G, this.lang || 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length && G.rng.chance(0.6) ? G.rng.pick(need) : PICK(G, 'ans', pool);
+    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);          /* the characters still to pass first (V2R1-02) */
     const opts = optsFor(G, this.lang || 'zh', lv, Math.min(n, this.maxN || 9), answer);
     return { k: [answer, opts.join('')], answer, opts };
   },
@@ -395,7 +395,7 @@ const PlayPark = {
 /* ---------------------------------------------------------------- 写字 / 写字母: the writing frame + the thing it names */
 const WriteBase = {
   kind0: 'write', verb: '写！',
-  gen(G, o) { const answer = PICK(G, 'ans', poolOf(G, this.lang, false)); return { k: [answer], answer }; },
+  gen(G, o) { const pool = poolOf(G, this.lang, false), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
   geo(st) {
     const L = K.L(), en = this.lang !== 'zh';
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };

@@ -10,7 +10,7 @@ const Mem = {
   get(k) { return Store.s.mem[k] || null; },
   touch(k) {
     const d = DAY(); let m = Store.s.mem[k];
-    if (!m) { m = Store.s.mem[k] = { b: 0, due: 0, last: d, up: -1, seen: d, pass: [], n: 0, ok: 0 }; Mem.today().newK++; }
+    if (!m) { m = Store.s.mem[k] = { b: 0, due: 0, last: d, up: -1, seen: d, pass: [], n: 0, ok: 0 }; if (ITEM[k] && ITEM[k].kind === 'zh') Mem.today().newK++; }
     return m;
   },
   /* one answer about an item. how: 'ok' (the child's own first try, no help), 'help' (right after the 2nd hint), 'wrong'.
@@ -43,7 +43,7 @@ const Mem = {
     return 'seen';
   },
   due(kind) { const d = DAY(); return Object.keys(Store.s.mem).filter(k => { const m = Store.s.mem[k]; return m.b > 0 && m.due <= d && ITEM[k] && (!kind || kind(ITEM[k])); }).sort((a, b) => Store.s.mem[a].due - Store.s.mem[b].due); },
-  overdue() { const d = DAY(); return Object.values(Store.s.mem).filter(m => m.b > 0 && m.due < d).length; },
+  overdue() { const d = DAY(); return Object.keys(Store.s.mem).filter(k => { const m = Store.s.mem[k]; return m.b > 0 && m.due < d && ITEM[k] && ITEM[k].kind === 'zh'; }).length; },
   today() { const d = DAY(), D = Store.s.days; if (!D[d]) { D[d] = { ms: 0, newK: 0, q: 0, keyGo: 0, keyEnd: 0, asked: 0 }; const old = Object.keys(D).map(Number).sort((a, b) => a - b); while (old.length > 60) delete D[old.shift()]; } return D[d]; },
   /* retention over a gap band: [rate, n] (A.21) */
   keep(lo, hi) { const e = Store.s.ev.filter(x => x[0] >= lo && x[0] <= hi); return [e.length ? e.filter(x => x[1]).length / e.length : 0, e.length]; },
@@ -92,7 +92,7 @@ const ReviewQ = Object.assign({}, ZBase, {
   itemOf(st) { return st.q.answer; },
   async present(st) {
     const q = st.q, G = st.G, L = K.L();
-    if (!G.rvSaid) { G.rvSaid = true; Voice.say('老朋友来了！', { tag: 'prompt' }); }
+    if (st.missQ) Voice.say('再来一个！', { tag: 'prompt' }); else if (!G.rvSaid && !G.key) { G.rvSaid = true; Voice.say('老朋友来了！', { tag: 'prompt' }); }
     K.cards(st, q.opts.map(k => Glyph.any(k, 110)), q.opts, Object.assign({ size: 160, gap: 30 }, L ? { cx: 560, cy: 470 } : { cx: 352, cy: 700 }));
     st.taskEl = K.task(st, [['speaker', 'q']]);
     if (isEn(q.answer)) { st.prompt = '找字母'; st.tail = [ITEM[q.answer].say]; Voice.say('找字母', { tag: 'prompt' }); Voice.say(ITEM[q.answer].say, { tag: 'prompt' }); }
@@ -107,11 +107,12 @@ const ReviewQ = Object.assign({}, ZBase, {
 /* ---------------------------------------------------------------- 补句子 (the sentence islands' 认字): the host says the whole
    sentence; the card shows it with the function word missing; pick it (3 or 4 function words / look-alikes) */
 const QFill = {
-  kind0: 'fill', verb: '补！', intro: '把字补上！', props: [],
+  kind0: 'fill', verb: '补！', intro: '把字补上！', props: [], softHint: true,
+  decor(G) { if (!K.L()) { this.chars.forEach(id => hideActor(G.actors[id])); return; } ZBase.decor.call(this, G); },
   gen(G, o) {
     const lv = o.level, pool = poolOf(G, 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length && G.rng.chance(0.6) ? G.rng.pick(need) : PICK(G, 'ans', pool);
-    const s = G.rng.pick(FW_SENTS[answer]), n = lv <= 2 ? 3 : 4;
+    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
+    const s = !Store.s.met[answer] ? FW_SENTS[answer][0] : G.rng.pick(FW_SENTS[answer]), n = lv <= 2 ? 3 : 4;
     const fws = ITEMS.filter(x => x.fw && x.k !== answer && (x.isl === G.world || Store.s.mem[x.k] || ISL[x.isl].i < G.W.i && ISL[x.isl].w === G.W.w)).map(x => x.k);
     const others = G.rng.shuffle(fws.filter(k => !s[0].includes(k))).slice(0, n - 1);
     const opts = G.rng.shuffle(others); opts.splice(G.rng.int(0, opts.length), 0, answer);
@@ -120,14 +121,14 @@ const QFill = {
   itemOf(st) { return st.q.answer; },
   async present(st) {
     const q = st.q, L = K.L();
-    await ZX.meetFw(st, q.answer);
+    const met = await ZX.meetFw(st, q.answer);
     if (!Session.alive(st)) return;
     const pic = st.pic = ZX.thing(st, 300, 300, 6, 'objpop'); Object.assign(pic.style, { background: '#fff', borderRadius: '26px', boxShadow: '0 0 0 4px #2B2118, 0 8px 0 rgba(43,33,24,.25)' }); pic.appendChild(Scene.node(q.scene, 300));
     const row = st.row = ZX.thing(st, 10, 10, 7, ''); row.style.width = row.style.height = 'auto'; row.appendChild(Sent.node(q.text, L ? 92 : 84, q.blank));
     K.cards(st, q.opts.map(k => Glyph.zh(k, 104)), q.opts, Object.assign({ size: 150, gap: 30 }, this.cardSpot()));
     this.place(st);
     K.pop(st, pic); K.pop(st, row, 120);
-    st.prompt = q.text; Voice.say(q.text, { tag: 'prompt' });
+    st.prompt = q.text; if (!met) Voice.say(q.text, { tag: 'prompt' });
   },
   cardSpot() { return K.L() ? { cx: 600, cy: 590 } : { cx: 352, cy: 900 }; },
   place(st) {
@@ -155,17 +156,18 @@ const QReadS = {
     return { k: ['rd', r[0], order.join('')], answer: order.indexOf(0), text: r[0], scenes: order.map(i => i === 0 ? r[1] : r[2][i - 1]), opts: [0, 1, 2] };
   },
   itemOf() { return null; },
+  itemsOf(st) { const own = st.G.W ? st.G.W.chars.map(c => c.c) : []; return Array.from(st.q.text).filter((c, i, a) => own.includes(c) && a.indexOf(c) === i); },
   async present(st) {
     const q = st.q, L = K.L(), size = L ? 230 : 200;
     st.peeked = false;
     const row = st.row = ZX.thing(st, 10, 10, 7, ''); row.style.width = row.style.height = 'auto';
     row.appendChild(Sent.node(q.text, L ? 96 : 88, -1, true));
-    $$('[data-ch]', row).forEach((cell, i) => { K.reg(st, 'ch' + i, cell, {}); cell.dataset.gid = 'ch' + i; });
+    $$('[data-ch]', row).forEach((cell, i) => { K.reg(st, 'ch' + i, cell, {}); cell.dataset.gid = 'ch' + i; cell.style.pointerEvents = 'auto'; });     /* the row is a picture (no taps), its characters are targets */
     st.cards = q.scenes.map((sc, i) => { const d = ZX.thing(st, size, size, 6, 'card'); d.appendChild(Scene.node(sc, size)); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 80 * i); return d; });
     st.opts = q.opts.slice();
     this.place(st); K.pop(st, row);
     st.taskEl = K.task(st, [['eye', 'q']]);
-    st.prompt = '读一读！'; if (!st.G.rdSaid) { st.G.rdSaid = true; Voice.say('读一读！', { tag: 'prompt' }); }
+    st.prompt = '读一读！'; if (!st.G.rdSaid && st.G.game.kind0 !== 'reads') { st.G.rdSaid = true; Voice.say('读一读！', { tag: 'prompt' }); }
   },
   onGesture(st, name, p) {
     if (name !== 'tap') return false;
@@ -183,8 +185,8 @@ const QReadS = {
   },
   relayoutQ(st) { this.place(st); },
   async reveal(st) { const e = st.cards[st.q.answer]; K.hop(st, e, 30); Sfx.reveal(); Voice.say(st.q.text, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
-  async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say('再读一读', { tag: 'wrong' }); await st.scope.wait(900); },
-  gestureHint(st) { if (st.hintDone || !st.row) return; st.hintDone = true; K.hop(st, st.row, 16); },
+  async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); await st.scope.wait(700); },
+  gestureHint(st) { if (st.hintDone || !st.row) return; st.hintDone = true; K.hop(st, st.row, 16); Voice.say(st.q.text, { tag: 'prompt' }); },
 };
 function knownZh(G) { return poolOf(G, 'zh', true).concat(ITEMS.filter(x => x.kind === 'zh' && (Mem.get(x.k) || learned(x.k))).map(x => x.k)); }
 
@@ -235,6 +237,7 @@ const Review = {
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);
+    n = Math.min(n, Math.max(0, (G.rounds || 5) - (G.needPass || []).length));
     return { pos: [1, 3, 4].slice(0, n) };
   },
   fits(G, k) {
@@ -247,9 +250,9 @@ const Review = {
     if (G.practice) return null;
     if (G.key) { const k = (G.keyItems || [])[G.round]; return k ? { k, form: 'card' } : null; }
     const g = G.game, used = G.rvUsed || (G.rvUsed = []);
-    if (G.wfMode === 2) { const its = G.W.chars.map(c => c.c), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form: 'card', wf: true }; }
+    if (G.wfMode === 2) { const its = G.W.chars.map(c => c.c), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form: G.round % 2 ? 'trace' : 'card', wf: true }; }
     const miss = (G.miss || []).find(m => m.at <= G.round && !m.done);
-    if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card' }; }
+    if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card', miss: true }; }
     if (!G.rv || !G.rv.pos.includes(G.round)) return null;
     const cand = Mem.due().filter(k => !used.includes(k) && this.fits(G, k) && !poolOf(G, ITEM[k].kind === 'zh' ? 'zh' : 'en', false).includes(k));
     const k = cand[0]; if (!k) return null;
@@ -257,23 +260,24 @@ const Review = {
     if (g.kind0 === 'write') return { k, form: 'write' };
     if (g.kind0 === 'find' && ITEM[k].kind === 'zh' && !ITEM[k].fw && g.lang !== 'up') return { k, form: 'find' };
     /* after the sentence islands, a challenge game's first review slot is a sentence to read (A.3) */
-    if (!G.rdUsed && g.kind0 !== 'find' && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2')) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
+    if (!G.rdUsed && g.kind0 !== 'find' && G.rv.pos.length >= 2 && G.round === G.rv.pos[1] && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2') && ALL_ISL().indexOf(G.world) % 2 === 0) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
     return { k, form: 'card' };
   },
   /* a question state for a review slot (the game's own frame where it fits; otherwise the review card) */
   newQ(G, rv) {
     const S = Session;
-    if (rv.form === 'find' || rv.form === 'write') {
+    if (rv.form === 'find' || rv.form === 'write' || rv.form === 'trace') {
       const st = S.newQ(G, {});
       if (rv.form === 'find') { const opts = optsFor(G, 'zh', G.level, st.q.opts.length, rv.k); st.q = { k: [rv.k, opts.join('')], answer: rv.k, opts }; }
       else st.q = { k: [rv.k], answer: rv.k };
       st.review = true;
+      if (rv.form === 'trace') { st.level = 1; st.noStar = true; st.wf = true; }          /* tracing practice, no star */
       return st;
     }
     /* built like every game (GameBase + ZBase): evaluate, cleanup, the card taps */
     const game = Object.assign(Object.create(GameBase), ZBase, rv.form === 'read' ? QReadS : ReviewQ, { chars: G.game.chars, host: G.game.host, id: rv.form === 'read' ? 'read' : 'review' });
     const st = S.newQ(G, {});
-    st.game = game; st.kind = game.kind0; st.review = true; st.wf = !!rv.wf;
+    st.game = game; st.kind = game.kind0; st.review = true; st.wf = !!rv.wf; st.missQ = !!rv.miss;
     st.q = game.gen(G, { level: G.level, rng: G.rng, item: rv.k });
     return st;
   },
@@ -294,7 +298,8 @@ const WriteFallback = {
     if (G.practice || G.game.kind0 !== 'write' || G.game.lang !== 'zh' || st.review && !st.wf) return;
     const wf = G.ws.wf || (G.ws.wf = { s: 0, m: 0 });
     if (st.wf) return;
-    if (res === 'ok') { wf.s = 0; Store.s.stat.clean++; }
+    if (res === 'ok' && !helped(st)) { wf.s = 0; Store.s.stat.clean++; }
+    else if (res === 'ok') { wf.s++; }
     else if (res === 'wrong') { wf.s++; if (wf.s >= 3 && wf.m < 2) { wf.m++; wf.s = 0; Store.s.stat.wfDown++; if (wf.m === 1) G.level = 1; else G.wfMode = 2; } }
     Store.save();
   },
@@ -369,7 +374,7 @@ const Keys = {
   },
   /* one more card (key / flag); shows it */
   turn(src) {
-    const a = Store.s.album; if (a.n >= CARDS.length) return;
+    const a = Store.s.album; if (a.n >= CARDS.length) { if (!fast() && src === 'key') this.album(); return; }
     a.n++; a.src.push(src); Store.save();
     this.reveal(CARDS[a.n - 1]);
   },

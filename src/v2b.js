@@ -92,7 +92,7 @@ const ParentV2 = {
       const x = list[i], top = el('div', '', ov);
       top.appendChild(x.k ? Glyph.zh(x.k, 260) : Sent.node(x.s, 90, -1));
       const row = el('div', '', ov); Object.assign(row.style, { display: 'flex', gap: '20px' });
-      const b = (t, f) => { const bt = el('button', 'pbtn', row, { text: t }); bt.style.fontSize = '24px'; bt.addEventListener('click', () => { f(); i++; show(); }); };
+      const b = (t, f) => { const bt = el('button', 'pbtn', row, { text: t }); Object.assign(bt.style, { fontSize: '26px', padding: '16px 30px', borderRadius: '18px', border: '3px solid #2B2118', background: '#FFF3C4', minWidth: '120px', minHeight: '88px' }); bt.addEventListener('click', () => { f(); i++; show(); }); };
       b(x.k ? '认得' : '读对了', () => { if (x.k) { res.n++; res.yes++; } else res.sent = 1; });
       b(x.k ? '不认得' : '没读对', () => { if (x.k) { res.n++; res.no.push(x.k); Mem.parentNo(x.k); } else res.sent = 0; });
       b('没测', () => {});

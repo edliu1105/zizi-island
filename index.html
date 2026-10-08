@@ -356,9 +356,9 @@ const CVC_WORDS = [["cat","cat"],["dog","dog"],["sun","sun"],["bus","bus"],["cup
 const CVC_OBJ = {"cat":"cat","dog":"dog","sun":"sun","bus":"bus","cup":"cup","pen":"pen","bed":"bed","hat":"hat","box":"box","pig":"pig","fox":"fox","egg":"egg","bag":"schoolbag","ant":"ant","nut":"nut","owl":"owl"};
 const WORDS2_LIST = [["火","车","train"],["雨","伞","umbrella"],["电","灯","lamp"],["月","光","moonlight"],["大","门","door"],["风","车","pinwheel"],["木","马","rockinghorse"],["大","米","rice"],["小","鸟","bird"],["大","山","mountain"],["火","山","volcano"],["雨","衣","raincoat"]];
 const WORDS2_OBJ = {"火车":"train","雨伞":"umbrella","电灯":"lamp","月光":"moonlight","大门":"door","风车":"pinwheel","木马":"rockinghorse","大米":"rice","小鸟":"bird","大山":"mountain","火山":"volcano","雨衣":"raincoat"};
-const FW_SENTS = {"我":[["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["我在山上。",[["mountain",0.5,0.66,0.6],["person",0.5,0.24,0.3]]]],"你":[["你的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["你有马。",[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]]],["你在门口。",[["person",0.28,0.58,0.62],["door",0.72,0.6,0.62]]]],"他":[["他是大人。",[["person",0.5,0.55,0.86]]],["他的牛。",[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]]],["他在木下。",[["tree",0.5,0.4,0.6],["person",0.5,0.84,0.28]]]],"是":[["这是月。",[["moon",0.5,0.55,0.7]]],["马是大的。",[["horse",0.5,0.55,0.86]]],["他是大人。",[["person",0.5,0.55,0.86]]]],"的":[["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["你的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["他的牛。",[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]]]],"了":[["火大了。",[["fire",0.5,0.55,0.86]]],["车来了。",[["car",0.5,0.55,0.7]]],["鸟来了。",[["bird",0.5,0.55,0.7]]]],"不":[["羊不大。",[["sheep",0.5,0.64,0.34]]],["鸟不在木上。",[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]]],["这不是马。",[["cow",0.5,0.55,0.7]]]],"有":[["山上有羊。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]]],"在":[["鸟在木上。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]],["羊在山上。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["我在山上。",[["mountain",0.5,0.66,0.6],["person",0.5,0.24,0.3]]]],"这":[["这是月。",[["moon",0.5,0.55,0.7]]],["这是我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["这不是马。",[["cow",0.5,0.55,0.7]]]]};
-const READ = [["马是大的。",[["horse",0.5,0.55,0.86]],[[["horse",0.5,0.64,0.34]],[["cow",0.5,0.55,0.86]]]],["牛是小的。",[["cow",0.5,0.64,0.34]],[[["cow",0.5,0.55,0.86]],[["horse",0.5,0.64,0.34]]]],["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]]]],["他的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["door",0.72,0.68,0.42]]]],["鸟不大。",[["bird",0.5,0.64,0.34]],[[["bird",0.5,0.55,0.86]],[["horse",0.5,0.64,0.34]]]],["这是月。",[["moon",0.5,0.55,0.7]],[[["sun",0.5,0.55,0.7]],[["cloud",0.5,0.55,0.7]]]],["火大了。",[["fire",0.5,0.55,0.86]],[[["fire",0.5,0.64,0.34]],[["water",0.5,0.55,0.86]]]],["鸟在木上。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]],[["car",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]]],["羊在山上。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["sheep",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["cow",0.5,0.24,0.3]]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[[["tree",0.5,0.55,0.7]],[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]]]],["羊不大。",[["sheep",0.5,0.64,0.34]],[[["sheep",0.5,0.55,0.86]],[["cow",0.5,0.64,0.34]]]],["伞在车上。",[["car",0.5,0.66,0.6],["umbrella",0.5,0.24,0.3]],[[["car",0.5,0.4,0.6],["umbrella",0.5,0.84,0.28]],[["door",0.5,0.66,0.6],["umbrella",0.5,0.24,0.3]]]],["日在山上。",[["mountain",0.5,0.66,0.6],["sun",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["sun",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["moon",0.5,0.24,0.3]]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[["umbrella",0.5,0.55,0.7]]]],["这是我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]]]],["马在门下。",[["door",0.5,0.4,0.6],["horse",0.5,0.84,0.28]],[[["door",0.5,0.66,0.6],["horse",0.5,0.24,0.3]],[["door",0.5,0.4,0.6],["cow",0.5,0.84,0.28]]]]];
-const BOOKS = [{"id":"b1","title":"小马的车","after":"s1","pages":[["我是小马。",[["horse",0.5,0.64,0.34]]],["我的车大。",[["horse",0.26,0.62,0.4],["car",0.68,0.62,0.62]]],["你是小牛。",[["cow",0.5,0.64,0.34]]],["你的车小。",[["cow",0.3,0.58,0.5],["car",0.72,0.74,0.3]]],["他是大人。",[["person",0.5,0.55,0.86]]],["他的车大！",[["person",0.26,0.55,0.62],["car",0.7,0.66,0.56]]]]},{"id":"b2","title":"山上有羊","after":"s2","pages":[["这是木。",[["tree",0.5,0.55,0.7]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]],["鸟不大。",[["bird",0.5,0.64,0.34]]],["这是山。",[["mountain",0.5,0.55,0.7]]],["山上有羊。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["月在山上了。",[["mountain",0.5,0.66,0.6],["moon",0.5,0.24,0.3]]]]}];
+const FW_SENTS = {"我":[["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["我在山上。",[["mountain",0.5,0.66,0.6],["person",0.5,0.24,0.3]]]],"你":[["你的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["你有马。",[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]]],["你在门口。",[["person",0.28,0.58,0.62],["door",0.72,0.6,0.62]]]],"他":[["他的马。",[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]]],["他的牛。",[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]]],["他在木下。",[["tree",0.5,0.4,0.6],["person",0.5,0.84,0.28]]]],"是":[["这是月。",[["moon",0.5,0.55,0.7]]],["马是大的。",[["horse",0.5,0.55,0.86]]],["牛是小的。",[["cow",0.5,0.64,0.34]]]],"的":[["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["你的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["他的牛。",[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]]]],"了":[["火大了。",[["fire",0.5,0.55,0.86]]],["羊大了。",[["sheep",0.5,0.55,0.86]]],["月上山了。",[["mountain",0.5,0.66,0.6],["moon",0.5,0.24,0.3]]]],"不":[["羊不大。",[["sheep",0.5,0.64,0.34]]],["鸟不在木上。",[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]]],["这不是马。",[["cow",0.5,0.55,0.7]]]],"有":[["山上有羊。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]]],"在":[["鸟在木上。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]],["羊在山上。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["我在山上。",[["mountain",0.5,0.66,0.6],["person",0.5,0.24,0.3]]]],"这":[["这是月。",[["moon",0.5,0.55,0.7]]],["这是我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]],["这不是马。",[["cow",0.5,0.55,0.7]]]]};
+const READ = [["马是大的。",[["horse",0.5,0.55,0.86]],[[["horse",0.5,0.64,0.34]],[["cow",0.5,0.55,0.86]]]],["牛是小的。",[["cow",0.5,0.64,0.34]],[[["cow",0.5,0.55,0.86]],[["horse",0.5,0.64,0.34]]]],["我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]]]],["他的伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["door",0.72,0.68,0.42]]]],["鸟不大。",[["bird",0.5,0.64,0.34]],[[["bird",0.5,0.55,0.86]],[["horse",0.5,0.64,0.34]]]],["这是月。",[["moon",0.5,0.55,0.7]],[[["sun",0.5,0.55,0.7]],[["cloud",0.5,0.55,0.7]]]],["火大了。",[["fire",0.5,0.55,0.86]],[[["fire",0.5,0.64,0.34]],[["water",0.5,0.55,0.86]]]],["鸟在木上。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]],[["car",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]]],["羊在山上。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["sheep",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["cow",0.5,0.24,0.3]]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[[["tree",0.5,0.55,0.7]],[["tree",0.5,0.4,0.6],["bird",0.5,0.84,0.28]]]],["羊不大。",[["sheep",0.5,0.64,0.34]],[[["sheep",0.5,0.55,0.86]],[["cow",0.5,0.64,0.34]]]],["伞在车上。",[["car",0.5,0.66,0.6],["umbrella",0.5,0.24,0.3]],[[["car",0.5,0.4,0.6],["umbrella",0.5,0.84,0.28]],[["door",0.5,0.66,0.6],["umbrella",0.5,0.24,0.3]]]],["日在山上。",[["mountain",0.5,0.66,0.6],["sun",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["sun",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["moon",0.5,0.24,0.3]]]],["我有伞。",[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[["umbrella",0.5,0.55,0.7]]]],["这是我的车。",[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]]]],["马在门下。",[["door",0.5,0.4,0.6],["horse",0.5,0.84,0.28]],[[["door",0.5,0.66,0.6],["horse",0.5,0.24,0.3]],[["door",0.5,0.4,0.6],["cow",0.5,0.84,0.28]]]],["马是我的。",[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]]],["你的门。",[["person",0.3,0.55,0.68],["door",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["umbrella",0.72,0.68,0.42]]]],["他的牛。",[["person",0.3,0.55,0.68],["cow",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["horse",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["sheep",0.72,0.68,0.42]]]],["羊是大的。",[["sheep",0.5,0.55,0.86]],[[["sheep",0.5,0.64,0.34]],[["horse",0.5,0.55,0.86]]]],["鸟是小的。",[["bird",0.5,0.64,0.34]],[[["bird",0.5,0.55,0.86]],[["cow",0.5,0.64,0.34]]]],["我的灯。",[["person",0.3,0.55,0.68],["lamp",0.72,0.68,0.42]],[[["person",0.3,0.55,0.68],["door",0.72,0.68,0.42]],[["person",0.3,0.55,0.68],["car",0.72,0.68,0.42]]]]];
+const BOOKS = [{"id":"b1","title":"小马的车","after":"s1","pages":[["我是小马。",[["horse",0.5,0.64,0.34]]],["我的车大。",[["horse",0.26,0.62,0.4],["car",0.68,0.62,0.62]]],["你是小牛。",[["cow",0.5,0.64,0.34]]],["你的车小。",[["cow",0.3,0.58,0.5],["car",0.72,0.74,0.3]]],["他是大牛。",[["cow",0.5,0.55,0.86]]],["他的车大！",[["cow",0.26,0.6,0.5],["car",0.7,0.66,0.56]]]]},{"id":"b2","title":"山上有羊","after":"s2","pages":[["这是木。",[["tree",0.5,0.55,0.7]]],["木上有鸟。",[["tree",0.5,0.66,0.6],["bird",0.5,0.24,0.3]]],["鸟不大。",[["bird",0.5,0.64,0.34]]],["这是山。",[["mountain",0.5,0.55,0.7]]],["山上有羊。",[["mountain",0.5,0.66,0.6],["sheep",0.5,0.24,0.3]]],["月在山上了。",[["mountain",0.5,0.66,0.6],["moon",0.5,0.24,0.3]]]]}];
 const META = {"bajie":[431,496,[[0.5035,0.244,0.0418,0.0403,"#fac6a8"],[0.6729,0.2732,0.0418,0.0393,"#fac6a8"]]],"bandit":[261,496,[[0.4789,0.2823,0.1073,0.0827,"#2f3753"],[0.7126,0.2641,0.1111,0.0827,"#2f3753"]]],"bingo":[351,496,[[0.3732,0.3226,0.0655,0.0524,"#f0934a"],[0.5926,0.3629,0.0684,0.0524,"#f0934a"]]],"bluey":[391,496,[[0.4194,0.3327,0.0844,0.0867,"#353a5c"],[0.6113,0.3125,0.0844,0.0867,"#353a5c"]]],"captain":[346,496,[]],"chase":[333,496,[[0.2868,0.3165,0.0706,0.0544,"#f3a830"],[0.5435,0.2984,0.0751,0.0544,"#f3a830"]]],"chilli":[262,496,[[0.4542,0.3024,0.126,0.0907,"#e0914c"],[0.6908,0.2984,0.1183,0.0867,"#e0914c"]]],"daddy_pig":[361,496,[[0.4155,0.1331,0.0416,0.0302,"#f9a8d1"],[0.5526,0.1673,0.0319,0.0242,"#f9a8d1"]]],"dragon_horse":[398,496,[[0.201,0.369,0.0578,0.0585,"#f9f8f8"],[0.4535,0.3589,0.0716,0.0565,"#f9f8f8"]]],"george":[376,496,[[0.3896,0.2591,0.0652,0.0514,"#f6b9c5"],[0.5957,0.3044,0.0585,0.0444,"#f6b9c5"]]],"gourd1":[321,496,[[0.3115,0.4022,0.0685,0.0494,"#fbd4ad"],[0.5857,0.4123,0.081,0.0514,"#fbd4ad"]]],"gourd2":[278,496,[[0.3741,0.4194,0.0791,0.0585,"#fac89c"],[0.6691,0.4194,0.0791,0.0585,"#fac99d"]]],"gourd3":[322,496,[[0.382,0.377,0.0652,0.0484,"#f8c9a2"],[0.6211,0.4062,0.0683,0.0474,"#f8c9a2"]]],"gourd4":[329,496,[[0.4164,0.4163,0.0729,0.0494,"#fad4aa"],[0.6641,0.3901,0.0653,0.0494,"#fad4aa"]]],"gourd5":[247,496,[[0.3725,0.4284,0.0972,0.0454,"#fad3a7"],[0.7105,0.3921,0.087,0.0474,"#fad3a7"]]],"gourd6":[380,496,[[0.3789,0.377,0.0579,0.0464,"#fcc18d"],[0.5987,0.4042,0.0618,0.0454,"#fcc18d"]]],"gourd7":[261,496,[[0.2222,0.378,0.0766,0.0494,"#f9c8a1"],[0.5364,0.3952,0.092,0.0504,"#f9c8a1"]]],"grandpa":[298,496,[[0.406,0.2117,0.0638,0.0343,"#c87839"],[0.6544,0.2248,0.0671,0.0353,"#c97839"]]],"hawkeye":[306,496,[]],"hulk":[474,496,[[0.3819,0.252,0.038,0.0363,"#8ab728"],[0.5612,0.252,0.038,0.0363,"#8ab728"]]],"ironman":[415,496,[]],"marshall":[320,496,[[0.3953,0.3579,0.0797,0.0514,"#f8f7f7"],[0.6375,0.3427,0.0625,0.0464,"#f8f7f7"]]],"miles":[217,496,[]],"mummy_pig":[349,496,[[0.4814,0.1915,0.0458,0.0363,"#fd9c91"]]],"panther":[271,496,[]],"peppa":[358,496,[[0.4246,0.2661,0.0642,0.0464,"#fac1d8"],[0.5726,0.2137,0.0559,0.0403,"#fac1d8"]]],"rocky":[364,496,[[0.3297,0.2883,0.0577,0.0504,"#dcd9e3"],[0.5632,0.3085,0.0577,0.0504,"#dcd9e3"]]],"rubble":[357,496,[[0.3137,0.3518,0.0784,0.0575,"#e98507"],[0.5966,0.3286,0.0644,0.0504,"#f9e9ca"]]],"ryder":[241,496,[[0.4274,0.3599,0.0913,0.0454,"#fabe81"],[0.7116,0.3438,0.0851,0.0454,"#fabe81"]]],"scorpion":[353,496,[[0.3796,0.375,0.068,0.0524,"#cdbae2"],[0.5977,0.3569,0.068,0.0565,"#cdbae2"]]],"shaseng":[459,496,[[0.4096,0.2177,0.0458,0.0464,"#fdb48c"],[0.5969,0.252,0.0479,0.0484,"#fdb48c"]]],"skye":[411,496,[[0.3479,0.3427,0.0608,0.0565,"#f5b969"],[0.5912,0.3024,0.0608,0.0565,"#f5b969"]]],"snake":[283,496,[]],"spiderman":[207,496,[]],"tangseng":[234,496,[[0.3376,0.3548,0.0769,0.0423,"#fad4b5"],[0.6197,0.3619,0.0684,0.0353,"#fad4b5"]]],"thor":[409,496,[[0.4205,0.2984,0.0489,0.0484,"#fdc59d"],[0.6247,0.3407,0.0526,0.0484,"#fdc59d"]]],"widow":[250,496,[[0.368,0.2722,0.072,0.0423,"#fab78b"],[0.64,0.2621,0.072,0.0423,"#fab78b"]]],"wukong":[370,496,[[0.3784,0.3024,0.0595,0.0484,"#fbd297"],[0.5959,0.3004,0.0608,0.0484,"#fbd297"]]],"zuma":[355,496,[[0.3056,0.2853,0.0718,0.0575,"#864f26"],[0.5775,0.2933,0.0789,0.0575,"#864f26"]]],"bumblebee":[456,496,[]],"catboy":[275,496,[]],"gekko":[252,496,[]],"kaiju1":[418,496,[]],"kaiju2":[427,496,[]],"optimus":[422,496,[]],"owlette":[377,496,[]],"ultraman":[303,496,[]],"zero":[336,496,[]]};
 /* ==== engine carried over from 点点岛 (kidmath3/index.html, release v0786eda3) - adapted for 字字岛 ==== */
 
@@ -2545,7 +2545,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0 }, flagDays: [], lastDay: 0, checks: [], v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -2584,11 +2584,13 @@ const Store = {
     if (o.stat && typeof o.stat === 'object') d.stat = { clean: num(o.stat.clean, 0, 0, 1e6), wfDown: num(o.stat.wfDown, 0, 0, 1e6) };
     if (Array.isArray(o.flagDays)) d.flagDays = o.flagDays.filter(x => typeof x === 'number').slice(-200);
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
+    if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
     if (Array.isArray(o.checks)) d.checks = o.checks.filter(x => x && typeof x === 'object' && typeof x.day === 'number').slice(-60);
     /* once, for a save from before v2: what was written becomes "seen" (never "known"); islands whose four games were
        already done keep their flag (the pass condition is not asked of them) */
     if (o.v2 !== 1) {
-      for (const k in d.learned) if (d.learned[k].w > 0 && !d.mem[k]) d.mem[k] = { b: 0, due: 0, last: 0, up: -1, seen: 0, pass: [], n: 0, ok: 0 };
+      let i = 0; const today = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+      for (const k in d.learned) if (d.learned[k].w > 0 && !d.mem[k]) d.mem[k] = { b: 1, due: today + (i++ % 7), last: 0, up: -1, seen: 0, pass: [], n: 0, ok: 0 };
       ALL_ISL().forEach(id => { if (ISL[id].games.every(g => (d.worlds[id].gstars[g] || 0) >= 5)) d.worlds[id].pok = true; });
     }
     return d;
@@ -2646,7 +2648,7 @@ const Clock = {
   show() { if (this.hiddenAt) { this.lost += now() - this.hiddenAt; this.hiddenAt = 0; } },
 };
 /* the 2nd hint (the picture / the brush shows this stroke) was given: the answer is no longer the child's own (A.12) */
-const helped = st => (st.assists || []).some(a => /^hint[23]/.test(a));
+const helped = st => !(st.game && st.game.softHint) && (st.assists || []).some(a => /^hint[23]/.test(a));
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -2660,7 +2662,7 @@ const Session = {
     const G = this.G = {
       world: islandId, W, ws, id: gameId, game, scope: new Scope(APP), rng: RNG(seed), seed, practice: !!opt.practice, item: opt.item || null,
       level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Prog.level(islandId, gameId)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
-      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: [],
+      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).map(k => ({ k, at: 0 })),
       t0: Clock.t(), stars: 0, streak: 0, bags: {}, dead: false, errors: 0,
     };
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
@@ -2719,8 +2721,8 @@ const Session = {
     const a = b.animate([{ transform: 'translate(-50%,-50%) scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.08) rotate(3deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%,-50%) scale(1) rotate(0)', opacity: 1, offset: 0.75 }, { transform: 'translate(-50%,-60%) scale(.7)', opacity: 0 }], { duration: T(800) + 1, easing: EASE.out, fill: 'forwards' });
     a.onfinish = () => b.remove();
     sc.add(() => b.remove());
-    const story = G.practice ? { line: null } : Story.intro(G);
-    Voice.say(story.line || g.intro, { tag: 'intro', owner: G });
+    const story = G.practice || G.key ? { line: null } : Story.intro(G);
+    Voice.say(G.key ? '找回老朋友！' : (story.line || g.intro), { tag: 'intro', owner: G });
     await sc.wait(700);
     if (story.play) await sc.guard(story.play());
   },
@@ -2778,6 +2780,7 @@ const Session = {
     Mem.today().q++;
     const g = st.game, k = g.itemOf ? g.itemOf(st) : (ITEM[st.q.answer] ? st.q.answer : null);
     if (k && (res === 'ok' || res === 'wrong')) Mem.answer(k, res === 'ok' ? (helped(st) ? 'help' : 'ok') : 'wrong', G.sid);
+    if (g.itemsOf && res === 'ok' && !st.noStar && !helped(st)) g.itemsOf(st).forEach(c => Mem.answer(c, 'ok', G.sid));
     if (k && res === 'wrong' && g.kind0 !== 'write' && !G.key) G.miss.push({ k, at: G.round + 2 });
     WriteFallback.after(G, st, res);
   },
@@ -2923,7 +2926,7 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
-    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.save(); }
+    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save(); }
     this.ffOn();
     const sc = G.scope;
     if (!G.practice) {
@@ -2948,6 +2951,7 @@ const Session = {
     MapView.update();
     await MapView.celebrate(wid, stars);
     if (Screens.cur === 'map' && !this.G && StopGo.maybe()) return;
+    if (!newGame && Prog.gamesDone(wid) && !flagged(wid) && Screens.cur === 'map' && !this.G) { MapView.openPanel(wid, '再玩一局插旗子！'); return; }
     if (newGame && Screens.cur === 'map' && !this.G) MapView.openPanel(wid, '新游戏开啦！');
   },
   teardown(G) {
@@ -2975,7 +2979,7 @@ const Session = {
     if (!this.G) return;
     const G = this.G, wid = G.world, opened = G.nx && !G.nxWas && Prog.gameOpen(wid, G.nx);
     if (G.practice) { this.teardown(G); Book.open(G.item && G.item.tab, G.item && G.item.k); return; }
-    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.save();
+    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save();
     Prog.check(true);
     this.teardown(this.G);
     Screens.show('map');
@@ -3027,7 +3031,7 @@ const MapView = {
       tapify(hit, () => this.tapIsland(id));
       this.isl[id] = { d, glow, land, hero, cloud, lan, big, flag, hit, deco };
       if (sp) { lan.remove(); big.remove(); flag.remove(); }
-      if (/^soon/.test(id)) { hero.src = 'assets/props/ui_star.png'; }
+      if (/^soon/.test(id)) { hero.src = 'assets/chars/' + ['hulk', 'thor', 'panther', 'widow', 'hawkeye'][Number(id.slice(4)) % 5] + '.png'; hero.style.filter = 'brightness(0) opacity(.55)'; }
       if (id === 'gate') d.classList.add('gate');
     });
     this.layout();
@@ -3391,7 +3395,7 @@ const Book = {
         const on = learned(it.k), lv = (Store.s.learned[it.k] || {}).p || 0;
         const t = el('div', 'tile' + (on ? '' : ' locked') + (lv >= 3 ? ' gold' : ''), grid);
         t.appendChild(it.kind === 'zh' ? Glyph.zh(it.k, 78) : Glyph.en(it.k, 70));
-        const pic = it.obj ? img('assets/obj/' + it.obj + '.png', 'pic', t) : (() => { const n = Scene.of(it.k, 60); n.classList.add('pic'); t.appendChild(n); return n; })();
+        const pic = it.obj ? img('assets/obj/' + it.obj + '.png', 'pic', t) : null;
         el('div', 'en', t, { text: it.en || '' });
         if (on) { const fl = el('div', 'fl', t); for (let i = 0; i < 3; i++) el('i', i < lv ? 'on' : '', fl); }
         else { const lk = el('div', 'lk', t); lk.innerHTML = '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect x="9" y="18" width="22" height="17" rx="4" fill="#FFC93C" stroke="#2B2118" stroke-width="3"/><path d="M13 18V13a7 7 0 0 1 14 0v5" fill="none" stroke="#2B2118" stroke-width="3.5"/></svg>'; }
@@ -3773,7 +3777,7 @@ const FindBase = {
   gen(G, o) {
     const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 5;
     const pool = poolOf(G, this.lang || 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length && G.rng.chance(0.6) ? G.rng.pick(need) : PICK(G, 'ans', pool);
+    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);          /* the characters still to pass first (V2R1-02) */
     const opts = optsFor(G, this.lang || 'zh', lv, Math.min(n, this.maxN || 9), answer);
     return { k: [answer, opts.join('')], answer, opts };
   },
@@ -4021,7 +4025,7 @@ const PlayPark = {
 /* ---------------------------------------------------------------- 写字 / 写字母: the writing frame + the thing it names */
 const WriteBase = {
   kind0: 'write', verb: '写！',
-  gen(G, o) { const answer = PICK(G, 'ans', poolOf(G, this.lang, false)); return { k: [answer], answer }; },
+  gen(G, o) { const pool = poolOf(G, this.lang, false), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
   geo(st) {
     const L = K.L(), en = this.lang !== 'zh';
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };
@@ -4815,7 +4819,7 @@ const Mem = {
   get(k) { return Store.s.mem[k] || null; },
   touch(k) {
     const d = DAY(); let m = Store.s.mem[k];
-    if (!m) { m = Store.s.mem[k] = { b: 0, due: 0, last: d, up: -1, seen: d, pass: [], n: 0, ok: 0 }; Mem.today().newK++; }
+    if (!m) { m = Store.s.mem[k] = { b: 0, due: 0, last: d, up: -1, seen: d, pass: [], n: 0, ok: 0 }; if (ITEM[k] && ITEM[k].kind === 'zh') Mem.today().newK++; }
     return m;
   },
   /* one answer about an item. how: 'ok' (the child's own first try, no help), 'help' (right after the 2nd hint), 'wrong'.
@@ -4848,7 +4852,7 @@ const Mem = {
     return 'seen';
   },
   due(kind) { const d = DAY(); return Object.keys(Store.s.mem).filter(k => { const m = Store.s.mem[k]; return m.b > 0 && m.due <= d && ITEM[k] && (!kind || kind(ITEM[k])); }).sort((a, b) => Store.s.mem[a].due - Store.s.mem[b].due); },
-  overdue() { const d = DAY(); return Object.values(Store.s.mem).filter(m => m.b > 0 && m.due < d).length; },
+  overdue() { const d = DAY(); return Object.keys(Store.s.mem).filter(k => { const m = Store.s.mem[k]; return m.b > 0 && m.due < d && ITEM[k] && ITEM[k].kind === 'zh'; }).length; },
   today() { const d = DAY(), D = Store.s.days; if (!D[d]) { D[d] = { ms: 0, newK: 0, q: 0, keyGo: 0, keyEnd: 0, asked: 0 }; const old = Object.keys(D).map(Number).sort((a, b) => a - b); while (old.length > 60) delete D[old.shift()]; } return D[d]; },
   /* retention over a gap band: [rate, n] (A.21) */
   keep(lo, hi) { const e = Store.s.ev.filter(x => x[0] >= lo && x[0] <= hi); return [e.length ? e.filter(x => x[1]).length / e.length : 0, e.length]; },
@@ -4897,7 +4901,7 @@ const ReviewQ = Object.assign({}, ZBase, {
   itemOf(st) { return st.q.answer; },
   async present(st) {
     const q = st.q, G = st.G, L = K.L();
-    if (!G.rvSaid) { G.rvSaid = true; Voice.say('老朋友来了！', { tag: 'prompt' }); }
+    if (st.missQ) Voice.say('再来一个！', { tag: 'prompt' }); else if (!G.rvSaid && !G.key) { G.rvSaid = true; Voice.say('老朋友来了！', { tag: 'prompt' }); }
     K.cards(st, q.opts.map(k => Glyph.any(k, 110)), q.opts, Object.assign({ size: 160, gap: 30 }, L ? { cx: 560, cy: 470 } : { cx: 352, cy: 700 }));
     st.taskEl = K.task(st, [['speaker', 'q']]);
     if (isEn(q.answer)) { st.prompt = '找字母'; st.tail = [ITEM[q.answer].say]; Voice.say('找字母', { tag: 'prompt' }); Voice.say(ITEM[q.answer].say, { tag: 'prompt' }); }
@@ -4912,11 +4916,12 @@ const ReviewQ = Object.assign({}, ZBase, {
 /* ---------------------------------------------------------------- 补句子 (the sentence islands' 认字): the host says the whole
    sentence; the card shows it with the function word missing; pick it (3 or 4 function words / look-alikes) */
 const QFill = {
-  kind0: 'fill', verb: '补！', intro: '把字补上！', props: [],
+  kind0: 'fill', verb: '补！', intro: '把字补上！', props: [], softHint: true,
+  decor(G) { if (!K.L()) { this.chars.forEach(id => hideActor(G.actors[id])); return; } ZBase.decor.call(this, G); },
   gen(G, o) {
     const lv = o.level, pool = poolOf(G, 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length && G.rng.chance(0.6) ? G.rng.pick(need) : PICK(G, 'ans', pool);
-    const s = G.rng.pick(FW_SENTS[answer]), n = lv <= 2 ? 3 : 4;
+    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
+    const s = !Store.s.met[answer] ? FW_SENTS[answer][0] : G.rng.pick(FW_SENTS[answer]), n = lv <= 2 ? 3 : 4;
     const fws = ITEMS.filter(x => x.fw && x.k !== answer && (x.isl === G.world || Store.s.mem[x.k] || ISL[x.isl].i < G.W.i && ISL[x.isl].w === G.W.w)).map(x => x.k);
     const others = G.rng.shuffle(fws.filter(k => !s[0].includes(k))).slice(0, n - 1);
     const opts = G.rng.shuffle(others); opts.splice(G.rng.int(0, opts.length), 0, answer);
@@ -4925,14 +4930,14 @@ const QFill = {
   itemOf(st) { return st.q.answer; },
   async present(st) {
     const q = st.q, L = K.L();
-    await ZX.meetFw(st, q.answer);
+    const met = await ZX.meetFw(st, q.answer);
     if (!Session.alive(st)) return;
     const pic = st.pic = ZX.thing(st, 300, 300, 6, 'objpop'); Object.assign(pic.style, { background: '#fff', borderRadius: '26px', boxShadow: '0 0 0 4px #2B2118, 0 8px 0 rgba(43,33,24,.25)' }); pic.appendChild(Scene.node(q.scene, 300));
     const row = st.row = ZX.thing(st, 10, 10, 7, ''); row.style.width = row.style.height = 'auto'; row.appendChild(Sent.node(q.text, L ? 92 : 84, q.blank));
     K.cards(st, q.opts.map(k => Glyph.zh(k, 104)), q.opts, Object.assign({ size: 150, gap: 30 }, this.cardSpot()));
     this.place(st);
     K.pop(st, pic); K.pop(st, row, 120);
-    st.prompt = q.text; Voice.say(q.text, { tag: 'prompt' });
+    st.prompt = q.text; if (!met) Voice.say(q.text, { tag: 'prompt' });
   },
   cardSpot() { return K.L() ? { cx: 600, cy: 590 } : { cx: 352, cy: 900 }; },
   place(st) {
@@ -4960,17 +4965,18 @@ const QReadS = {
     return { k: ['rd', r[0], order.join('')], answer: order.indexOf(0), text: r[0], scenes: order.map(i => i === 0 ? r[1] : r[2][i - 1]), opts: [0, 1, 2] };
   },
   itemOf() { return null; },
+  itemsOf(st) { const own = st.G.W ? st.G.W.chars.map(c => c.c) : []; return Array.from(st.q.text).filter((c, i, a) => own.includes(c) && a.indexOf(c) === i); },
   async present(st) {
     const q = st.q, L = K.L(), size = L ? 230 : 200;
     st.peeked = false;
     const row = st.row = ZX.thing(st, 10, 10, 7, ''); row.style.width = row.style.height = 'auto';
     row.appendChild(Sent.node(q.text, L ? 96 : 88, -1, true));
-    $$('[data-ch]', row).forEach((cell, i) => { K.reg(st, 'ch' + i, cell, {}); cell.dataset.gid = 'ch' + i; });
+    $$('[data-ch]', row).forEach((cell, i) => { K.reg(st, 'ch' + i, cell, {}); cell.dataset.gid = 'ch' + i; cell.style.pointerEvents = 'auto'; });     /* the row is a picture (no taps), its characters are targets */
     st.cards = q.scenes.map((sc, i) => { const d = ZX.thing(st, size, size, 6, 'card'); d.appendChild(Scene.node(sc, size)); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 80 * i); return d; });
     st.opts = q.opts.slice();
     this.place(st); K.pop(st, row);
     st.taskEl = K.task(st, [['eye', 'q']]);
-    st.prompt = '读一读！'; if (!st.G.rdSaid) { st.G.rdSaid = true; Voice.say('读一读！', { tag: 'prompt' }); }
+    st.prompt = '读一读！'; if (!st.G.rdSaid && st.G.game.kind0 !== 'reads') { st.G.rdSaid = true; Voice.say('读一读！', { tag: 'prompt' }); }
   },
   onGesture(st, name, p) {
     if (name !== 'tap') return false;
@@ -4988,8 +4994,8 @@ const QReadS = {
   },
   relayoutQ(st) { this.place(st); },
   async reveal(st) { const e = st.cards[st.q.answer]; K.hop(st, e, 30); Sfx.reveal(); Voice.say(st.q.text, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
-  async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say('再读一读', { tag: 'wrong' }); await st.scope.wait(900); },
-  gestureHint(st) { if (st.hintDone || !st.row) return; st.hintDone = true; K.hop(st, st.row, 16); },
+  async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); await st.scope.wait(700); },
+  gestureHint(st) { if (st.hintDone || !st.row) return; st.hintDone = true; K.hop(st, st.row, 16); Voice.say(st.q.text, { tag: 'prompt' }); },
 };
 function knownZh(G) { return poolOf(G, 'zh', true).concat(ITEMS.filter(x => x.kind === 'zh' && (Mem.get(x.k) || learned(x.k))).map(x => x.k)); }
 
@@ -5040,6 +5046,7 @@ const Review = {
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);
+    n = Math.min(n, Math.max(0, (G.rounds || 5) - (G.needPass || []).length));
     return { pos: [1, 3, 4].slice(0, n) };
   },
   fits(G, k) {
@@ -5052,9 +5059,9 @@ const Review = {
     if (G.practice) return null;
     if (G.key) { const k = (G.keyItems || [])[G.round]; return k ? { k, form: 'card' } : null; }
     const g = G.game, used = G.rvUsed || (G.rvUsed = []);
-    if (G.wfMode === 2) { const its = G.W.chars.map(c => c.c), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form: 'card', wf: true }; }
+    if (G.wfMode === 2) { const its = G.W.chars.map(c => c.c), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form: G.round % 2 ? 'trace' : 'card', wf: true }; }
     const miss = (G.miss || []).find(m => m.at <= G.round && !m.done);
-    if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card' }; }
+    if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card', miss: true }; }
     if (!G.rv || !G.rv.pos.includes(G.round)) return null;
     const cand = Mem.due().filter(k => !used.includes(k) && this.fits(G, k) && !poolOf(G, ITEM[k].kind === 'zh' ? 'zh' : 'en', false).includes(k));
     const k = cand[0]; if (!k) return null;
@@ -5062,23 +5069,24 @@ const Review = {
     if (g.kind0 === 'write') return { k, form: 'write' };
     if (g.kind0 === 'find' && ITEM[k].kind === 'zh' && !ITEM[k].fw && g.lang !== 'up') return { k, form: 'find' };
     /* after the sentence islands, a challenge game's first review slot is a sentence to read (A.3) */
-    if (!G.rdUsed && g.kind0 !== 'find' && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2')) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
+    if (!G.rdUsed && g.kind0 !== 'find' && G.rv.pos.length >= 2 && G.round === G.rv.pos[1] && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2') && ALL_ISL().indexOf(G.world) % 2 === 0) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
     return { k, form: 'card' };
   },
   /* a question state for a review slot (the game's own frame where it fits; otherwise the review card) */
   newQ(G, rv) {
     const S = Session;
-    if (rv.form === 'find' || rv.form === 'write') {
+    if (rv.form === 'find' || rv.form === 'write' || rv.form === 'trace') {
       const st = S.newQ(G, {});
       if (rv.form === 'find') { const opts = optsFor(G, 'zh', G.level, st.q.opts.length, rv.k); st.q = { k: [rv.k, opts.join('')], answer: rv.k, opts }; }
       else st.q = { k: [rv.k], answer: rv.k };
       st.review = true;
+      if (rv.form === 'trace') { st.level = 1; st.noStar = true; st.wf = true; }          /* tracing practice, no star */
       return st;
     }
     /* built like every game (GameBase + ZBase): evaluate, cleanup, the card taps */
     const game = Object.assign(Object.create(GameBase), ZBase, rv.form === 'read' ? QReadS : ReviewQ, { chars: G.game.chars, host: G.game.host, id: rv.form === 'read' ? 'read' : 'review' });
     const st = S.newQ(G, {});
-    st.game = game; st.kind = game.kind0; st.review = true; st.wf = !!rv.wf;
+    st.game = game; st.kind = game.kind0; st.review = true; st.wf = !!rv.wf; st.missQ = !!rv.miss;
     st.q = game.gen(G, { level: G.level, rng: G.rng, item: rv.k });
     return st;
   },
@@ -5099,7 +5107,8 @@ const WriteFallback = {
     if (G.practice || G.game.kind0 !== 'write' || G.game.lang !== 'zh' || st.review && !st.wf) return;
     const wf = G.ws.wf || (G.ws.wf = { s: 0, m: 0 });
     if (st.wf) return;
-    if (res === 'ok') { wf.s = 0; Store.s.stat.clean++; }
+    if (res === 'ok' && !helped(st)) { wf.s = 0; Store.s.stat.clean++; }
+    else if (res === 'ok') { wf.s++; }
     else if (res === 'wrong') { wf.s++; if (wf.s >= 3 && wf.m < 2) { wf.m++; wf.s = 0; Store.s.stat.wfDown++; if (wf.m === 1) G.level = 1; else G.wfMode = 2; } }
     Store.save();
   },
@@ -5174,7 +5183,7 @@ const Keys = {
   },
   /* one more card (key / flag); shows it */
   turn(src) {
-    const a = Store.s.album; if (a.n >= CARDS.length) return;
+    const a = Store.s.album; if (a.n >= CARDS.length) { if (!fast() && src === 'key') this.album(); return; }
     a.n++; a.src.push(src); Store.save();
     this.reveal(CARDS[a.n - 1]);
   },
@@ -5352,7 +5361,7 @@ const ParentV2 = {
       const x = list[i], top = el('div', '', ov);
       top.appendChild(x.k ? Glyph.zh(x.k, 260) : Sent.node(x.s, 90, -1));
       const row = el('div', '', ov); Object.assign(row.style, { display: 'flex', gap: '20px' });
-      const b = (t, f) => { const bt = el('button', 'pbtn', row, { text: t }); bt.style.fontSize = '24px'; bt.addEventListener('click', () => { f(); i++; show(); }); };
+      const b = (t, f) => { const bt = el('button', 'pbtn', row, { text: t }); Object.assign(bt.style, { fontSize: '26px', padding: '16px 30px', borderRadius: '18px', border: '3px solid #2B2118', background: '#FFF3C4', minWidth: '120px', minHeight: '88px' }); bt.addEventListener('click', () => { f(); i++; show(); }); };
       b(x.k ? '认得' : '读对了', () => { if (x.k) { res.n++; res.yes++; } else res.sent = 1; });
       b(x.k ? '不认得' : '没读对', () => { if (x.k) { res.n++; res.no.push(x.k); Mem.parentNo(x.k); } else res.sent = 0; });
       b('没测', () => {});
