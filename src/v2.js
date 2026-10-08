@@ -101,7 +101,12 @@ const ReviewQ = Object.assign({}, ZBase, {
   place(st) { const L = K.L(); K.cardsPlace(st, Object.assign({ gap: 30 }, L ? { cx: 560, cy: 470 } : { cx: 352, cy: 700 })); },
   relayoutQ(st) { this.place(st); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); Sfx.reveal(); sayItem(st.q.answer); await st.scope.guard(Voice.afterSay(200)); },
-  gestureHint(st) { if (st.picShown || !st.taskEl) return; st.picShown = true; const it = st.taskEl.querySelector('.it'); const p = Scene.of(st.q.answer, 54); it.replaceChild(p, it.firstChild); Sfx.sparkle(); },
+  gestureHint(st) {
+    if (st.picShown || !st.taskEl) return; st.picShown = true;
+    /* a function word has no picture of its own (its sentence's scene is a thing - 了 = a fire - and that thing can be an option): its sentence is said (V2R2-03) */
+    if (ITEM[st.q.answer] && ITEM[st.q.answer].fw && FW_SENTS[st.q.answer]) { Voice.say(FW_SENTS[st.q.answer][0][0], { tag: 'prompt' }); return; }
+    const it = st.taskEl.querySelector('.it'); const p = Scene.of(st.q.answer, 54); it.replaceChild(p, it.firstChild); Sfx.sparkle();
+  },
 });
 
 /* ---------------------------------------------------------------- 补句子 (the sentence islands' 认字): the host says the whole
@@ -148,7 +153,7 @@ const QFill = {
 /* ---------------------------------------------------------------- 读一读: read silently, tap the picture it says. The sentence is
    never read first (that would be listening); a tap on a character says it, but that question then gives no star (A.3) */
 const QReadS = {
-  kind0: 'reads', verb: '读！', intro: '读一读！', props: [],
+  kind0: 'reads', verb: '读！', intro: '读一读！', props: [], softHint: true,
   gen(G, o) {
     const known = G.knownZh || knownZh(G), ok = READ.filter(r => Array.from(r[0]).every(c => /[。！？，]/.test(c) || known.includes(c)));
     const r = PICK(G, 'read', ok.length ? ok : READ.slice(0, 3));
@@ -186,7 +191,11 @@ const QReadS = {
   relayoutQ(st) { this.place(st); },
   async reveal(st) { const e = st.cards[st.q.answer]; K.hop(st, e, 30); Sfx.reveal(); Voice.say(st.q.text, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); await st.scope.wait(700); },
-  gestureHint(st) { if (st.hintDone || !st.row) return; st.hintDone = true; K.hop(st, st.row, 16); Voice.say(st.q.text, { tag: 'prompt' }); },
+  gestureHint(st) {
+    if (st.hintDone || !st.row) return; st.hintDone = true;
+    $$('[data-ch]', st.row).forEach(cell => K.hop(st, cell, 10));
+    Voice.say('可以点字听听！', { tag: 'prompt' });
+  },
 };
 function knownZh(G) { return poolOf(G, 'zh', true).concat(ITEMS.filter(x => x.kind === 'zh' && (Mem.get(x.k) || learned(x.k))).map(x => x.k)); }
 
@@ -224,7 +233,7 @@ const CASTS2 = { s1: ['ironman', 'spiderman'], s2: ['captain', 'miles'] };
   /* no new letters here: the capitals of world 1 come back as old friends, the most due first */
   writeGame({ id: id + ':abc', world: id, lang: 'up', bg: id + '_abc', chars: cast.slice(0, 1), host, title: '写字母', verb: 'ABC', intro: '写字母啦！', iconNode: () => Glyph.en('A', 60, '#2E6FD8'), decor: writeDecor,
     gen(G) { const ups = ITEMS.filter(x => x.kind === 'up' && x.isl).map(x => x.k), due = Mem.due(it => it.kind === 'up').filter(k => !(G.used || []).includes(k)); const k = due[0] || PICK(G, 'up', ups); (G.used = G.used || []).push(k); return { k: [k], answer: k }; } });
-  zGame(QReadS, { id: id + ':quiz', world: id, bg: id + '_quiz', chars: cast, host, title: '读一读', boost: 0, iconNode: () => { const d = el('div'); d.appendChild(Glyph.zh('读', 60, '#2E6FD8')); return d; } });
+  zGame(QReadS, { id: id + ':quiz', world: id, bg: id + '_quiz', chars: cast, host, title: '读一读', boost: 0, iconNode: () => { const d = el('div'); d.innerHTML = ICONS.eye; const s = d.firstChild; s.setAttribute('width', '80%'); s.setAttribute('height', '80%'); Object.assign(d.style, { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }); return d; } });
   W.games = [id + ':find', id + ':write', id + ':abc', id + ':quiz'];
 });
 
@@ -242,7 +251,7 @@ const Review = {
   },
   fits(G, k) {
     const it = ITEM[k], g = G.game;
-    if (g.kind0 === 'write') return g.lang === 'zh' ? it.kind === 'zh' : it.kind === g.lang;
+    if (g.kind0 === 'write') return g.lang === 'zh' ? it.kind === 'zh' && !NOWRITE.includes(k) : it.kind === g.lang;
     return true;
   },
   /* the question for this round, or null (an island question) */
@@ -250,7 +259,7 @@ const Review = {
     if (G.practice) return null;
     if (G.key) { const k = (G.keyItems || [])[G.round]; return k ? { k, form: 'card' } : null; }
     const g = G.game, used = G.rvUsed || (G.rvUsed = []);
-    if (G.wfMode === 2) { const its = G.W.chars.map(c => c.c), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form: G.round % 2 ? 'trace' : 'card', wf: true }; }
+    if (G.wfMode === 2) { const form = G.round % 2 ? 'trace' : 'card', its = G.W.chars.map(c => c.c).filter(c => form === 'card' || !NOWRITE.includes(c)), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form, wf: true }; }
     const miss = (G.miss || []).find(m => m.at <= G.round && !m.done);
     if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card', miss: true }; }
     if (!G.rv || !G.rv.pos.includes(G.round)) return null;
@@ -263,20 +272,29 @@ const Review = {
     if (!G.rdUsed && g.kind0 !== 'find' && G.rv.pos.length >= 2 && G.round === G.rv.pos[1] && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2') && ALL_ISL().indexOf(G.world) % 2 === 0) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
     return { k, form: 'card' };
   },
+  /* the game's own question as a frame for a review question: whatever its draw took from the bags (the island's
+     characters still to pass), the session's seen keys and the last key all go back (V2R2-01) */
+  frame(G) {
+    const bags = {}, B = G.bags || {}; Object.keys(B).forEach(n => { bags[n] = B[n].slice(); });
+    const seen = G.seenKeys ? new Set(G.seenKeys) : null, last = G.ws.lastKey;
+    const st = Session.newQ(G, {});
+    G.bags = bags; if (seen) G.seenKeys = seen; else delete G.seenKeys; G.ws.lastKey = last;
+    return st;
+  },
   /* a question state for a review slot (the game's own frame where it fits; otherwise the review card) */
   newQ(G, rv) {
     const S = Session;
     if (rv.form === 'find' || rv.form === 'write' || rv.form === 'trace') {
-      const st = S.newQ(G, {});
+      const st = this.frame(G);
       if (rv.form === 'find') { const opts = optsFor(G, 'zh', G.level, st.q.opts.length, rv.k); st.q = { k: [rv.k, opts.join('')], answer: rv.k, opts }; }
       else st.q = { k: [rv.k], answer: rv.k };
       st.review = true;
-      if (rv.form === 'trace') { st.level = 1; st.noStar = true; st.wf = true; }          /* tracing practice, no star */
+      if (rv.form === 'trace') { st.level = 1; st.noStar = true; st.wf = true; st.tracing = true; }          /* tracing practice: no star, no pass, no box (A.4) */
       return st;
     }
     /* built like every game (GameBase + ZBase): evaluate, cleanup, the card taps */
     const game = Object.assign(Object.create(GameBase), ZBase, rv.form === 'read' ? QReadS : ReviewQ, { chars: G.game.chars, host: G.game.host, id: rv.form === 'read' ? 'read' : 'review' });
-    const st = S.newQ(G, {});
+    const st = this.frame(G);
     st.game = game; st.kind = game.kind0; st.review = true; st.wf = !!rv.wf; st.missQ = !!rv.miss;
     st.q = game.gen(G, { level: G.level, rng: G.rng, item: rv.k });
     return st;
@@ -374,9 +392,11 @@ const Keys = {
   },
   /* one more card (key / flag); shows it */
   turn(src) {
-    const a = Store.s.album; if (a.n >= CARDS.length) { if (!fast() && src === 'key') this.album(); return; }
+    const a = Store.s.album;
+    /* all 36 out: the key opens the album; a flag says so (V2R2-08) */
+    if (a.n >= CARDS.length) { if (!fast() && src === 'key') this.album(); else if (src === 'flag') Voice.say('卡册满啦！', { tag: 'card' }); return Promise.resolve(); }
     a.n++; a.src.push(src); Store.save();
-    this.reveal(CARDS[a.n - 1]);
+    return this.reveal(CARDS[a.n - 1]);
   },
   reveal(id) {
     const ov = el('div', '', document.body);
@@ -385,8 +405,12 @@ const Keys = {
     const im = img('assets/chars/' + id + '.png', '', c); Object.assign(im.style, { height: '92%', objectFit: 'contain' });
     c.animate([{ transform: 'rotateY(90deg) scale(.4)' }, { transform: 'rotateY(0) scale(1.08)', offset: 0.7 }, { transform: 'rotateY(0) scale(1)' }], { duration: T(900) + 1, easing: EASE.pop });
     Sfx.fanfare(); Fx.confetti(40); Voice.sayNow('新朋友来啦！', { tag: 'card' });
-    tapify(ov, () => { ov.remove(); MapView.update(); });
-    setTimeout(() => { if (ov.isConnected) { ov.remove(); MapView.update(); } }, T(3600) + 200);
+    /* resolves when the card is gone (V2R2-02: the flag waits for it, so the next island opens in plain view) */
+    return new Promise(res => {
+      const off = () => { if (ov.isConnected) { ov.remove(); MapView.update(); } res(); };
+      tapify(ov, off);
+      setTimeout(off, T(3600) + 200);
+    });
   },
   album() {
     const ov = el('div', '', document.body); ov.id = 'album';

@@ -7,7 +7,7 @@ const MapV2 = {
     if ($('#chestbtn')) return;
     const st = el('style', '', document.head); st.textContent = '#gear.dot::after{content:"";position:absolute;right:12px;top:12px;width:22px;height:22px;border-radius:50%;background:#E8414B;box-shadow:0 0 0 3px #fff}';
     const mk = (id, src, css, fn, lbl) => { const b = el('button', 'btn', $('#map')); b.id = id; b.setAttribute('aria-label', lbl); Object.assign(b.style, Object.assign({ position: 'absolute', width: '104px', height: '104px', background: '#FFF3C4', borderRadius: '28px', zIndex: 12 }, css)); const i = img(src, '', b); Object.assign(i.style, { width: '84%', height: '84%', objectFit: 'contain' }); tapify(b, fn); return b; };
-    mk('chestbtn', 'assets/props/chest.png', { right: 'calc(14px + var(--sr))', top: 'calc(14px + var(--st))' }, () => { MapView.closePanel(true); if (Keys.avail()) Keys.start(); else Keys.album(); }, '英雄卡');
+    mk('chestbtn', 'assets/props/chest.png', { right: 'calc(14px + var(--sr))', top: 'calc(14px + var(--st))' }, () => { MapView.closePanel(true); Keys.album(); }, '英雄卡');
     mk('storybtn', 'assets/obj/book.png', { left: 'calc(14px + var(--sl))', top: 'calc(14px + var(--st))' }, () => { MapView.closePanel(true); Books.shelf(); }, '故事书');
   },
   update() {
@@ -49,6 +49,7 @@ const ParentV2 = {
     const ch = S.checks.slice(-2);
     if (ch.length === 2 && n7 >= 20 && ch.every(c => c.n && c.yes / c.n < r7 - 0.2)) sig.push('连续两周“考一考”的认得率比 app 里低 20 个百分点以上：请告诉 Claude 检查题目是不是露了答案。');
     if (S.stat.wfDown) sig.push('写字降到描红级 / 改成认读共 ' + S.stat.wfDown + ' 次（只在当时那个岛有效）。');
+    if (S.stat.traced) sig.push('描红练习完成 ' + S.stat.traced + ' 次（只记描红，不算过关、不升箱）。');
     el('h3', '', sh, { text: '早期信号' });
     el('div', 'mut', sh, { html: sig.length ? sig.map(x => '• ' + x).join('<br>') : '暂时没有。' });
     el('h3', '', sh, { text: '每周“考一考”（约 5 分钟，不要给孩子看图、不要读出来）' });

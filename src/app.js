@@ -62,7 +62,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -98,7 +98,7 @@ const Store = {
     if (o.days && typeof o.days === 'object') for (const k in o.days) { const x = o.days[k]; if (/^\d+$/.test(k) && x && typeof x === 'object') d.days[k] = { ms: num(x.ms, 0, 0, 1e9), newK: num(x.newK, 0, 0, 1e4), q: num(x.q, 0, 0, 1e6), keyGo: num(x.keyGo, 0, 0, 99), keyEnd: num(x.keyEnd, 0, 0, 99), asked: x.asked ? 1 : 0 }; }
     if (o.key && typeof o.key === 'object') d.key = { day: num(o.key.day, -1, -1, 1e7), got: num(o.key.got, 0, 0, 1e6), short: o.key.short === true };
     if (o.album && typeof o.album === 'object') d.album = { n: num(o.album.n, 0, 0, 1000), src: Array.isArray(o.album.src) ? o.album.src.filter(x => typeof x === 'string').slice(-1000) : [] };
-    if (o.stat && typeof o.stat === 'object') d.stat = { clean: num(o.stat.clean, 0, 0, 1e6), wfDown: num(o.stat.wfDown, 0, 0, 1e6) };
+    if (o.stat && typeof o.stat === 'object') d.stat = { clean: num(o.stat.clean, 0, 0, 1e6), wfDown: num(o.stat.wfDown, 0, 0, 1e6), traced: num(o.stat.traced, 0, 0, 1e6) };
     if (Array.isArray(o.flagDays)) d.flagDays = o.flagDays.filter(x => typeof x === 'number').slice(-200);
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
     if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
@@ -179,7 +179,7 @@ const Session = {
     const G = this.G = {
       world: islandId, W, ws, id: gameId, game, scope: new Scope(APP), rng: RNG(seed), seed, practice: !!opt.practice, item: opt.item || null,
       level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Prog.level(islandId, gameId)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
-      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).map(k => ({ k, at: 0 })),
+      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).map(k => ({ k, at: 1 })),
       t0: Clock.t(), stars: 0, streak: 0, bags: {}, dead: false, errors: 0,
     };
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
@@ -296,6 +296,7 @@ const Session = {
     if (G.practice) return;
     Mem.today().q++;
     const g = st.game, k = g.itemOf ? g.itemOf(st) : (ITEM[st.q.answer] ? st.q.answer : null);
+    if (st.tracing) { if (res === 'ok') { Store.s.stat.traced = (Store.s.stat.traced || 0) + 1; Store.save(); } WriteFallback.after(G, st, res); return; }     /* tracing practice: only 'traced' (A.4) */
     if (k && (res === 'ok' || res === 'wrong')) Mem.answer(k, res === 'ok' ? (helped(st) ? 'help' : 'ok') : 'wrong', G.sid);
     if (g.itemsOf && res === 'ok' && !st.noStar && !helped(st)) g.itemsOf(st).forEach(c => Mem.answer(c, 'ok', G.sid));
     if (k && res === 'wrong' && g.kind0 !== 'write' && !G.key) G.miss.push({ k, at: G.round + 2 });
@@ -443,7 +444,7 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
-    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save(); }
+    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save(); }
     this.ffOn();
     const sc = G.scope;
     if (!G.practice) {
@@ -795,7 +796,7 @@ const MapView = {
     Voice.say(n === 1 ? '插上旗子啦！' : CNQ(n) + '面旗子啦！', { tag: 'unlock' });
     await new Promise(r2 => setTimeout(r2, T(1500)));
     Store.s.flagDays.push(DAY()); Store.save();
-    if (!fast()) { Keys.turn('flag'); await new Promise(r2 => setTimeout(r2, T(2600))); } else Keys.turn('flag');
+    if (!fast()) { await Keys.turn('flag'); await new Promise(r2 => setTimeout(r2, T(400))); } else Keys.turn('flag');
   },
   async openShow(id, line) {
     const J = this.isl[id];

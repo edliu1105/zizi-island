@@ -4,6 +4,8 @@
 const LOOK = { 日: '目田月口', 目: '日田', 田: '日目口', 口: '日田', 人: '大从', 大: '人', 木: '禾米本', 禾: '木米', 米: '木禾', 牛: '手', 手: '牛', 马: '鸟', 鸟: '马', 上: '下', 下: '上', 月: '日明', 本: '木', 林: '木休', 从: '人', 休: '林', 明: '日月', 风: '电', 电: '田日', 包: '勺', 勺: '包', 兔: '龙', 杯: '林', 床: '林', 叶: '口', 果: '田', 车: '牛', 门: '口', 衣: '农', 巾: '中', 光: '火', 火: '光' };
 const LOOKEN = { E: 'F', F: 'E', M: 'NW', N: 'M', O: 'QC', Q: 'O', P: 'RB', R: 'P', B: 'PD', U: 'V', V: 'U', b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'm', i: 'j', j: 'i', u: 'n', w: 'v', C: 'G', G: 'C', I: 'L', L: 'I' };
 const PICK = (G, name, items) => bagPick(G, name, items);
+/* characters read but not written: the plan writes none over 8 strokes in the first two worlds (A.4) - 是 has 9 */
+const NOWRITE = ['是'];
 /* characters that hold another one inside (明 holds 月): never a look-alike option for it */
 const HOLDS = { 月: '明', 日: '明', 木: '林休本果杯床', 人: '从休', 口: '叶', 火: '灯', 田: '果' };
 /* the characters / letters the child can be asked about here (this island + the islands before it, for review) */
@@ -114,7 +116,7 @@ const ZBase = {
   workEls(st) { return st.cards || []; },
   snap(st) { return { opts: st.opts || null }; },
   key(q) { return this.id + ':' + JSON.stringify(q.k); },
-  icon() { const d = el('div'); d.style.width = d.style.height = '100%'; d.appendChild(this.iconNode ? this.iconNode() : Glyph.zh('字', 60)); return d; },
+  icon() { const d = el('div'); d.style.width = d.style.height = '100%'; d.appendChild(this.iconNode ? this.iconNode() : Glyph.zh('口', 60)); return d; },
   cheerAll(st) { this.chars.slice(0, 2).forEach(id => { const a = st.G.actors[id]; if (a && a.x > 0) a.cheer(); }); },
   next(st, strat) { return K.cardNext(st, strat); },
   onGesture(st, name, p) {
@@ -395,7 +397,7 @@ const PlayPark = {
 /* ---------------------------------------------------------------- 写字 / 写字母: the writing frame + the thing it names */
 const WriteBase = {
   kind0: 'write', verb: '写！',
-  gen(G, o) { const pool = poolOf(G, this.lang, false), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
+  gen(G, o) { const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
   geo(st) {
     const L = K.L(), en = this.lang !== 'zh';
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };

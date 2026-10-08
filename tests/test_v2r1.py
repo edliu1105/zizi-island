@@ -18,7 +18,7 @@ usage: python tests/test_v2r1.py"""
 import os, sys, json, re, glob
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from playwright.sync_api import sync_playwright
-from harness import serve, new_page, enter, wait_phase, step, q, Log
+from harness import serve, new_page, enter, wait_phase, step, q, answer_question, Log
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 log = Log('v2r1')
@@ -66,8 +66,8 @@ with sync_playwright() as p, serve() as base:
       const s = Store.validate(old), d = DAY(); return Object.keys(s.mem).map(k => [k, s.mem[k].b, s.mem[k].due - d]); }""")
     log.check(all(b == 1 and 0 <= dd <= 6 for k, b, dd in r) and any(dd == 0 for k, b, dd in r), '03 an old save: written -> box 1, first tests over the first week %s' % r)
     # 04
-    r = page.evaluate("(() => { const s = { game: GAMES['s1:find'], assists: ['hint2'] }, t = { game: GAMES['s1:quiz'], assists: ['hint2'] }; return [helped(s), helped(t), String(QReadS.gestureHint).includes('Voice.say(st.q.text')]; })()")
-    log.check(r == [False, True, True], '04 补句子 hints cost no star; 读一读\'s 2nd hint reads the sentence (and costs it) %s' % r)
+    r = page.evaluate("(() => { const s = { game: GAMES['s1:find'], assists: ['hint2'] }, t = { game: GAMES['s1:quiz'], assists: ['hint2'] }; return [helped(s), helped(t), String(QReadS.gestureHint).includes('可以点字听听')]; })()")
+    log.check(r == [False, False, True], '04 补句子 hints cost no star; 读一读\'s automatic 2nd hint is a free reminder (V2R2-04: only a tapped character costs the star) %s' % r)
     # 05
     r = page.evaluate("(() => { Store.s.album.n = CARDS.length; const src = String(Keys.turn); return src.includes('this.album()'); })()")
     log.check(r, '05 all cards out: the key opens the album')
@@ -76,10 +76,9 @@ with sync_playwright() as p, serve() as base:
       return Array.from(all).filter(c => !/[。！？，]/.test(c) && !Hanzi.data[c]); }""")
     log.check(not r, '06 every character of every sentence has stroke data %s' % r)
     # 07
-    lines = set(json.load(open(os.path.join(ROOT, 'raw', 'voice_lines.json'), encoding='utf-8')))
-    have = page.evaluate("Array.from(Bank.set || [])")
-    need = ['新游戏开啦！', '旗子插好啦！', '再来一个！', '找回老朋友！', '再玩一局插旗子！', '新朋友来啦！', '停船还是继续？']
-    miss = [t for t in need if t not in lines]
+    # V2R2-11: only what ships (assets/voice/bank.json through Bank.has), not the build-side list in raw/
+    need = ['新游戏开啦！', '旗子插好啦！', '再来一个！', '找回老朋友！', '再玩一局插旗子！', '新朋友来啦！', '停船还是继续？', '可以点字听听！', '卡册满啦！']
+    miss = []
     bank_miss = page.evaluate("(need) => need.filter(t => !Bank.has(t))", need)
     log.check(not miss and not bank_miss, '07 the lines are in the list and recorded %s %s' % (miss, bank_miss))
     # 08 the missed queue across sessions
@@ -98,10 +97,11 @@ with sync_playwright() as p, serve() as base:
     nxt = page.evaluate("Store.s.missNext")
     page.evaluate("() => { Voice.say = ((f) => function (t, o) { (window.__said3 = window.__said3 || []).push(t); return f.call(this, t, o); })(Voice.say); }")
     page.evaluate("window.__go('huluwa', 'huluwa:quiz', 3, {seed: 2})"); wait_phase(page, timeout=30000); page.wait_for_timeout(300)
-    first = q(page)
+    # V2R2-10: it comes right after the game's first own question (the game's opener is followed by the game's question)
+    q0 = q(page); answer_question(page, 'right'); first = wait_phase(page, gen=q0['gen'], timeout=30000); page.wait_for_timeout(300)
     said = page.evaluate("window.__said3 || []")
-    log.check(late and late in nxt and first['kind'] == 'review' and first['answer'] == late and '再来一个！' in said and '老朋友来了！' not in said[:3],
-              '08 a wrong item in the last round comes first in the next session, said with "再来一个！" %s %s %s' % (late, nxt, first and (first['kind'], first['answer'])))
+    log.check(late and late in nxt and q0['kind'] != 'review' and first['kind'] == 'review' and first['answer'] == late and '再来一个！' in said and '老朋友来了！' not in said,
+              '08 a wrong item in the last round comes second in the next session (after the game\'s own first), said with "再来一个！" %s %s %s' % (late, nxt, first and (first['kind'], first['answer'])))
     page.evaluate("gesture('home')"); page.wait_for_timeout(300)
     # 09
     r = page.evaluate("() => { Store.reset(); ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].forEach(k => Mem.touch(k)); const a = Mem.today().newK; ['人', '口'].forEach(k => Mem.touch(k)); return [a, Mem.today().newK]; }")
