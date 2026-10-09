@@ -857,7 +857,7 @@ const Input = {
     const dx = p.x - c.x0, dy = p.y - c.y0;
     if (!c.moved && Math.hypot(dx, dy) > 10) { c.moved = true; if (sp.hold && !sp.holdMoveOk) { clearTimeout(c.holdT); if (sp.onHoldEnd) sp.onHoldEnd(false); } }
     c.path.push(p); if (c.path.length > 400) c.path.splice(1, 1);
-    if (sp.drag && c.moved) {
+    if ((sp.drag || sp.follow) && c.moved) {           /* follow: a thing that is flicked moves with the finger until let go (W3R1-08) */
       c.el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.08) rotate(' + clamp(dx * 0.04, -8, 8) + 'deg)';
       if (c.z0 === undefined) c.z0 = c.el.style.zIndex;        /* its own layer, given back on release */
       c.el.style.zIndex = 45;
@@ -920,6 +920,7 @@ const Input = {
     }
     if (sp.arc && c.moved) { if (this.isArc(c.path)) { gesture('arc', { id: sp.id }); this.fails = 0; } else this.fail(); return; }
     if ((sp.swipe || sp.flick) && c.moved) {
+      if (sp.follow) this.snapBack(t, c.z0);
       const dx = p.x - c.x0, dy = p.y - c.y0, L = Math.hypot(dx, dy);
       if (L < 30) { this.fail(); return; }
       const ang = Math.atan2(dy, dx) * 180 / Math.PI;
@@ -951,7 +952,7 @@ const Input = {
     const c = this.cur; if (!c || e.pointerId !== c.pid) return;
     this.cur = null; clearTimeout(c.holdT);
     c.el.classList.remove('press');
-    if (c.spec.drag && c.moved) this.snapBack(c.el, c.z0);
+    if ((c.spec.drag || c.spec.follow) && c.moved) this.snapBack(c.el, c.z0);
     if (c.spec.hold && c.spec.onHoldEnd) c.spec.onHoldEnd(false);
     if (c.spec.draw) c.spec.draw.cancel();
   },
@@ -961,7 +962,7 @@ const Input = {
     this.cur = null; clearTimeout(c.holdT);
     try { c.el.releasePointerCapture(c.pid); } catch (err) {}
     c.el.classList.remove('press');
-    if (c.spec.drag && c.moved) this.snapBack(c.el, c.z0);
+    if ((c.spec.drag || c.spec.follow) && c.moved) this.snapBack(c.el, c.z0);
     if (c.spec.hold && c.spec.onHoldEnd) c.spec.onHoldEnd(false);
     if (c.spec.draw) c.spec.draw.cancel();
   },

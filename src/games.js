@@ -4,6 +4,22 @@
 const LOOK = { 一: '二三', 二: '一三', 三: '二一', 八: '人', 十: '七', 七: '十', 白: '日目', 来: '米', 妈: '姐', 姐: '妈', 吃: '喝', 喝: '吃', 红: '绿', 绿: '红', 日: '目田月口白', 目: '日田', 田: '日目口', 口: '日田', 人: '大从', 大: '人', 木: '禾米本', 禾: '木米', 米: '木禾', 牛: '手', 手: '牛', 马: '鸟', 鸟: '马', 上: '下', 下: '上', 月: '日明', 本: '木', 林: '木休', 从: '人', 休: '林', 明: '日月', 风: '电', 电: '田日', 包: '勺', 勺: '包', 兔: '龙', 杯: '林', 床: '林', 叶: '口', 果: '田', 车: '牛', 门: '口', 衣: '农', 巾: '中', 光: '火', 火: '光' };
 const LOOKEN = { E: 'F', F: 'E', M: 'NW', N: 'M', O: 'QC', Q: 'O', P: 'RB', R: 'P', B: 'PD', U: 'V', V: 'U', b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'm', i: 'j', j: 'i', u: 'n', w: 'v', C: 'G', G: 'C', I: 'L', L: 'I' };
 const PICK = (G, name, items) => bagPick(G, name, items);
+/* a bag over a list that may change between picks: what is in the bag but not in the list waits; nothing left refills it */
+function bagFrom(G, name, items) {
+  const b = G.bags[name] || (G.bags[name] = []);
+  let i = b.findIndex(k => items.includes(k));
+  if (i < 0) { b.length = 0; b.push(...G.rng.shuffle(items)); i = 0; }
+  return b.splice(i, 1)[0];
+}
+/* the island's characters still to pass come first (V2R1-02) - but one of them at most twice in a session and never twice
+   in a row; the other rounds take the island's other characters (W3R1-02: a session is never one character five times) */
+function needPick(G, pool, bag) {
+  const asked = G.asked || [], last = asked[asked.length - 1], times = k => asked.filter(x => x === k).length;
+  const need = (G.needPass || []).filter(k => pool.includes(k) && k !== last && times(k) < 2);
+  if (need.length) { const m = Math.min(...need.map(times)); return bagFrom(G, 'need', need.filter(k => times(k) === m)); }
+  const rest = pool.filter(k => k !== last);
+  return bagFrom(G, bag || 'ans', rest.length ? rest : pool);
+}
 /* characters read but not written: the plan writes none over 8 strokes in the first two worlds (A.4) - 是 has 9 */
 const NOWRITE = ['是'].concat(NOWRITE3.split(''));      /* world 3 writes 2 characters an island; the others are read (A.4) */
 /* characters that hold another one inside (明 holds 月): never a look-alike option for it */
@@ -24,6 +40,8 @@ function optsFor(G, kind, level, n, answer) {
   const look = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => ITEM[k] && known.includes(k) && !holds.includes(k));      /* R2-04 */
   const cand = [];
   if (level >= 3) look.forEach(k => cand.push(k));
+  /* level 4: an old character among them (DESIGN §3) - also on islands with enough characters of their own (W3R1-01) */
+  if (level >= 4) { const old = rev.filter(k => !holds.includes(k) && k !== answer); if (old.length) cand.push(G.rng.pick(old)); }
   G.rng.shuffle(own).forEach(k => cand.push(k));
   if (level >= 4 || cand.length < n + 1) G.rng.shuffle(rev).forEach(k => cand.push(k));
   const others = cand.filter((k, i) => k !== answer && cand.indexOf(k) === i).slice(0, n - 1);
@@ -148,10 +166,10 @@ const FindBase = {
   kind0: 'find', verb: '找！',
   gen(G, o) {
     const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 5;
-    const pool = poolOf(G, this.lang || 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);          /* the characters still to pass first (V2R1-02) */
-    const opts = optsFor(G, this.lang || 'zh', lv, Math.min(n, this.maxN || 9), answer);
-    return { k: [answer, opts.join('')], answer, opts };
+    const lang = this.lang || 'zh', pool = poolOf(G, lang, false), answer = needPick(G, pool);      /* still to pass first, at most twice (W3R1-02) */
+    const opts = optsFor(G, lang, lv, Math.min(n, this.maxN || 9), answer), lk = (lang === 'zh' ? LOOK : LOOKEN)[answer] || '';
+    /* what the level is made of: the picture on the card (L1), look-alikes (L3), old characters (L4), five (L5) */
+    return { k: [answer, opts.join('')], answer, opts, pic: lv <= 1, look: opts.filter(k => k !== answer && lk.includes(k)).length, rev: opts.filter(k => !pool.includes(k)).length };
   },
   async present(st) {
     const q = st.q, G = st.G;
@@ -398,11 +416,8 @@ const PlayPark = {
 const WriteBase = {
   kind0: 'write', verb: '写！',
   gen(G, o) {
-    const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : [];
-    let answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
-    /* never the character just asked again (a wrong one is followed by a NEW question) - also when it is the only one still to pass */
-    const lk = G.ws && G.ws.lastKey, last = lk && lk.startsWith(this.id + ':') ? (JSON.parse(lk.slice(this.id.length + 1)) || [])[0] : null;
-    if (answer === last && pool.some(k => k !== last)) answer = G.rng.pick(pool.filter(k => k !== last));
+    /* still to pass first, but never the character just asked again and one at most twice (W3R1-02) */
+    const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), answer = needPick(G, pool);
     return { k: [answer], answer };
   },
   geo(st) {

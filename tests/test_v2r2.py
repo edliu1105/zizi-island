@@ -98,7 +98,7 @@ with sync_playwright() as p, serve() as base:
     # 05
     data = json.load(open(os.path.join(ROOT, 'assets', 'data', 'hanzi.json'), encoding='utf-8'))
     lits = set()
-    for f in glob.glob(os.path.join(ROOT, 'src', '*.js')):
+    for f in [os.path.join(ROOT, 'index.html')]:      # the built page holds every source (W3R1-10: no src/ needed)
         lits |= set(re.findall(r"Glyph\.zh\('(.)'", open(f, encoding='utf-8').read()))
     nodata = sorted(c for c in lits if c not in data)
     page.evaluate(OPEN)

@@ -74,7 +74,7 @@ ACT = {
     'drink': KID + 'standing and drinking a glass of water, head tipped back a little, the glass at his mouth',
     'look': KID + 'looking through a pair of toy binoculars, standing',
     'walk': KID + 'walking to the right seen from the side, one leg forward mid-stride, arms swinging',
-    'come': KID + 'standing facing us and beckoning with one hand, palm up, curling his fingers as if saying come here, friendly smile',
+    'come': KID + 'standing facing us, leaning forward a little, one arm stretched out towards the viewer with the palm turned UP and the fingers curled back towards himself in a clear "come here" beckoning gesture, two small curved motion lines next to the fingers showing the waving towards himself, a friendly inviting smile',      # W3R1-09 (redrawn)
 }
 PROPS = {
     'boulder': 'one big round grey boulder with a few cracks, a flat smooth front face',

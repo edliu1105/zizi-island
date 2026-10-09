@@ -169,7 +169,8 @@ const Clock = {
   show() { if (this.hiddenAt) { this.lost += now() - this.hiddenAt; this.hiddenAt = 0; } },
 };
 /* the 2nd hint (the picture / the brush shows this stroke) was given: the answer is no longer the child's own (A.12) */
-const helped = st => !(st.game && st.game.softHint) && (st.assists || []).some(a => /^hint[23]/.test(a));
+/* a soft game's 2nd hint only says the question again / how to play (W3R1-03): no help - unless it really gave some (st.realHelp) */
+const helped = st => (!(st.game && st.game.softHint) || !!st.realHelp) && (st.assists || []).some(a => /^hint[23]/.test(a));
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -252,6 +253,7 @@ const Session = {
     const g = G.game, ws = G.ws, level = G.level;
     const q = this.genQ(G, level);
     ws.lastKey = g.key(q);
+    (G.asked || (G.asked = [])).push(q.item || (ITEM[q.answer] ? q.answer : null));      /* what this session asked, in order (W3R1-02) */
     const st = {
       gen: ++this.qn, id: 'q' + this.qn, G, game: g, q, kind: g.kind0, level, phase: 'setup', hinted: false, guided: false, demo: false, retest: !!opt.retest,
       err: opt.err || 0, scope: new Scope(G.scope), els: [], map: {}, ops: 0, childOps: 0, assists: [],
@@ -701,7 +703,7 @@ const MapView = {
       const th = img('assets/bgthumb/' + GAMES[g].bg + '.jpg', '', m);
       Object.assign(th.style, { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' });
       const ic = el('div', '', m); ic.appendChild(GAMES[g].icon());
-      Object.assign(ic.style, { position: 'absolute', width: '64%', height: '64%', left: '18%', top: '18%', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'drop-shadow(0 4px 0 rgba(43,33,24,.3))' });
+      Object.assign(ic.style, { position: 'absolute', width: '64%', height: '64%', left: '18%', top: '18%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(255,253,246,.9)', boxShadow: '0 0 0 3px rgba(43,33,24,.18)', filter: 'drop-shadow(0 4px 0 rgba(43,33,24,.3))' });      /* a light round backing: the icon reads on any background (W3R1-05) */
       if (g === rec) { m.style.boxShadow = '0 0 0 4px #2B2118, 0 0 0 12px rgba(255,236,140,.95), 0 12px 30px rgba(255,210,60,.8)'; Loops.run(m, [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity }); }
       m.animate([{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: T(320) + 1, delay: T(80 * i), easing: EASE.pop, fill: 'backwards' });
       const locked = !Prog.gameOpen(id, g);
@@ -923,7 +925,7 @@ const Book = {
         const t = el('div', 'tile' + (on ? '' : ' locked') + (lv >= 3 ? ' gold' : ''), grid);
         t.appendChild(it.kind === 'zh' ? Glyph.zh(it.k, 78) : Glyph.en(it.k, 70));
         const pic = it.obj ? img(OBJURL(it.obj), 'pic', t) : null;
-        el('div', 'en', t, { text: it.en || '' });
+        { const en = el('div', 'en', t, { text: it.en || '' }); if ((it.en || '').length > 9) en.style.fontSize = '13px'; }      /* little brother: fits the tile (W3R1-06) */
         if (on) { const fl = el('div', 'fl', t); for (let i = 0; i < 3; i++) el('i', i < lv ? 'on' : '', fl); }
         else { const lk = el('div', 'lk', t); lk.innerHTML = '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect x="9" y="18" width="22" height="17" rx="4" fill="#FFC93C" stroke="#2B2118" stroke-width="3"/><path d="M13 18V13a7 7 0 0 1 14 0v5" fill="none" stroke="#2B2118" stroke-width="3.5"/></svg>'; }
         void pic;
@@ -933,7 +935,9 @@ const Book = {
         t.addEventListener('pointerup', () => {
           if (moved) return;
           if (!on) { t.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(0)' }], { duration: T(300) + 1 }); Voice.sayNow('还没学到哦', { tag: 'map' }); return; }
-          Sfx.tap(); Practice.start(it);
+          Sfx.tap();
+          if (it.kind === 'zh' && NOWRITE.includes(it.k)) { Voice.sayNow(it.line, { tag: 'map' }); if (it.en && Store.s.settings.en) Voice.say(it.en, { tag: 'map' }); t.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: T(360) + 1 }); return; }      /* read, not written (A.4, W3R1-06) */
+          Practice.start(it);
         });
         if (focus && it.k === focus) focusEl = t;
       });

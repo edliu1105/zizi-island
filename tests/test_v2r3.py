@@ -27,7 +27,7 @@ with sync_playwright() as p, serve() as base:
     r = page.evaluate("() => { const a = learned('是'); const m = Mem.touch('是'); m.b = 1; m.pass = ['s1', 's2']; return [a, Mem.passed('是'), learned('是'), learned('我')]; }")
     log.check(r == [False, True, True, False], '01 是 is learned once it passes (it is never written); 我 still needs writing %s' % r)
     # 02
-    src = open(os.path.join(ROOT, 'src', 'app.js'), encoding='utf-8').read()
+    src = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()      # the built page holds every source (W3R1-10: no src/ needed)
     r = page.evaluate("""() => { const G = { practice: false, game: GAMES['bluey:write'], ws: Store.w('bluey'), level: 1 }; G.ws.wf = { s: 2, m: 1 }; WriteFallback.after(G, { review: false, wf: false, assists: [] }, 'wrong'); return [G.ws.wf.m, G.wfMode]; }""")
     log.check(r == [2, 2] and "if (res === 'wrong' && G.wfMode === 2 && !st.review) return 'ok';" in src, '02 the fallback reaches its 2nd step and the round ends there (the next round is a card) %s' % r)
     # 03 + 06
@@ -51,7 +51,7 @@ with sync_playwright() as p, serve() as base:
       const pending = MapView.ids().some(o => flagged(o) && !Store.s.flags.includes(o)); window.__f = window.fast; window.fast = () => false; MapV2.hello(); window.fast = window.__f; return { pending, hello: Mem.today().hello || 0 }; }""")
     log.check(r == {'pending': True, 'hello': 0}, '05 a flag still to plant: no "找回老朋友！" yet (it comes next time) %s' % r)
     # 07
-    src = open(os.path.join(ROOT, 'src', 'app.js'), encoding='utf-8').read()
+    src = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()      # the built page holds every source (W3R1-10: no src/ needed)
     order = src.index("MapView.openPanel(wid, '再玩一局插旗子！')") < src.index("StopGo.maybe()) return;")
     page.evaluate(OPEN)
     rep = page.evaluate("Report.text().split('\\n')[0]")

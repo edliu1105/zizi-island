@@ -115,8 +115,7 @@ const QFill = {
   kind0: 'fill', verb: '补！', intro: '把字补上！', props: [], softHint: true,
   decor(G) { if (!K.L()) { this.chars.forEach(id => hideActor(G.actors[id])); return; } ZBase.decor.call(this, G); },
   gen(G, o) {
-    const lv = o.level, pool = poolOf(G, 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
-    const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
+    const lv = o.level, pool = poolOf(G, 'zh', false), answer = needPick(G, pool);      /* still to pass first, at most twice (W3R1-02) */
     const kn = knownZh(G), more = (FW_SENTS3[answer] || []).filter(x => Array.from(x[0]).every(c => /[。！？，]/.test(c) || c === answer || kn.includes(c)));      /* phase 2: once its other characters are known */
     const s = !Store.s.met[answer] ? FW_SENTS[answer][0] : G.rng.pick(FW_SENTS[answer].concat(more)), n = lv <= 2 ? 3 : 4;
     const fws = ITEMS.filter(x => x.fw && x.k !== answer && (x.isl === G.world || Store.s.mem[x.k] || ISL[x.isl].i < G.W.i && ISL[x.isl].w === G.W.w)).map(x => x.k);
@@ -277,14 +276,15 @@ const Review = {
      characters still to pass), the session's seen keys and the last key all go back (V2R2-01) */
   frame(G) {
     const bags = {}, B = G.bags || {}; Object.keys(B).forEach(n => { bags[n] = B[n].slice(); });
-    const seen = G.seenKeys ? new Set(G.seenKeys) : null, last = G.ws.lastKey;
+    const seen = G.seenKeys ? new Set(G.seenKeys) : null, last = G.ws.lastKey, asked = (G.asked || []).slice();
     const st = Session.newQ(G, {});
-    G.bags = bags; if (seen) G.seenKeys = seen; else delete G.seenKeys; G.ws.lastKey = last;
+    G.bags = bags; if (seen) G.seenKeys = seen; else delete G.seenKeys; G.ws.lastKey = last; G.asked = asked;
     return st;
   },
   /* a question state for a review slot (the game's own frame where it fits; otherwise the review card) */
   newQ(G, rv) {
     const S = Session;
+    if (rv.k || rv.form === 'read') (G.asked || (G.asked = [])).push(rv.k || null);       /* frame() put back what the frame asked */
     if (rv.form === 'find' || rv.form === 'write' || rv.form === 'trace') {
       const st = this.frame(G);
       if (rv.form === 'find') { const opts = optsFor(G, 'zh', G.level, st.q.opts.length, rv.k); st.q = { k: [rv.k, opts.join('')], answer: rv.k, opts }; }
@@ -360,7 +360,7 @@ const Books = {
     BOOKS.forEach(b => {
       const on = list.includes(b), c = el('div', 'btn', ov);
       Object.assign(c.style, { position: 'relative', width: '220px', height: '260px', background: on ? '#FFF6E2' : 'rgba(255,255,255,.4)', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' });
-      const sc = Scene.node(b.pages[0][1], 150); if (!on) sc.style.filter = 'grayscale(1) brightness(.6)'; c.appendChild(sc);
+      const sc = Scene.node(b.cover || b.pages[0][1], 150); if (!on) sc.style.filter = 'grayscale(1) brightness(.6)'; c.appendChild(sc);
       const t = el('div', '', c); t.textContent = b.title; Object.assign(t.style, { font: '900 30px system-ui,sans-serif', color: INK });
       tapify(c, () => { if (!on) { Voice.sayNow('插了旗就能读', { tag: 'map' }); return; } ov.remove(); this.show(b.id); });
     });

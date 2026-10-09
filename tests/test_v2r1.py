@@ -59,7 +59,7 @@ with sync_playwright() as p, serve() as base:
                 run_session(page, isl, g, None, seed)
         flags[isl] = page.evaluate("(i) => [Prog.gamesDone(i), Prog.islandDone(i)]", isl)
     log.check(all(v == [True, True] for v in flags.values()), '02 the most fluent child: four games once each -> the flag, no extra session %s' % flags)
-    src = open(os.path.join(ROOT, 'src', 'app.js'), encoding='utf-8').read()
+    src = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()      # the built page holds every source (W3R1-10: no src/ needed)
     log.check("MapView.openPanel(wid, '再玩一局插旗子！')" in src, '02 four ✓ without a flag: the panel opens with "再玩一局插旗子！"')
     # 03
     r = page.evaluate("""() => { const old = JSON.parse(JSON.stringify(Store.s)); delete old.v2; old.mem = {}; old.learned = { 人: { w: 1, p: 0 }, 口: { w: 2, p: 0 }, A: { w: 1, p: 0 } };

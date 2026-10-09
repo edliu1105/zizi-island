@@ -247,6 +247,84 @@ with sync_playwright() as p, serve() as base:
     }""" % json.dumps(NEW))
     log.check(not r['bad'] and len(r['newBooks']) >= 2 and r['atThor'] and not r['early'], '07 the books (%d, new: %s) use only characters learned by then, 6 pages of <= 8; 读一读 at 雷神云岛 has the number sentences %s and none with characters still to come %s %s' % (r['n'], r['newBooks'], r['atThor'], r['early'], r['bad']))
 
+    # 10 (W3R1-01) every new game strictly harder at every level: its own questions measured level by level
+    lv = page.evaluate(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'w3_levels.js'), encoding='utf-8').read())
+    flat = {g: v['lv'] for g, v in lv.items() if not v['ok']}
+    log.check(len(lv) == 15 and not flat, '10 W3R1-01: all 15 new plays are harder at every step L1 -> L5 (no plateau) %s' % (flat or {g: v['lv'] for g, v in list(lv.items())[:3]}))
+
+    # 11 (W3R1-02) one character still to pass: asked at most twice, never twice in a row, the questions all different
+    probs, seen = [], {}
+    for g in [g for _, g in games] + ['peppa:find', 'peppa:write', 's1:find', 'pj:find']:
+        isl = g.split(':')[0]
+        page.evaluate("""(i) => { Store.reset(); Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; ISL[id].chars.forEach(c => { Store.s.met[c.c] = true; }); });
+          const d = DAY(); ['山', '火', '车'].forEach((k, j) => { Store.s.learned[k] = { w: 1, p: 0 }; const m = Mem.touch(k); m.b = 2; m.due = d + 3 - j; });
+          const cs = ISL[i].chars.map(c => c.c), keep = cs.filter(k => !NOWRITE.includes(k)).slice(-1)[0] || cs[0];
+          cs.forEach(k => { if (k !== keep) { const m = Mem.touch(k); m.pass = ['a', 'b']; m.b = 1; m.due = d + 5; } });
+          window.__keep = keep; Store.save(); }""", isl)
+        page.evaluate("([i, g]) => window.__go(i, g, 0, { seed: 7 })", [isl, g])
+        seq = []
+        try:
+            for k in range(5):
+                cur = wait_phase(page, timeout=20000)
+                seq.append((cur['q'].get('item') or cur['answer'], json.dumps(cur['q'].get('k'), ensure_ascii=False)))
+                gen, cur2 = answer(page, 'right')
+                if k < 4:
+                    wait_next_question(page, gen)
+        except Exception as e:
+            probs.append((g, 'ERR', str(e)[:80]))
+        keep = page.evaluate("window.__keep")
+        items = [s[0] for s in seq]
+        n, adj, keys = items.count(keep), any(items[i] == items[i + 1] for i in range(len(items) - 1)), len(set(s[1] for s in seq))
+        seen[g] = ''.join(str(x) for x in items)
+        if n < 1 or n > 2 or adj or (not g.endswith(':write') and keys < len(seq)):
+            probs.append((g, keep, items, keys))
+        page.evaluate("gesture('home')"); page.wait_for_timeout(200)
+    log.check(not probs, '11 W3R1-02: one character still to pass -> asked once or twice a session, never twice in a row, every question different (worlds 1-3) %s %s' % (probs[:5], seen))
+
+    # 12 (W3R1-03) the 2nd hint of the eight soft games only says the question again: the right answer after it keeps its star;
+    #    where the question never said the word (level 5 of 补元音 / 首字母) saying it is real help -> no star
+    probs = []
+    for isl, g, lvl, want in [('hulk3', 'hulk3:en', 3, 1), ('thor3', 'thor3:en', 3, 1), ('panther3', 'panther3:en', 3, 1), ('hawk3', 'hawk3:en', 3, 1),
+                              ('hulk3', 'hulk3:quiz', 3, 1), ('thor3', 'thor3:quiz', 3, 1), ('panther3', 'panther3:quiz', 3, 1), ('widow3', 'widow3:quiz', 3, 1), ('hawk3', 'hawk3:quiz', 3, 1),
+                              ('thor3', 'thor3:en', 5, 0), ('panther3', 'panther3:en', 5, 0), ('hulk3', 'hulk3:find', 3, 0)]:
+        page.evaluate(OPEN)
+        go(page, isl, g, lvl, 8); page.wait_for_timeout(300)
+        s0 = stars(page)
+        r = page.evaluate("() => { const st = Session.st; window.__s4 = []; if (!Voice.__w4) { Voice.__w4 = 1; Voice.say = ((f) => function (t, o) { (window.__s4 = window.__s4 || []).push(t); return f.call(this, t, o); })(Voice.say); } Hints.mark(st, 'hint2'); st.game.gestureHint(st, false); return { soft: !!st.game.softHint, real: !!st.realHelp }; }")
+        page.wait_for_timeout(400)
+        said = page.evaluate("window.__s4.slice()")
+        gen, cur = answer(page, 'right'); wait_next_question(page, gen)
+        if stars(page) - s0 != want or not (said or g.endswith(':find')):
+            probs.append((g, lvl, 'star', stars(page) - s0, 'want', want, r, said[:3]))
+        page.evaluate("gesture('home')"); page.wait_for_timeout(150)
+    log.check(not probs, '12 W3R1-03: the 2nd hint of rhyme / vowel / first letter / I spy / count / ten lamps / paint / family / do-as-it-says says the question again or "可以点字听听！" and keeps the star; at level 5 the vowel / first-letter hint says the word = help, no star; 认字 shows the picture = help %s' % probs)
+
+    # 13 W3R1-04..08: the white pot shows; the read-only character in the book is heard, not written; 跳石头 plain at level 2;
+    #    the hammer follows the finger; every game icon has a light backing
+    page.evaluate(OPEN)
+    r = page.evaluate("""() => { const p = W3X.pot('#FFFFFF').innerHTML; return { pot: /fill="#6E7B91"/.test(p) && /fill="#FFFFFF"/.test(p) }; }""")
+    go(page, 'panther3', 'panther3:find', 2, 4); page.wait_for_timeout(300)
+    r['leap2'] = page.evaluate("() => Session.st.cards.every(c => { const s = c.querySelector('.sign'), paths = Array.from(c.querySelectorAll('.sign path')); return getComputedStyle(s).backgroundColor === 'rgb(255, 248, 236)' && paths.every(x => x.getAttribute('fill') === INK); })")
+    page.evaluate("gesture('home')"); page.wait_for_timeout(200)
+    go(page, 'thor3', 'thor3:find', 3, 4); page.wait_for_timeout(400)
+    h = page.evaluate("(() => { const e = Session.st.hammer.getBoundingClientRect(); return [e.left + e.width / 2, e.top + e.height / 2]; })()")
+    page.mouse.move(h[0], h[1]); page.mouse.down(); page.mouse.move(h[0] + 20, h[1] - 30); page.mouse.move(h[0] + 40, h[1] - 60)
+    r['follow'] = page.evaluate("Session.st.hammer.style.transform")
+    page.mouse.move(h[0] + 42, h[1] - 64); page.mouse.up(); page.wait_for_timeout(600)
+    page.evaluate("gesture('home')"); page.wait_for_timeout(300)
+    page.evaluate("() => { const m = Mem.touch('三'); m.pass = ['a', 'b']; m.b = 1; Store.s.learned['一'] = { w: 1, p: 0 }; Store.save(); MapView.closePanel(true); Book.open('zh'); }")
+    page.wait_for_timeout(400)
+    t = page.evaluate("(() => { const ts = Array.from(document.querySelectorAll('#book .tile')).filter(t => !t.classList.contains('locked')); const e = ts.find(x => x.querySelector('.en') && x.querySelector('.en').textContent === 'three'); if (!e) return null; e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()")
+    if t:
+        page.mouse.click(t[0], t[1]); page.wait_for_timeout(600)
+    r['readonly'] = bool(t) and page.evaluate("!Session.G && Screens.cur === 'book'")
+    page.evaluate("Book.close()"); page.wait_for_timeout(300)
+    page.evaluate("MapView.useSet('w3'); MapView.openPanel('widow3')"); page.wait_for_timeout(500)
+    r['icons'] = page.evaluate("Array.from(document.querySelectorAll('[data-game] > div')).filter(d => d.style.borderRadius === '50%').map(d => getComputedStyle(d).backgroundColor)")
+    page.evaluate("MapView.closePanel(true)")
+    log.check(r['pot'] and r['leap2'] and 'translate' in (r['follow'] or '') and r['readonly'] and len(r['icons']) == 4 and all(c.startswith('rgba(255, 253, 246') for c in r['icons']),
+              '13 W3R1-04..08: the white pot has a slate body; 跳石头 level 2 plain signs in black ink; the hammer moves with the finger; a learned read-only character (三) in the book is heard, not written; the 4 game icons on a light backing %s' % r)
+
     # 08 progression and the ending
     r = page.evaluate("""() => {
       Store.reset(); const out = {}, done = id => { const ws = Store.w(id); ws.unlocked = true; ISL[id].games.forEach(g => { ws.gstars[g] = 5; }); };

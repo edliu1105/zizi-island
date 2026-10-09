@@ -196,13 +196,13 @@ BOOKS = [
         ('这是木。', alone('tree')), ('木上有鸟。', on('bird', 'tree')), ('鸟不大。', small('bird')),
         ('这是山。', alone('mountain')), ('山上有羊。', on('sheep', 'mountain')), ('月在山上了。', on('moon', 'mountain'))]),
     # phase 2: one book after each of four hero islands of the rainbow sea
-    dict(id='b3', title='十本书', after='thor3', pages=[
+    dict(id='b3', title='十本书', after='thor3', cover=big('book'), pages=[
         ('我有一本书。', withn('book', 1)), ('你有三本书。', withn('book', 3)), ('他有五本书。', withn('book', 5)),
         ('这是七本书。', many('book', 7)), ('八本书在床上。', [('bed', .5, .7, .78)] + [(o, x, round(y - .16, 3), round(k * .7, 3)) for o, x, y, k in many('book', 8)]),
         ('我有十本书！', withn('book', 10))]),
     dict(id='b4', title='红车白云', after='panther3', pages=[
         ('车是红的。', alone('car')), ('鸟是蓝的。', alone('bird')), ('叶是绿的。', alone('leaf')),
-        ('鸡是黄的。', alone('chicken')), ('云是白的。', alone('cloud')), ('花是红的！', tint(alone('flower'), 'hue-rotate(-24deg) saturate(1.8)'))]),
+        ('鸡是黄的。', alone('chicken')), ('云是白的。', alone('cloud')), ('伞是红的！', alone('umbrella'))]),
     dict(id='b5', title='我的爸爸妈妈', after='widow3', pages=[
         ('这是爸爸。', who('daddy_pig')), ('这是妈妈。', who('mummy_pig')), ('这是姐姐。', who('peppa')),
         ('这是弟弟。', who('george')), ('姐姐有伞。', who('peppa', 'umbrella')), ('弟弟有车！', who('george', 'car'))]),
