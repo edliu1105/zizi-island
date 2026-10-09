@@ -76,6 +76,16 @@
 
 ## 回归
 
-- **部署**：先部署（`844a2b6`），再跑全部测试。
-- **全套**：`bash tests/run_all.sh w3r2`，结果见 `tests/logs/w3r2_summary.txt`。
-- **线上**：`tests/smoke_live.py`。
+- **部署**：先部署（`844a2b6`、`15c5a9b`），再跑全部测试。
+- **全套**：`bash tests/run_all.sh w3r2`，结果见 `tests/logs/w3r2_summary.txt`：
+  - core 那一次没过：按钮先改成只数字，`test_core` 要求按钮"数写过的字和字母"；
+  - 改回字加字母（`15c5a9b`）之后，在最终版本上单独重跑 core 到 v2r3，全过（`tests/logs/w3r2b_*.txt`）；
+  - pointer、layout、voiceflow、w3new 在全套里跑的就是最终版本。
+- **最终版本的结果**：
+  - core 102、r1 15、r2 9、r3 10；
+  - v2 19、v2r1 15、v2r2 13、v2r3 8；
+  - pointer 100、layout 8（4 种尺寸 × 84 个游戏 × 3 个难度）、voiceflow 86；
+  - w3new 31。
+
+  全部通过。
+- **线上**：`tests/smoke_live.py` 23 项全过（Chromium、WebKit，含 4 个彩虹海游戏和离线缓存）。
