@@ -2205,8 +2205,8 @@ const STROKE_NAMES = {
   从: '撇 点 撇 捺', 休: '撇 竖 横 竖 撇 捺', 林: '横 竖 撇 点 横 竖 撇 捺', 明: '竖 横折 横 横 撇 横折钩 横 横', 花: '横 竖 竖 撇 竖 撇 竖弯钩', 叶: '竖 横折 横 横 竖', 果: '竖 横折 横 横 横 竖 撇 捺', 竹: '撇 横 竖 撇 横 竖钩',
   龙: '横 撇 竖弯钩 撇 点', 兔: '撇 横撇 竖 横折 横 撇 竖弯钩 点', 狗: '撇 弯钩 撇 撇 横折钩 竖 横折 横', 鸡: '横撇 点 撇 横折钩 点 竖折折钩 横', 饭: '撇 横钩 竖提 撇 撇 横撇 捺', 汤: '点 点 提 横折折折钩 撇 撇', 肉: '竖 横折钩 撇 点 撇 点', 勺: '撇 横折钩 点',
   一: '横', 二: '横 横', 三: '横 横 横', 四: '竖 横折 撇 竖弯 横', 五: '横 竖 横折 横', 六: '点 横 撇 点', 七: '横 竖弯钩', 八: '撇 捺', 九: '撇 横折弯钩', 十: '横 竖',
-  红: '撇折 撇折 提 横 竖 横', 黄: '横 竖 竖 横 竖 横折 横 横 横 撇 点', 蓝: '横 竖 竖 竖 竖 撇 横 点 竖 横折 竖 竖 横', 绿: '撇折 撇折 提 横折 横 横 竖钩 点 提 撇 点', 白: '撇 竖 横折 横 横',
-  爸: '撇 点 撇 捺 横折 横 竖 竖弯钩', 妈: '撇点 撇 横 横折 竖折折钩 横', 哥: '横 竖 横折 横 竖钩 横 竖 横折 横 竖钩', 姐: '撇点 撇 横 竖 横折 横 横 横', 弟: '点 撇 横折 横 竖折折钩 竖 撇',
+  红: '撇折 撇折 提 横 竖 横', 黄: '横 竖 竖 横 竖 横折 横 竖 横 撇 点', 蓝: '横 竖 竖 竖 竖 撇 横 点 竖 横折 竖 竖 横', 绿: '撇折 撇折 提 横折 横 横 竖钩 点 提 撇 点', 白: '撇 竖 横折 横 横',
+  爸: '撇 点 撇 捺 横折 竖 横 竖弯钩', 妈: '撇点 撇 横 横折 竖折折钩 横', 哥: '横 竖 横折 横 竖钩 横 竖 横折 横 竖钩', 姐: '撇点 撇 横 竖 横折 横 横 横', 弟: '点 撇 横折 横 竖折折钩 竖 撇',
   吃: '竖 横折 横 撇 横 横折弯钩', 喝: '竖 横折 横 竖 横折 横 横 撇 横折钩 撇 点 竖折', 看: '撇 横 横 撇 竖 横折 横 横 横', 走: '横 竖 横 竖 横 撇 捺', 来: '横 点 撇 横 竖 撇 捺',
 };
 const Hanzi = {
@@ -4044,7 +4044,14 @@ const PlayPark = {
 /* ---------------------------------------------------------------- 写字 / 写字母: the writing frame + the thing it names */
 const WriteBase = {
   kind0: 'write', verb: '写！',
-  gen(G, o) { const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
+  gen(G, o) {
+    const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : [];
+    let answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
+    /* never the character just asked again (a wrong one is followed by a NEW question) - also when it is the only one still to pass */
+    const lk = G.ws && G.ws.lastKey, last = lk && lk.startsWith(this.id + ':') ? (JSON.parse(lk.slice(this.id.length + 1)) || [])[0] : null;
+    if (answer === last && pool.some(k => k !== last)) answer = G.rng.pick(pool.filter(k => k !== last));
+    return { k: [answer], answer };
+  },
   geo(st) {
     const L = K.L(), en = this.lang !== 'zh';
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };
@@ -5071,7 +5078,7 @@ const CASTS2 = { s1: ['ironman', 'spiderman'], s2: ['captain', 'miles'] };
    asks a wrong item again 2 questions later in another form */
 const Review = {
   plan(G) {
-    if (G.practice || G.key || G.game.ownReview) return { pos: [] };      /* world 3's writing plans its own old friend */
+    if (G.practice || G.key || (G.game && G.game.ownReview)) return { pos: [] };      /* world 3's writing plans its own old friend */
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);
@@ -5519,7 +5526,7 @@ const PlaySmash = {
     if (!st.cards) return;
     const L = K.L(), r = L ? { x: 190, y: 120, w: 660, h: 400 } : { x: 40, y: 260, w: 624, h: 570 }, cells = L ? st.cellsL : st.cellsP;
     st.cards.forEach((d, i) => { const [u, v] = cells[i]; place(d, r.x + u * r.w - 75, r.y + v * r.h - 70, 150, 140); });
-    if (st.tally) place(st.tally, L ? 600 : 352 - st.need * 25, L ? 26 : 196, st.need * 50, 50);
+    if (st.tally) place(st.tally, L ? 568 : 352 - st.need * 25, L ? 26 : 196, st.need * 50, 50);
   },
   decor(G) { const L = K.L(), a = G.actors.hulk; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L ? 84 : 90, L ? 698 : 1016, L ? 180 : 150); },
   onGesture(st, name, p) {
@@ -5637,7 +5644,7 @@ const PlayLeap = {
       const d = ZX.thing(st, 140, 170, 6, 'item'); ZX.pic('assets/props/platform.png', d).style.top = '22%';
       const c = ink[i], dark = c === '白', s = el('div', 'sign');
       Object.assign(s.style, { position: 'absolute', width: '96px', height: '96px', left: 'calc(50% - 48px)', top: '-2%' });
-      if (lv >= 2) s.style.background = lv >= 3 ? (dark ? '#3B3B4A' : '#FFF8EC') : this.tint(ink[(i + 1) % n] || c);
+      if (lv >= 2) s.style.background = lv >= 3 ? (dark ? '#3B3B4A' : '#FFF8EC') : this.tint(c);      /* level 2: a painted sign, never in its own colour */
       s.appendChild(Glyph.zh(k, 78, lv >= 3 ? INKS[c] : INK));
       d.appendChild(s);
       K.reg(st, 'card' + i, d, {}); K.pop(st, d, 70 * i);

@@ -10,7 +10,7 @@
    - assets: cache first, then network (and cached)
    VERSION is a hash over index.html, manifest and every asset: tools/gen_sw_list.py rewrites it for every release
    (tests/test_offline.py fails when it is stale). */
-const VERSION = 'v8db6ed95';
+const VERSION = 'ved9cf8c1';
 const CORE = 'zzi-core-' + VERSION;
 const ASSETS = 'zzi-assets-' + VERSION;
 const CORE_FILES = ['./', './index.html', './manifest.webmanifest'];

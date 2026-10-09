@@ -97,7 +97,7 @@ const PlaySmash = {
     if (!st.cards) return;
     const L = K.L(), r = L ? { x: 190, y: 120, w: 660, h: 400 } : { x: 40, y: 260, w: 624, h: 570 }, cells = L ? st.cellsL : st.cellsP;
     st.cards.forEach((d, i) => { const [u, v] = cells[i]; place(d, r.x + u * r.w - 75, r.y + v * r.h - 70, 150, 140); });
-    if (st.tally) place(st.tally, L ? 600 : 352 - st.need * 25, L ? 26 : 196, st.need * 50, 50);
+    if (st.tally) place(st.tally, L ? 568 : 352 - st.need * 25, L ? 26 : 196, st.need * 50, 50);
   },
   decor(G) { const L = K.L(), a = G.actors.hulk; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L ? 84 : 90, L ? 698 : 1016, L ? 180 : 150); },
   onGesture(st, name, p) {
@@ -215,7 +215,7 @@ const PlayLeap = {
       const d = ZX.thing(st, 140, 170, 6, 'item'); ZX.pic('assets/props/platform.png', d).style.top = '22%';
       const c = ink[i], dark = c === '白', s = el('div', 'sign');
       Object.assign(s.style, { position: 'absolute', width: '96px', height: '96px', left: 'calc(50% - 48px)', top: '-2%' });
-      if (lv >= 2) s.style.background = lv >= 3 ? (dark ? '#3B3B4A' : '#FFF8EC') : this.tint(ink[(i + 1) % n] || c);
+      if (lv >= 2) s.style.background = lv >= 3 ? (dark ? '#3B3B4A' : '#FFF8EC') : this.tint(c);      /* level 2: a painted sign, never in its own colour */
       s.appendChild(Glyph.zh(k, 78, lv >= 3 ? INKS[c] : INK));
       d.appendChild(s);
       K.reg(st, 'card' + i, d, {}); K.pop(st, d, 70 * i);

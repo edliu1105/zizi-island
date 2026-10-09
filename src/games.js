@@ -397,7 +397,14 @@ const PlayPark = {
 /* ---------------------------------------------------------------- 写字 / 写字母: the writing frame + the thing it names */
 const WriteBase = {
   kind0: 'write', verb: '写！',
-  gen(G, o) { const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : []; const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool); return { k: [answer], answer }; },
+  gen(G, o) {
+    const pool = poolOf(G, this.lang, false).filter(k => !NOWRITE.includes(k)), need = this.lang === 'zh' ? (G.needPass || []).filter(k => pool.includes(k)) : [];
+    let answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
+    /* never the character just asked again (a wrong one is followed by a NEW question) - also when it is the only one still to pass */
+    const lk = G.ws && G.ws.lastKey, last = lk && lk.startsWith(this.id + ':') ? (JSON.parse(lk.slice(this.id.length + 1)) || [])[0] : null;
+    if (answer === last && pool.some(k => k !== last)) answer = G.rng.pick(pool.filter(k => k !== last));
+    return { k: [answer], answer };
+  },
   geo(st) {
     const L = K.L(), en = this.lang !== 'zh';
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };

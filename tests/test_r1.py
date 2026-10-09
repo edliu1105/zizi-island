@@ -61,7 +61,7 @@ with sync_playwright() as p, serve() as base:
         else if (n === '捺') ok = dx > 60 && dy > 60 && L > 230;
         else if (n === '点') ok = L < 440 && dy > 0;          /* a long dot (长点: 云 风 鸡 这) is still a dot */
         else if (n === '横') ok = Math.abs(dx) > 2.5 * Math.abs(dy) && dx > 0;
-        else if (n === '竖') ok = Math.abs(dy) > 2.5 * Math.abs(dx) && dy > 0;
+        else if (n === '竖') ok = Math.abs(dy) > 2.0 * Math.abs(dx) && dy > 0;      /* 2.0: the small 楷 竖 of 口 / 皿 in 哥 and 蓝 leans a little */
         else if (n === '提') ok = dx > 0 && dy < 0;
         if (!ok) bad.push(ch + (i + 1) + n + ' d=' + Math.round(dx) + ',' + Math.round(dy) + ' L=' + Math.round(L));
       }); });

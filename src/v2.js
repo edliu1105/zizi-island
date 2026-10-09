@@ -243,7 +243,7 @@ const CASTS2 = { s1: ['ironman', 'spiderman'], s2: ['captain', 'miles'] };
    asks a wrong item again 2 questions later in another form */
 const Review = {
   plan(G) {
-    if (G.practice || G.key || G.game.ownReview) return { pos: [] };      /* world 3's writing plans its own old friend */
+    if (G.practice || G.key || (G.game && G.game.ownReview)) return { pos: [] };      /* world 3's writing plans its own old friend */
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);
