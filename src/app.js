@@ -135,7 +135,7 @@ const Prog = {
   worldOpen(w) { return w === 'w1' || Store.s.all || (w === 'w2' ? this.worldDone('w1') : this.worldDone('w2')); },
   /* the difficulty now: the island's start + its game's boost + one step for every 5 stars earned in it */
   level(i, g) { return clamp(ISL[i].base + ((GAMES[g] && GAMES[g].boost) || 0) + Math.floor(this.stars(i, g) / 5), 1, 5); },
-  learnedCount() { return Object.keys(Store.s.learned).filter(k => learned(k)).length; },
+  learnedCount() { return ITEMS.filter(x => x.kind === 'zh' && learned(x.k)).length; },      /* = the book cover's "N 个字" (W3R2-06) */
   /* opens what is due (show: the map plays the cloud show for a new island) */
   check(show) {
     let any = false;
@@ -169,8 +169,12 @@ const Clock = {
   show() { if (this.hiddenAt) { this.lost += now() - this.hiddenAt; this.hiddenAt = 0; } },
 };
 /* the 2nd hint (the picture / the brush shows this stroke) was given: the answer is no longer the child's own (A.12) */
-/* a soft game's 2nd hint only says the question again / how to play (W3R1-03): no help - unless it really gave some (st.realHelp) */
-const helped = st => (!(st.game && st.game.softHint) || !!st.realHelp) && (st.assists || []).some(a => /^hint[23]/.test(a));
+/* the 2nd hint is help - the star goes - only where the game really gives some (W3R1-03, W3R2-02): its own gestureHint (a
+   picture, a stroke shown; GameBase's is empty: only the host waves), not a soft one that just says the question again, and not
+   a time it gave nothing (st.noHelp: the picture was on the card already); or wherever a hint did help (st.realHelp). A re-teach
+   after two failed gestures only shows how to play (W3R2-01) and costs nothing */
+const ownHint = g => !!(g && typeof g.gestureHint === 'function' && g.gestureHint !== GameBase.gestureHint);
+const helped = st => !!st.realHelp || ((st.assists || []).some(a => /^hint[23]/.test(a)) && ownHint(st.game) && !st.game.softHint && !st.noHelp);
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },

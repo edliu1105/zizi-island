@@ -326,6 +326,116 @@ with sync_playwright() as p, serve() as base:
     log.check(r['pot'] and r['leap2'] and 'translate' in (r['follow'] or '') and r['readonly'] and len(r['icons']) == 4 and all(c.startswith('rgba(255, 253, 246') for c in r['icons']),
               '13 W3R1-04..08: the white pot has a slate body; 跳石头 level 2 plain signs in black ink; the hammer moves with the finger; a learned read-only character (三) in the book is heard, not written; the 4 game icons on a light backing %s' % r)
 
+    # 14 (W3R2-01) two failed gestures -> the re-teach shows how to play, never the answer's picture; the star stays fair
+    probs = []
+    for isl, g in (('thor3', 'thor3:find'), ('peppa2', 'peppa2:find'), ('widow3', 'widow3:find')):
+        page.evaluate(OPEN)
+        go(page, isl, g, 3, 6); page.wait_for_timeout(400)
+        s0 = stars(page)
+        for k in range(2):                    # the hammer: a 15 px nudge; a card / the torch: dragged to an empty corner
+            src = page.evaluate("(g) => { const st = Session.st, e = g === 'thor3:find' ? st.hammer : g === 'widow3:find' ? st.torch : st.cards[0]; const b = e.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; }", g)
+            page.mouse.move(src[0], src[1]); page.mouse.down()
+            to = (src[0] + 15, src[1] - 6) if g == 'thor3:find' else (12, page.viewport_size['height'] - 12)
+            for j in range(1, 8):
+                page.mouse.move(src[0] + (to[0] - src[0]) * j / 7, src[1] + (to[1] - src[1]) * j / 7)
+            page.mouse.up(); page.wait_for_timeout(350)
+        r = page.evaluate("() => ({ assists: Session.st.assists.slice(), pic: !!(Session.st.taskEl && Session.st.taskEl.querySelector('img')), helped: helped(Session.st), submitted: Session.st.submitted })")
+        gen, cur = answer(page, 'right'); wait_next_question(page, gen)
+        if 'reteach' not in r['assists'] or r['pic'] or r['helped'] or r['submitted'] or stars(page) != s0 + 1:
+            probs.append((g, r, stars(page) - s0))
+        page.evaluate("gesture('home')"); page.wait_for_timeout(150)
+    log.check(not probs, '14 W3R2-01: two failed gestures (a nudge of the hammer, a card / the torch dropped nowhere) -> the re-teach shows how to play, no picture of the answer; answered right then -> its star %s' % probs)
+
+    # 15 (W3R2-02) a 2nd hint that is only the host waving costs no star - the 14 challenges of worlds 1-2; 认字 L1 adds nothing (no
+    #    cost), 认字 L2 shows the picture (no star)
+    probs = []
+    old = [(i, i + ':quiz') for i in ('peppa', 'bluey', 'huluwa', 'paw', 'xiyou', 'ultra', 'robot', 'peppa2', 'bluey2', 'pj', 'ultra2', 'huluwa2', 'xiyou2', 'robot2')]
+    for isl, g, lvl, want in [(i, gg, 0, 1) for i, gg in old] + [('peppa', 'peppa:find', 1, 1), ('peppa', 'peppa:find', 2, 0), ('bluey', 'bluey:write', 2, 0)]:
+        page.evaluate(OPEN)
+        go(page, isl, g, lvl, 9); page.wait_for_timeout(250)
+        s0 = stars(page)
+        page.evaluate("() => { const st = Session.st; Hints.mark(st, 'hint2'); if (st.game.gestureHint) st.game.gestureHint(st, false); }")
+        page.wait_for_timeout(250)
+        gen, cur = answer(page, 'right'); wait_next_question(page, gen)
+        if stars(page) - s0 != want:
+            probs.append((g, lvl, stars(page) - s0, 'want', want))
+        page.evaluate("gesture('home')"); page.wait_for_timeout(120)
+    log.check(not probs, '15 W3R2-02: the 2nd hint of the 14 challenges of worlds 1-2 (the host waves, nothing more) keeps the star; 认字 L1 (the picture is on the card already) keeps it; 认字 L2 (the picture shown) and 写字 (the stroke shown) do not %s' % probs)
+
+    # 16 (W3R2-03) no 读一读 review inside the English games; the challenges of the even islands still have it
+    r = {}
+    for isl, g in (('hulk3', 'hulk3:en'), ('panther3', 'panther3:en'), ('hawk3', 'hawk3:en'), ('hulk3', 'hulk3:quiz')):
+        page.evaluate("""(i) => { Store.reset(); Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; ISL[id].chars.forEach(c => { Store.s.met[c.c] = true; }); });
+          const d = DAY(); ['水', '山', '人', '口', '月'].forEach(k => { const m = Mem.touch(k); m.b = 2; m.due = d; m.pass = ['x', 'y']; Store.s.learned[k] = { w: 1, p: 0 }; });
+          ALL_ISL().slice(0, ALL_ISL().indexOf(i)).forEach(id => ISL[id].chars.forEach(c => { if (!Mem.get(c.c)) { const m = Mem.touch(c.c); m.b = 3; m.due = d + 9; m.pass = ['x', 'y']; } }));
+          ISL[i].chars.forEach(c => { const m = Mem.touch(c.c); m.pass = ['x', 'y']; m.b = 1; m.due = d + 5; }); Store.save(); }""", isl)
+        page.evaluate("([i, g]) => window.__go(i, g, 0, { seed: 5 })", [isl, g])
+        kinds = []
+        try:
+            for k in range(5):
+                cur = wait_phase(page, timeout=20000); kinds.append(cur['kind'])
+                gen, c2 = answer(page, 'right')
+                if k < 4:
+                    wait_next_question(page, gen)
+        except Exception as e:
+            kinds.append('ERR')
+        r[g] = kinds
+        page.evaluate("gesture('home')"); page.wait_for_timeout(150)
+    log.check(all('reads' not in v and 'ERR' not in v for k, v in r.items() if k.endswith(':en')) and 'reads' in r['hulk3:quiz'], '16 W3R2-03: no Chinese 读一读 review inside the English games of the even islands; the challenge still has one %s' % r)
+
+    # 17 (W3R2-06) the map's treasure-book number = the book cover's (read-only characters that passed count too)
+    r = page.evaluate("""() => { Store.reset(); ['人', '口', '一'].forEach(k => { Store.s.learned[k] = { w: 1, p: 0 }; }); ['三', '黄', '是'].forEach(k => { const m = Mem.touch(k); m.pass = ['a', 'b']; m.b = 1; }); Store.save();
+      MapView.update(); const btn = Number(document.querySelector('#bookbtn .cnt').textContent); Book.open('zh'); const cover = document.querySelector('#book .meter .mt span').textContent; Book.close(); return { btn, cover, n: ITEMS.filter(x => x.kind === 'zh' && learned(x.k)).length }; }""")
+    log.check(r['btn'] == r['n'] == 6 and r['cover'].startswith('6 '), '17 W3R2-06: the map button counts what the cover counts (3 written + 三 黄 是 read): %s' % r)
+
+    # 18 (W3R2-05) two characters still to pass: neither more than twice; English answers never twice in a row; 翻翻乐 asks the ones
+    #    still to pass, not twice in a row; the hammer between two clouds is no throw
+    probs, seq2 = [], {}
+    for g in ['hulk3:find', 'thor3:quiz', 'panther3:quiz', 'widow3:quiz', 'hawk3:find', 'hulk3:write', 'peppa:find', 'peppa:quiz', 'bluey:find']:
+        isl = g.split(':')[0]
+        for seed in (3, 8):
+            page.evaluate("""(i) => { Store.reset(); Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; ISL[id].chars.forEach(c => { Store.s.met[c.c] = true; }); });
+              const d = DAY(); ['山', '火', '车'].forEach((k, j) => { Store.s.learned[k] = { w: 1, p: 0 }; const m = Mem.touch(k); m.b = 2; m.due = d + 3 - j; });
+              const cs = ISL[i].chars.map(c => c.c), keep = cs.filter(k => !NOWRITE.includes(k)).slice(-2);
+              cs.forEach(k => { if (!keep.includes(k)) { const m = Mem.touch(k); m.pass = ['a', 'b']; m.b = 1; m.due = d + 5; } });
+              window.__keep = keep; Store.save(); }""", isl)
+            page.evaluate("([i, g, s]) => window.__go(i, g, 0, { seed: s })", [isl, g, seed])
+            items = []
+            try:
+                for k in range(5):
+                    cur = wait_phase(page, timeout=20000); items.append(cur['q'].get('item') or cur['answer'])
+                    gen, c2 = answer(page, 'right')
+                    if k < 4:
+                        wait_next_question(page, gen)
+            except Exception as e:
+                items.append('ERR')
+            keep = page.evaluate("window.__keep")
+            seq2[g + '/' + str(seed)] = ''.join(str(x) for x in items)
+            if 'ERR' in items or any(items.count(k) > 2 for k in keep) or any(items[i] == items[i + 1] for i in range(len(items) - 1)):
+                probs.append((g, seed, keep, items))
+            page.evaluate("gesture('home')"); page.wait_for_timeout(150)
+    r = page.evaluate("""() => { const out = {};
+      ['hulk3', 'thor3', 'panther3', 'widow3', 'hawk3'].forEach(i => { const g = GAMES[i + ':en']; for (let l = 1; l <= 5; l++) { const G = { world: i, W: ISL[i], rng: RNG(40 + l), bags: {}, needPass: [], asked: [], ws: {}, game: g }; let rep = 0;
+        for (let n = 0; n < 100; n++) { const q = g.gen(G, { level: l }), it = q.item || q.answer; if (it === G.asked[G.asked.length - 1]) rep++; G.asked.push(it); } out[i + ':en L' + l] = rep; } });
+      const G = { world: 'peppa', W: ISL.peppa, rng: RNG(3), bags: {}, needPass: ['口'], asked: [], ws: {}, game: GAMES['peppa:quiz'] }, mem = [];
+      for (let n = 0; n < 5; n++) { const q = GAMES['peppa:quiz'].gen(G, { level: 2 }); mem.push(q.answer); G.asked.push(q.answer); }
+      return { rep: out, mem }; }""")
+    reps = {k: v for k, v in r['rep'].items() if v}
+    memok = r['mem'].count('口') == 2 and not any(r['mem'][i] == r['mem'][i + 1] for i in range(4))
+    page.evaluate(OPEN)
+    go(page, 'thor3', 'thor3:find', 3, 5); page.wait_for_timeout(400)
+    gap = page.evaluate("""() => { const st = Session.st, h = st.hammer.getBoundingClientRect(), a = st.cards[0].getBoundingClientRect(), b = st.cards[1].getBoundingClientRect();
+      const hx = h.left + h.width / 2, hy = h.top + h.height / 2, ang = t => Math.atan2(t.top + t.height / 2 - hy, t.left + t.width / 2 - hx), m = (ang(a) + ang(b)) / 2;
+      return [hx, hy, hx + Math.cos(m) * 120, hy + Math.sin(m) * 120, st.gen || 0]; }""")
+    gen0 = q(page)['gen']
+    page.mouse.move(gap[0], gap[1]); page.mouse.down()
+    for j in range(1, 8):
+        page.mouse.move(gap[0] + (gap[2] - gap[0]) * j / 7, gap[1] + (gap[3] - gap[1]) * j / 7)
+    page.mouse.up(); page.wait_for_timeout(400)
+    still = page.evaluate("(g) => { const q = window.__q; return !!q && q.gen === g && !q.submitted; }", gen0)
+    page.evaluate("gesture('home')"); page.wait_for_timeout(150)
+    log.check(not probs and not reps and memok and still, '18 W3R2-05: two still to pass -> neither more than twice, nothing twice in a row (%d sessions) %s; English: the same answer never twice in a row in 2500 questions %s; 翻翻乐 %s; a flick between two clouds is no throw (%s) %s' % (len(seq2), probs[:4], reps, r['mem'], still, seq2))
+
     # 08 progression and the ending
     r = page.evaluate("""() => {
       Store.reset(); const out = {}, done = id => { const ws = Store.w(id); ws.unlocked = true; ISL[id].games.forEach(g => { ws.gstars[g] = 5; }); };

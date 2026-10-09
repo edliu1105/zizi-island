@@ -115,7 +115,7 @@ with sync_playwright() as p, serve() as base:
     log.check(r == '人', '11 one review place: it asks the due item, not a sentence (%s)' % r)
     # 13
     r = page.evaluate("""() => { Store.reset(); const ws = Store.w('huluwa'); const G = { practice: false, game: GAMES['huluwa:write'], ws, level: 3, W: ISL.huluwa, round: 1, rvUsed: [] };
-      WriteFallback.start(G); const st = { review: false, wf: false, assists: ['hint2'] }; WriteFallback.after(G, st, 'ok'); const s1 = ws.wf.s;
+      WriteFallback.start(G); const st = { game: GAMES['huluwa:write'], review: false, wf: false, assists: ['hint2'] }; WriteFallback.after(G, st, 'ok'); const s1 = ws.wf.s;
       G.wfMode = 2; const a = Review.slot(Object.assign(G, { round: 1 })), b = Review.slot(Object.assign(G, { round: 2 })); return [s1, a.form, b.form]; }""")
     log.check(r == [1, 'trace', 'card'], '13 writing: right only after the 2nd hint = a miss; the 2nd step alternates tracing practice and reading cards %s' % r)
     # 14

@@ -269,7 +269,7 @@ const Review = {
     if (g.kind0 === 'write') return { k, form: 'write' };
     if (g.kind0 === 'find' && ITEM[k].kind === 'zh' && !ITEM[k].fw && g.lang !== 'up') return { k, form: 'find' };
     /* after the sentence islands, a challenge game's first review slot is a sentence to read (A.3) */
-    if (!G.rdUsed && g.kind0 !== 'find' && G.rv.pos.length >= 2 && G.round === G.rv.pos[1] && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2') && ALL_ISL().indexOf(G.world) % 2 === 0) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
+    if (!G.rdUsed && /:quiz$/.test(g.id || '') && G.rv.pos.length >= 2 && G.round === G.rv.pos[1] && ALL_ISL().indexOf(G.world) > ALL_ISL().indexOf('s2') && ALL_ISL().indexOf(G.world) % 2 === 0) { G.rdUsed = true; used.pop(); return { k: null, form: 'read' }; }
     return { k, form: 'card' };
   },
   /* the game's own question as a frame for a review question: whatever its draw took from the bags (the island's

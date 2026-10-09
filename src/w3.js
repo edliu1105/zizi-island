@@ -156,7 +156,10 @@ const PlayHammer = {
     if (!c || !c.path || c.path.length < 2) return out;
     const a = c.path[c.path.length - 1], ang = Math.atan2(a.y - c.y0, a.x - c.x0);
     const d = e => { const cc = e.center(); let x = Math.atan2(cc.y - c.y0, cc.x - c.x0) - ang; while (x > Math.PI) x -= 2 * Math.PI; while (x < -Math.PI) x += 2 * Math.PI; return Math.abs(x); };
-    return out.sort((p, q) => d(p) - d(q));
+    const near = out.sort((p, q) => d(p) - d(q));
+    /* between two clouds (W3R2-08): not a throw at either - the hammer comes back, "throw it" (a miss of the hand, not a wrong answer) */
+    if (!near.length || d(near[0]) > 20 * Math.PI / 180) { if (Session.alive(st) && (!st.toldHow || Clock.t() - st.toldHow > 4000)) { st.toldHow = Clock.t(); Voice.sayNow('把锤子甩出去！', { tag: 'how' }); } return []; }
+    return near;
   },
   geo() { return K.L() ? { cx: 512, cy: 590, R: 330, a0: -165, a1: -15, w: 190, h: 140 } : { cx: 352, cy: 900, R: 330, a0: -145, a1: -35, w: 150, h: 112 }; },
   place(st) {
@@ -195,8 +198,8 @@ const PlayHammer = {
   nope(st, i) { this.fly(st, i, true); },
   next(st, strat) { if (!st.cards) return null; const i = strat === 'wrong' ? st.opts.findIndex(v => v !== st.q.answer) : st.opts.indexOf(st.q.answer); return { g: 'drop', p: { id: 'hammer', to: 'card' + i }, to: center(st.cards[i]) }; },
   workEls(st) { return st.hammer ? [st.hammer] : []; },
-  gestureHint(st) {
-    FindBase.gestureHint.call(this, st);
+  gestureHint(st, reteach) {
+    if (!reteach) FindBase.gestureHint.call(this, st);           /* a re-teach shows the throw only, never the picture (W3R2-01) */
     if (st.hammer) st.scope.anim(st.hammer, [{ transform: 'translateY(0)' }, { transform: 'translateY(-60px) rotate(30deg)' }, { transform: 'translateY(0)' }], { duration: 700, easing: EASE.glide });
   },
 };
@@ -316,8 +319,8 @@ const PlayTorch = {
   },
   workEls(st) { return st.torch ? [st.torch] : []; },
   /* the 2nd hint: the light sweeps the whole room once (every card, the same) */
-  gestureHint(st) {
-    FindBase.gestureHint.call(this, st);
+  gestureHint(st, reteach) {
+    if (!reteach) FindBase.gestureHint.call(this, st);           /* a re-teach: the light sweeps the room only (W3R2-01) */
     if (!st.cards || st.sweeping) return; st.sweeping = true;
     const L = K.L(), y = L ? 300 : 520, x0 = 80, x1 = Stage.W - 80, t0 = now(), dur = T(1600) || 1;
     const step = () => { if (st.scope.dead) return; const k = Math.min(1, (now() - t0) / dur); this.light(st, x0 + (x1 - x0) * k, y); if (k < 1) requestAnimationFrame(step); else { st.sweeping = false; const h = this.home(st); this.light(st, h.x, h.y); } };
@@ -428,14 +431,14 @@ const ERhyme = {
     const n = [0, 3, 3, 4, 4, 5][lv], allit = lv >= 2, vow = [0, 0, 0, 0, 2, 3][lv];
     const noR = T => words.filter(x => rime(x) !== rime(T));
     const ok = T => fam[rime(T)].length >= 2 && (!allit || noR(T).some(x => x[0] === T[0])) && noR(T).filter(x => x[1] === T[1] && x[0] !== T[0]).length >= vow;
-    const T = bagFrom(G, 'w', words.filter(ok)), R = G.rng.pick(fam[rime(T)].filter(w => w !== T));
+    const last = (G.asked || []).slice(-1)[0], T = bagFrom(G, 'w', words.filter(w => ok(w) && fam[rime(w)].some(x => x !== w && x !== last))), R = G.rng.pick(fam[rime(T)].filter(w => w !== T && w !== last));
     const objs = new Set([W3X.obj(T), W3X.obj(R)]), others = [];
     const add = x => { if (others.length < n - 1 && !others.includes(x) && !objs.has(W3X.obj(x))) { objs.add(W3X.obj(x)); others.push(x); return true; } return false; };
     let a = 0, v = 0;
     if (allit) G.rng.shuffle(noR(T).filter(x => x[0] === T[0])).some(x => add(x) && ++a);
     G.rng.shuffle(noR(T).filter(x => x[1] === T[1] && x[0] !== T[0])).forEach(x => { if (v < vow && add(x)) v++; });
     G.rng.shuffle(noR(T).filter(x => x[1] !== T[1] && x[0] !== T[0])).forEach(add);
-    return { k: [T, R, others.join()], target: T, answer: R, opts: W3X.put(G, others, R), allit: a, vow: v };
+    return { k: [T, R, others.join()], target: T, answer: R, item: R, opts: W3X.put(G, others, R), allit: a, vow: v };
   },
   async present(st) {
     const q = st.q;
@@ -466,9 +469,9 @@ const EVowel = {
   rule: 'missing-vowel', intro: '补上中间的字母！', softHint: true,
   gen(G, o) {
     const lv = o.level, n = [0, 2, 3, 4, 5, 5][lv], quiet = lv >= 5;
-    const w = bagFrom(G, 'w', quiet ? W3X.clear() : W3X.words()), v = w[1];
+    const last = (G.asked || []).slice(-1)[0], all = quiet ? W3X.clear() : W3X.words(), w = bagFrom(G, 'w', all.filter(x => x[1] !== last).length ? all.filter(x => x[1] !== last) : all), v = w[1];
     const others = G.rng.shuffle(VOWELS.split('').filter(x => x !== v)).slice(0, n - 1);
-    return { k: [w, others.join(''), quiet], word: w, answer: v, opts: W3X.put(G, others, v), quiet: quiet ? 1 : 0 };
+    return { k: [w, others.join(''), quiet], word: w, answer: v, item: v, opts: W3X.put(G, others, v), quiet: quiet ? 1 : 0 };
   },
   itemOf(st) { return st.q.answer; },
   async present(st) {
@@ -509,12 +512,12 @@ const EFirst = {
     const lv = o.level, n = [0, 3, 4, 4, 5, 5][lv], look = lv >= 3, quiet = lv >= 5;
     const lk = w => (LOOKEN[w[0]] || '').split('').filter(x => /[a-z]/.test(x) && ITEM[x]);
     let words = quiet ? W3X.clear() : W3X.words(); if (look) words = words.filter(w => lk(w).length);
-    const w = bagFrom(G, 'w', words), a = w[0], others = [];
+    const last = (G.asked || []).slice(-1)[0], w = bagFrom(G, 'w', words.filter(x => x[0] !== last).length ? words.filter(x => x[0] !== last) : words), a = w[0], others = [];
     const add = x => { if (others.length < n - 1 && x !== a && !others.includes(x) && ITEM[x] && (look || !lk(w).includes(x))) others.push(x); };
     if (look) lk(w).forEach(add);
     G.rng.shuffle(W3X.words().map(x => x[0])).forEach(add);
     G.rng.shuffle('abcdefghijklmnoprstuvwxyz'.split('')).forEach(add);
-    return { k: [w, others.join(''), quiet], word: w, answer: a, opts: W3X.put(G, others, a), look: others.filter(x => lk(w).includes(x)).length, quiet: quiet ? 1 : 0 };
+    return { k: [w, others.join(''), quiet], word: w, answer: a, item: a, opts: W3X.put(G, others, a), look: others.filter(x => lk(w).includes(x)).length, quiet: quiet ? 1 : 0 };
   },
   itemOf(st) { return st.q.answer; },
   async present(st) {
@@ -547,12 +550,12 @@ const ESecret = {
   gen(G, o) {
     const lv = o.level, n = [0, 3, 3, 3, 4, 5][lv], want = [0, 0, 1, 2, 2, 2][lv], words = W3X.words();
     const d1 = (a, b) => a.split('').filter((c, i) => c !== b[i]).length === 1, nb = w => words.filter(x => d1(w, x) && W3X.obj(x) !== W3X.obj(w));
-    const w = bagFrom(G, 'w', words.filter(x => nb(x).length >= want)), objs = new Set([W3X.obj(w)]), others = [];
+    const last = (G.asked || []).slice(-1)[0], cw = words.filter(x => nb(x).length >= want), w = bagFrom(G, 'w', cw.filter(x => x !== last).length ? cw.filter(x => x !== last) : cw), objs = new Set([W3X.obj(w)]), others = [];
     const add = x => { if (others.length < n - 1 && x !== w && !others.includes(x) && !objs.has(W3X.obj(x))) { objs.add(W3X.obj(x)); others.push(x); } };
     G.rng.shuffle(nb(w)).slice(0, want).forEach(add);
     const share = x => x.split('').some((c, i) => c === w[i]), rest = G.rng.shuffle(words.filter(x => !d1(w, x)));
     (lv >= 4 ? rest.filter(share).concat(rest.filter(x => !share(x))) : rest.filter(x => !share(x)).concat(rest.filter(share))).forEach(add);
-    return { k: [w, others.join()], answer: w, opts: W3X.put(G, others, w), near: others.filter(x => d1(w, x)).length };
+    return { k: [w, others.join()], answer: w, item: w, opts: W3X.put(G, others, w), near: others.filter(x => d1(w, x)).length };
   },
   async present(st) {
     const q = st.q;
@@ -583,14 +586,14 @@ const ESpy = {
   gen(G, o) {
     const lv = o.level, clear = W3X.clear(), n = [0, 3, 4, 4, 5, 5][lv], trap = lv >= 3, look = lv >= 5, lk = L => (LOOKEN[L] || '').split('');
     const okL = L => clear.some(x => x[0] === L) && (!trap || clear.some(x => x[0] !== L && x.includes(L))) && (!look || clear.some(x => lk(L).includes(x[0])));
-    const L = bagFrom(G, 'l', Array.from(new Set(clear.map(w => w[0]))).filter(okL)), w = G.rng.pick(clear.filter(x => x[0] === L));
+    const last = (G.asked || []).slice(-1)[0], Ls = Array.from(new Set(clear.map(w => w[0]))).filter(okL), L = bagFrom(G, 'l', Ls.filter(x => x !== (last || ' ')[0]).length ? Ls.filter(x => x !== (last || ' ')[0]) : Ls), w = G.rng.pick(clear.filter(x => x[0] === L));
     const others = [], used = new Set([L]), add = x => { if (others.length < n - 1 && !used.has(x[0])) { used.add(x[0]); others.push(x); return true; } return false; };
     const traps = trap ? clear.filter(x => x[0] !== L && x.includes(L)) : [], isT = x => x.includes(L), isK = x => lk(L).includes(x[0]);
     if (look) { const both = traps.filter(isK); if (both.length) add(G.rng.pick(both)); }          /* bed for d: ends with d, starts like it */
     if (trap && !others.some(isT)) G.rng.shuffle(traps).some(add);
     if (look && !others.some(isK)) G.rng.shuffle(clear.filter(isK)).some(add);
     G.rng.shuffle(clear.filter(x => x[0] !== L && !isT(x) && !isK(x))).forEach(add);
-    return { k: [L, w, others.join()], letter: L, answer: w, opts: W3X.put(G, others, w), trap: others.some(isT) ? 1 : 0, look: others.some(isK) ? 1 : 0 };
+    return { k: [L, w, others.join()], letter: L, answer: w, item: w, opts: W3X.put(G, others, w), trap: others.some(isT) ? 1 : 0, look: others.some(isK) ? 1 : 0 };
   },
   itemOf(st) { return st.q.letter; },
   async present(st) {

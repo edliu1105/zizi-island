@@ -17,8 +17,8 @@ function needPick(G, pool, bag) {
   const asked = G.asked || [], last = asked[asked.length - 1], times = k => asked.filter(x => x === k).length;
   const need = (G.needPass || []).filter(k => pool.includes(k) && k !== last && times(k) < 2);
   if (need.length) { const m = Math.min(...need.map(times)); return bagFrom(G, 'need', need.filter(k => times(k) === m)); }
-  const rest = pool.filter(k => k !== last);
-  return bagFrom(G, bag || 'ans', rest.length ? rest : pool);
+  const done2 = k => (G.needPass || []).includes(k) && times(k) >= 2, rest = pool.filter(k => k !== last && !done2(k)), rest2 = pool.filter(k => k !== last);
+  return bagFrom(G, bag || 'ans', rest.length ? rest : rest2.length ? rest2 : pool);
 }
 /* characters read but not written: the plan writes none over 8 strokes in the first two worlds (A.4) - 是 has 9 */
 const NOWRITE = ['是'].concat(NOWRITE3.split(''));      /* world 3 writes 2 characters an island; the others are read (A.4) */
@@ -192,8 +192,10 @@ const FindBase = {
     await st.scope.guard(Voice.afterSay(200));
   },
   workEls(st) { return st.cards || []; },
-  gestureHint(st) {
-    if (st.picShown || !st.taskEl || st.level <= 1) return;
+  gestureHint(st, reteach) {
+    if (reteach) { (this.workEls ? this.workEls(st) : []).forEach((e, i) => st.scope.timeout(() => K.hop(st, e, 22), 120 * i)); return; }     /* how to play only (W3R2-01) */
+    if (st.level <= 1) { st.noHelp = true; return; }                      /* the card shows the picture already: nothing is given (W3R2-02) */
+    if (st.picShown || !st.taskEl) return;
     st.picShown = true;
     const it = st.taskEl.querySelector('.it'), im = img(OBJURL(ITEM[st.q.answer].obj), '');
     im.style.height = '54px'; it.replaceChild(im, it.firstChild);
@@ -494,7 +496,7 @@ const QMemory = {
   gen(G, o) {
     const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 6;
     const pool = poolOf(G, 'zh', lv >= 4).concat(lv >= 3 ? poolOf(G, 'up', false) : []);
-    const answer = PICK(G, 'ans', poolOf(G, 'zh', false));
+    const answer = needPick(G, poolOf(G, 'zh', false));
     const others = G.rng.shuffle(pool.filter(k => k !== answer)).slice(0, n - 1);
     const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, answer);
     return { k: [answer, others.join('')], answer, opts: others, show: lv <= 2 ? 3600 : lv <= 4 ? 3000 : 2600 };
@@ -591,7 +593,7 @@ const QOrder = {
 const QMissing = {
   kind0: 'missing', verb: '补！', intro: '少了一笔！', props: [],
   gen(G, o) {
-    const lv = o.level, answer = PICK(G, 'ans', poolOf(G, 'zh', lv >= 4));
+    const lv = o.level, answer = needPick(G, poolOf(G, 'zh', lv >= 4));
     const names = (STROKE_NAMES[answer] || '').split(' '), n = names.length, miss = G.rng.int(0, n - 1), want = names[miss];
     const pool = G.rng.shuffle(poolOf(G, 'zh', true).filter(k => k !== answer)), fo = [], used = new Set([want]);
     for (const k of pool) {
