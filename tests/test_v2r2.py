@@ -64,9 +64,11 @@ with sync_playwright() as p, serve() as base:
         need = page.evaluate("(i) => ISL[i].chars.map(c => c.c)", isl)
         asked = play(page, isl, g, None, 5, wrong_first=True)
         rounds = page.evaluate("(g) => (GAMES[g] && GAMES[g].rounds) || 5", g)
-        miss = [k for k in need if k not in asked]
-        if miss and len(need) <= rounds: skipped[isl] = (need, asked, miss)
-    log.check(not skipped, '01 the first answer wrong and a review card in the session: every character still to pass is asked (10 islands) %s' % skipped)
+        # each question counts (a wrong one too, client rule 2026-10-08), so a session with a mistake can have fewer own
+        # questions than characters; what must hold: no character is asked twice while another still to pass is skipped
+        own = [a for a in asked if a in need]
+        if len(set(own)) < min(len(need), len(own)): skipped[isl] = (need, asked)
+    log.check(not skipped, '01 the first answer wrong and a review card in the session: no character still to pass is skipped for a repeat (10 islands) %s' % skipped)
     # 01b: the four games once each, the first answer of each wrong -> the flag
     flags = {}
     for isl in isls:

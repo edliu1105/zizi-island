@@ -66,7 +66,7 @@ with sync_playwright() as p, serve() as base:
                     page.wait_for_timeout(20); continue
                 step(page, 'wrong'); page.wait_for_timeout(10)
             page.wait_for_function("([g]) => window.__q && window.__q.gen !== g && ['ready','act','input'].includes(window.__q.phase)", arg=[gen], timeout=30000)
-            keys.append(page.evaluate("Session.G.game.key(Session.st.q)"))
+            if q(page)['kind'] != 'review': keys.append(page.evaluate("Session.G.game.key(Session.st.q)"))      # a missed character's card ("再来一个！") brings it back on purpose
         stars = page.evaluate("([i, g]) => Prog.stars(i, g)", [isl, g])
         log.check(stars == 0 and len(set(keys)) == len(keys), '%s: three wrong answers -> no star, each time a new question (%d different)' % (g, len(set(keys))))
         page.evaluate("gesture('home')"); page.wait_for_timeout(100)
