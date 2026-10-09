@@ -2626,7 +2626,7 @@ const Prog = {
   worldOpen(w) { return w === 'w1' || Store.s.all || (w === 'w2' ? this.worldDone('w1') : this.worldDone('w2')); },
   /* the difficulty now: the island's start + its game's boost + one step for every 5 stars earned in it */
   level(i, g) { return clamp(ISL[i].base + ((GAMES[g] && GAMES[g].boost) || 0) + Math.floor(this.stars(i, g) / 5), 1, 5); },
-  learnedCount() { return ITEMS.filter(x => x.kind === 'zh' && learned(x.k)).length; },      /* = the book cover's "N 个字" (W3R2-06) */
+  learnedCount() { return ITEMS.filter(x => learned(x.k)).length; },      /* the book cover's characters + letters, by the same learned() (read-only characters that passed count too: W3R2-06) */
   /* opens what is due (show: the map plays the cloud show for a new island) */
   check(show) {
     let any = false;

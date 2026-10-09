@@ -385,8 +385,8 @@ with sync_playwright() as p, serve() as base:
 
     # 17 (W3R2-06) the map's treasure-book number = the book cover's (read-only characters that passed count too)
     r = page.evaluate("""() => { Store.reset(); ['人', '口', '一'].forEach(k => { Store.s.learned[k] = { w: 1, p: 0 }; }); ['三', '黄', '是'].forEach(k => { const m = Mem.touch(k); m.pass = ['a', 'b']; m.b = 1; }); Store.save();
-      MapView.update(); const btn = Number(document.querySelector('#bookbtn .cnt').textContent); Book.open('zh'); const cover = document.querySelector('#book .meter .mt span').textContent; Book.close(); return { btn, cover, n: ITEMS.filter(x => x.kind === 'zh' && learned(x.k)).length }; }""")
-    log.check(r['btn'] == r['n'] == 6 and r['cover'].startswith('6 '), '17 W3R2-06: the map button counts what the cover counts (3 written + 三 黄 是 read): %s' % r)
+      MapView.update(); const btn = Number(document.querySelector('#bookbtn .cnt').textContent); Book.open('zh'); const cover = document.querySelector('#book .meter .mt span').textContent; Book.close(); return { btn, cover, n: ITEMS.filter(x => learned(x.k)).length }; }""")
+    log.check(r['btn'] == r['n'] == 6 and r['cover'].startswith('6 '), '17 W3R2-06: the map button counts what the cover counts, by the same learned() (3 written + 三 黄 是 read, no letters): %s' % r)
 
     # 18 (W3R2-05) two characters still to pass: neither more than twice; English answers never twice in a row; 翻翻乐 asks the ones
     #    still to pass, not twice in a row; the hammer between two clouds is no throw
