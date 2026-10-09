@@ -6012,8 +6012,8 @@ const ESecret = {
     this.place(st);
     st.prompt = '读单词，找图！'; Voice.say('读单词，找图！', { tag: 'prompt' });
   },
-  cardSpot() { return K.L() ? { cx: 560, cy: 400 } : { cx: 352, cy: 700 }; },
-  place(st) { const L = K.L(); if (st.note) place(st.note, (L ? 560 : 352) - 165, L ? 100 : 250, 330, 150); K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
+  cardSpot() { return K.L() ? { cx: 512, cy: 400 } : { cx: 352, cy: 700 }; },
+  place(st) { const L = K.L(); if (st.note) place(st.note, (L ? 512 : 352) - 165, L ? 100 : 250, 330, 150); K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
   onGesture(st, name, p) {
     if (name === 'tap' && p.id === 'word' && !st.submitted) { st.peeked = true; st.noStar = true; Voice.sayNow(st.q.answer, { tag: 'peek' }); K.hop(st, st.note, 12); return 'ok'; }
     return EnBase.onGesture.call(this, st, name, p);
@@ -6231,10 +6231,10 @@ const QPaint = Object.assign({}, ReadHint, {
     this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
   async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say('这是' + st.q.opts[st.tapped] + '色', { tag: 'wrong' }); await st.scope.wait(900); },
-  next(st, strat) {
-    if (!st.cards) return null;
-    const want = st.q.seq[st.step || 0], i = strat === 'wrong' ? st.q.opts.findIndex(k => k !== want) : st.q.opts.indexOf(want);
-    return { g: 'tap', p: { id: 'card' + i } };
+  next(st, strat) {           /* the pot for the shape to paint now (right) or another pot (wrong) */
+    const q = st.q, c = q.seq[st.step || 0]; if (!st.cards) return null;
+    const i = q.opts.findIndex(k => (strat === 'wrong') !== (k === c));
+    return i < 0 ? null : { g: 'tap', p: { id: 'card' + i } };
   },
   snap(st) { return { opts: st.opts || null, step: st.step || 0, peeked: !!st.peeked }; },
   iconNode() { return W3X.pot('#E8413A'); },

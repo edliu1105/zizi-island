@@ -97,8 +97,8 @@ with sync_playwright() as p, serve() as base:
     log.check(set(r[0]) == set('六七八九十') and set(r[1]) > set(r[0]), '01 十格灯: levels 1-2 the island\'s numbers, from level 3 every number known (1-10) %s' % r)
     r = page.evaluate("""() => { const G = { world: 'widow3', W: ISL.widow3, rng: RNG(3), bags: {}, needPass: [], ws: Store.w('widow3') }, one = [], five = [];
       for (let i = 0; i < 40; i++) { one.push(GAMES['widow3:quiz'].gen(G, { level: 1 })); five.push(GAMES['widow3:quiz'].gen(G, { level: 5 })); }
-      return [one.filter(q => q.pivot || q.fam === 'bluey').length, five.filter(q => q.pivot).length, five.filter(q => q.fam === 'bluey').length]; }""")
-    log.check(r[0] == 0 and r[1] > 0 and r[2] > 0, '01 全家福: level 1 the words in one family photo; level 5 a second family and "他的姐姐" %s' % r)
+      return [one.filter(q => q.rel || q.extra).length, five.filter(q => q.rel === 2 && q.extra).length, five.filter(q => q.trap).length]; }""")
+    log.check(r[0] == 0 and r[1] == 40 and r[2] > 0, '01 全家福: level 1 a word in one family photo; level 5 two words ("弟弟的姐姐") with someone from another family, often of that name too %s' % r)
 
     # 02 real mouse input
     for ori, vw, vh in (('L', 1180, 820), ('P', 820, 1180)):
@@ -276,7 +276,8 @@ with sync_playwright() as p, serve() as base:
         items = [s[0] for s in seq]
         n, adj, keys = items.count(keep), any(items[i] == items[i + 1] for i in range(len(items) - 1)), len(set(s[1] for s in seq))
         seen[g] = ''.join(str(x) for x in items)
-        if n < 1 or n > 2 or adj or (not g.endswith(':write') and keys < len(seq)):
+        en = g.endswith(':en')                 # the English games ask words, not the island's characters: no repeat in a row, all different
+        if (not en and (n < 1 or n > 2)) or adj or (not g.endswith(':write') and keys < len(seq)):
             probs.append((g, keep, items, keys))
         page.evaluate("gesture('home')"); page.wait_for_timeout(200)
     log.check(not probs, '11 W3R1-02: one character still to pass -> asked once or twice a session, never twice in a row, every question different (worlds 1-3) %s %s' % (probs[:5], seen))
