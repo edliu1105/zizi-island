@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """The live site, Chromium and WebKit (the iPad engine): the page and its assets load, the map shows, a find game and a
-writing game play through a question, the treasure book opens; Chromium: the service worker precaches every asset.
+writing game play through a question (also four games of the rainbow sea's hero islands), the treasure book opens; Chromium: the service worker precaches every asset.
 usage: python tests/smoke_live.py [url]"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -14,7 +14,7 @@ with sync_playwright() as p:
         page = new_page(br, URL, 1180, 820, sw='allow' if eng == 'chromium' else 'block')
         enter(page); page.wait_for_timeout(1500)
         log.check(page.evaluate("MapView.built && Screens.cur === 'map'"), '%s: the map' % eng)
-        for isl, g in (('peppa', 'peppa:find'), ('peppa', 'peppa:write'), ('bluey', 'bluey:abc'), ('robot', 'robot:quiz')):
+        for isl, g in (('peppa', 'peppa:find'), ('peppa', 'peppa:write'), ('bluey', 'bluey:abc'), ('robot', 'robot:quiz'), ('hulk3', 'hulk3:find'), ('thor3', 'thor3:quiz'), ('widow3', 'widow3:en'), ('hawk3', 'hawk3:find')):
             page.evaluate("([i, g]) => window.__go(i, g, 2, {seed: 9})", [isl, g])
             wait_phase(page, timeout=40000)
             gen = q(page)['gen']
