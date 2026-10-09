@@ -928,7 +928,7 @@ const Input = {
         const d = Object.keys(dirs).find(k => Math.abs(((ang - dirs[k] + 540) % 360) - 180) <= 35);
         if (d && sp.swipe.includes(d)) { gesture('swipe', { id: sp.id, dir: d }); this.fails = 0; } else this.fail();
       } else {
-        const tg = (typeof sp.flick === 'function' ? sp.flick() : sp.flick).find(f => { const cc = f.center(); const ta = Math.atan2(cc.y - c.y0, cc.x - c.x0) * 180 / Math.PI; return Math.abs(((ang - ta + 540) % 360) - 180) <= 35; });
+        const tg = (typeof sp.flick === 'function' ? sp.flick(p, c) : sp.flick).find(f => { const cc = f.center(); const ta = Math.atan2(cc.y - c.y0, cc.x - c.x0) * 180 / Math.PI; return Math.abs(((ang - ta + 540) % 360) - 180) <= 35; });
         if (tg) { gesture('drop', { id: sp.id, to: tg.id }); this.fails = 0; } else this.fail();
       }
       return;
@@ -1280,7 +1280,7 @@ const Loader = {
     L.style.setProperty('--world', G.W.color);
     L.style.background = G.W.color;
     const r = $('.runner', L), im = $('img', r);
-    im.src = 'assets/chars/' + G.W.runner + '.png';
+    im.src = 'assets/chars/' + (G.W.runner || G.W.host) + '.png';
     Screens.show('load');
     const t0 = now();
     const run = r.animate([{ left: '-15%' }, { left: '115%' }], { duration: 2600, iterations: Infinity });

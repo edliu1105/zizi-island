@@ -54,11 +54,11 @@ const Mem = {
 const Scene = {
   node(spec, size) {
     const d = el('div', 'scene'); Object.assign(d.style, { position: 'relative', width: size + 'px', height: size + 'px' });
-    spec.forEach(([o, x, y, k]) => { const s = size * k, i = img('assets/obj/' + o + '.png', '', d); Object.assign(i.style, { position: 'absolute', width: s + 'px', height: s + 'px', left: (x * size - s / 2) + 'px', top: (y * size - s / 2) + 'px', objectFit: 'contain', pointerEvents: 'none' }); });
+    spec.forEach(([o, x, y, k, f]) => { const s = size * k, i = img(OBJURL(o), '', d); Object.assign(i.style, { position: 'absolute', width: s + 'px', height: s + 'px', left: (x * size - s / 2) + 'px', top: (y * size - s / 2) + 'px', objectFit: 'contain', pointerEvents: 'none' }); if (f) i.style.filter = f; });      /* f: a CSS filter (a red bird for a distractor) */
     return d;
   },
   /* the picture of an item: its object, or (a function word) the scene of its first sentence */
-  of(k, size) { const it = ITEM[k]; if (it && it.obj) { const i = img('assets/obj/' + it.obj + '.png', ''); Object.assign(i.style, { width: size + 'px', height: size + 'px', objectFit: 'contain' }); return i; } const s = FW_SENTS[k]; return s ? this.node(s[0][1], size) : Glyph.any(k, size * 0.8); },
+  of(k, size) { const it = ITEM[k]; if (it && it.obj) { const i = img(OBJURL(it.obj), ''); Object.assign(i.style, { width: size + 'px', height: size + 'px', objectFit: 'contain' }); return i; } const s = FW_SENTS[k]; return s ? this.node(s[0][1], size) : Glyph.any(k, size * 0.8); },
 };
 /* a sentence as a row of glyphs (the missing one a dashed box); every glyph a tap target when asked for */
 const Sent = {
@@ -117,7 +117,8 @@ const QFill = {
   gen(G, o) {
     const lv = o.level, pool = poolOf(G, 'zh', false), need = (G.needPass || []).filter(k => pool.includes(k));
     const answer = need.length ? PICK(G, 'need', need) : PICK(G, 'ans', pool);
-    const s = !Store.s.met[answer] ? FW_SENTS[answer][0] : G.rng.pick(FW_SENTS[answer]), n = lv <= 2 ? 3 : 4;
+    const kn = knownZh(G), more = (FW_SENTS3[answer] || []).filter(x => Array.from(x[0]).every(c => /[。！？，]/.test(c) || c === answer || kn.includes(c)));      /* phase 2: once its other characters are known */
+    const s = !Store.s.met[answer] ? FW_SENTS[answer][0] : G.rng.pick(FW_SENTS[answer].concat(more)), n = lv <= 2 ? 3 : 4;
     const fws = ITEMS.filter(x => x.fw && x.k !== answer && (x.isl === G.world || Store.s.mem[x.k] || ISL[x.isl].i < G.W.i && ISL[x.isl].w === G.W.w)).map(x => x.k);
     const others = G.rng.shuffle(fws.filter(k => !s[0].includes(k))).slice(0, n - 1);
     const opts = G.rng.shuffle(others); opts.splice(G.rng.int(0, opts.length), 0, answer);
@@ -242,7 +243,7 @@ const CASTS2 = { s1: ['ironman', 'spiderman'], s2: ['captain', 'miles'] };
    asks a wrong item again 2 questions later in another form */
 const Review = {
   plan(G) {
-    if (G.practice || G.key) return { pos: [] };
+    if (G.practice || G.key || G.game.ownReview) return { pos: [] };      /* world 3's writing plans its own old friend */
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);

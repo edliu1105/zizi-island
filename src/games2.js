@@ -213,7 +213,7 @@ const QSpell = {
   async present(st) {
     const q = st.q, obj = CVC_OBJ[q.word];
     st.got = 0; st.used = [];
-    const pic = st.pic = ZX.thing(st, 180, 180, 6, 'objpop'); ZX.pic('assets/obj/' + obj + '.png', pic); K.pop(st, pic);
+    const pic = st.pic = ZX.thing(st, 180, 180, 6, 'objpop'); ZX.pic(OBJURL(obj), pic); K.pop(st, pic);
     st.slots = q.word.split('').map((c, i) => { const d = ZX.thing(st, 110, 110, 6, 'card'); if (q.hint) { const g = Glyph.en(c, 84, 'rgba(43,33,24,.18)'); d.appendChild(g); } return d; });
     st.tileEls = q.tiles.map((c, i) => { const d = ZX.thing(st, 110, 110, 8, 'item'); ZX.pic('assets/props/tile.png', d); const g = Glyph.en(c, 80); Object.assign(g.style, { position: 'absolute', left: '50%', top: '52%', transform: 'translate(-50%,-50%)' }); d.appendChild(g); K.reg(st, 'T' + i, d, {}); K.pop(st, d, 60 * i); return d; });
     this.place(st);
@@ -283,7 +283,7 @@ const QWord2 = {
   },
   async present(st) {
     const q = st.q, obj = WORDS2_OBJ[q.word];
-    const pic = st.pic = ZX.thing(st, 170, 170, 6, 'objpop'); ZX.pic('assets/obj/' + obj + '.png', pic); K.pop(st, pic);
+    const pic = st.pic = ZX.thing(st, 170, 170, 6, 'objpop'); ZX.pic(OBJURL(obj), pic); K.pop(st, pic);
     st.first = ZX.thing(st, 140, 140, 6, 'card'); st.first.appendChild(Glyph.zh(q.a, 110));
     st.blank = ZX.thing(st, 140, 140, 6, 'card'); st.blank.style.border = '5px dashed #2B2118'; st.blank.style.background = 'rgba(255,255,255,.6)'; const qm = el('div', '', st.blank); qm.innerHTML = ICONS.q; qm.style.width = qm.style.height = '60px';
     K.cards(st, q.opts.map(k => Glyph.zh(k, 108)), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
@@ -377,7 +377,7 @@ const QRead = {
   },
   cardSpot() { return K.L() ? { cx: 512, cy: 400 } : { cx: 352, cy: 560 }; },
   place(st) { K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
-  async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], b = box(e); K.hop(st, e, 30); Sfx.reveal(); const d = ZX.thing(st, 150, 150, 32, 'objpop'); ZX.pic('assets/obj/' + CVC_OBJ[st.q.answer] + '.png', d); place(d, b.x + b.w / 2 - 75, b.y - 170, 150, 150); K.pop(st, d); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
+  async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], b = box(e); K.hop(st, e, 30); Sfx.reveal(); const d = ZX.thing(st, 150, 150, 32, 'objpop'); ZX.pic(OBJURL(CVC_OBJ[st.q.answer]), d); place(d, b.x + b.w / 2 - 75, b.y - 170, 150, 150); K.pop(st, d); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say(ans, { tag: 'wrong' }); await st.scope.wait(900); },
   iconNode() { return Glyph.word('dog', 44); },
 };

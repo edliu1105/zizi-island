@@ -5,9 +5,9 @@ praise strings) and the sentences made from data (every character's line, "哪�
 Chinese lines must stay within 8 characters (the client's rule). usage: python tools/voice_lines.py"""
 import os, re, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content import W1, W2, W3, CVC, WORDS2, FW_SENTS, READ, BOOKS
+from content import W1, W2, W3, CVC, WORDS2, FW_SENTS, FW_SENTS3, READ, BOOKS, WORDS3
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
+CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十']
 CNQ = lambda n: '两' if n == 2 else CN[n]
 # said through a variable or a ternary the scan does not see
 EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字', '玩得真开心！', '我们去字字岛吧！', 'Hello!']
@@ -15,7 +15,7 @@ EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字'
 
 def literals():
     out = set()
-    for f in ('app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js'):
+    for f in ('app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js', 'w3.js'):
         s = open(os.path.join(ROOT, 'src', f), encoding='utf-8').read()
         for m in re.finditer(r"(?:Voice\.say|Voice\.sayNow|K\.say\(st,|W2X\.say|say)\(\s*'([^'\\]+)'", s):
             out.add(m.group(1))
@@ -78,8 +78,23 @@ def data_lines():
     w = open(os.path.join(ROOT, 'src', 'writer.js'), encoding='utf-8').read()
     for v in re.findall(r":\s*'([^']+)'", re.search(r"const STROKE_NAMES = \{(.+?)\n\};", w, re.S).group(1)):
         out |= {'这是' + nm for nm in v.split()}            # the missing-stroke challenge names what was picked
-    for n in range(1, 15):
+    for n in range(1, 30):                                   # every flag of the installed seas (21 islands now)
         out.add('插上旗子啦！' if n == 1 else CNQ(n) + '面旗子啦！')
+    # world 3, phase 2 (src/w3.js): lines made from data
+    out |= {w for w, _, _ in WORDS3}
+    for k, lst in FW_SENTS3.items():
+        out |= {t for t, _ in lst}
+    zh = [c for lst in (W1, W2, W3) for d in lst if not d.get('fw') for c, _, _, _ in d['chars']]
+    out |= {'砸碎所有的' + c + '！' for c in zh}                          # 绿巨人 · 砸石头 (its review questions too)
+    out |= {'亮了' + CNQ(n) + '盏灯' for n in range(1, 11)}               # 雷神 · 十格灯: what was lit
+    for c in '红黄蓝绿白':                                                # 黑豹 · 涂颜色
+        out.add('这是' + c + '色')
+        for nn in '衣云叶花':
+            out |= {c + nn, c + nn + '！'}
+    kin = ['爸爸', '妈妈', '哥哥', '姐姐', '弟弟', '爷爷', '妹妹']        # 黑寡妇 · 全家福
+    out |= set(kin) | {'这是' + k for k in kin}
+    for r in ('他的姐姐', '他的妈妈', '他的爸爸', '他的哥哥', '他的弟弟'):
+        out |= {r, r + '！'}
     return out
 
 

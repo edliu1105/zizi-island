@@ -9,9 +9,12 @@ const CHARS = {
   wukong: ['悟空', 'flip'], bajie: ['八戒', 'belly'], shaseng: ['沙僧', 'nod'], tangseng: ['师父', 'bow'], dragon_horse: ['白龙马', 'rear'],
   catboy: ['猫小子', 'pounce'], owlette: ['猫头鹰女', 'flip'], gekko: ['壁虎侠', 'hop'],
   ultraman: ['奥特曼', 'thrust'], zero: ['赛罗', 'thrust'], optimus: ['擎天柱', 'stomp'], bumblebee: ['大黄蜂', 'hop'], kaiju1: ['小怪兽', 'hop'], kaiju2: ['小怪兽', 'hop'],
+  hulk: ['绿巨人', 'smash'], thor: ['雷神', 'zap'], panther: ['黑豹', 'pounce'], widow: ['黑寡妇', 'flip'], hawkeye: ['鹰眼', 'aim'],
 };
+/* an item's picture: an object (assets/obj) or, with '@', one of the client's own character pictures as it is (world 3's family words) */
+const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + o) + '.png';
 const PRAISE = ['真棒！', '对啦！', '你真厉害！', '好样的！', '太棒啦！', '一点不错！', '你答对啦！', '认得真准！'];
-const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十'];
 const CNQ = n => (n === 2 ? '两' : CN[n] || String(n));
 const UI = { doneBtn(icon, size) { const b = el('div', 'done'); size = size || 110; b.style.width = size + 'px'; b.style.height = size + 'px'; b.innerHTML = ICONS[icon] || ICONS.check; return b; } };
 
@@ -54,7 +57,7 @@ const Glyph = {
     else { const gg = svg('g', { transform: 'translate(0,900) scale(1,-1)' }, s); Hanzi.data[g].s.forEach(o => svg('path', { d: o, fill: color || INK }, gg)); }
     return s;
   },
-  obj(id) { const i = img('assets/obj/' + id + '.png', ''); Object.assign(i.style, { width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }); return i; },
+  obj(id) { const i = img(OBJURL(id), ''); Object.assign(i.style, { width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }); return i; },
 };
 
 /* ---------------------------------------------------------------- storage (versioned, corruption tolerant) */
@@ -149,8 +152,9 @@ const Prog = {
 };
 const flagged = id => Prog.islandDone(id);
 const FLAG_HTML = id => {
-  const W = ISL[id], two = W.w === 'w2', ink = '#2B2118';
-  const cloth = two ? '<path d="M2 3H58L47 21L58 39H2Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/><path d="M3.5 4.5H10V37.5H3.5Z" fill="' + W.color2 + '"/>'
+  const W = ISL[id], two = W.w === 'w2', three = W.w === 'w3', ink = '#2B2118';
+  const cloth = three ? '<path d="M2 3Q30 -2 58 5Q54 21 58 37Q30 44 2 39Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>' + ['#E8413A', '#FFC93C', '#5CC46E', '#4FB3FF'].map((c, i) => '<path d="M3.5 ' + (28 + 2.4 * i) + 'Q30 ' + (33 + 2.4 * i) + ' 56.5 ' + (27.5 + 2.4 * i) + '" stroke="' + c + '" stroke-width="2.6" fill="none"/>').join('')
+    : two ? '<path d="M2 3H58L47 21L58 39H2Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/><path d="M3.5 4.5H10V37.5H3.5Z" fill="' + W.color2 + '"/>'
     : '<path d="M2 3Q30 -2 58 5Q54 21 58 37Q30 44 2 39Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/><path d="M3.5 31Q30 36 56.5 30.5L57 35.6Q30 42.4 3.5 37.7Z" fill="' + W.color2 + '"/>';
   return '<div class="cloth"><svg viewBox="0 0 60 42">' + cloth + '</svg><img src="assets/thumbs/' + W.host + '.png" alt=""></div>'
     + (two ? '<svg class="finial" viewBox="0 0 24 24"><path d="M12 1.5L15 8.6L22.6 9.3L16.8 14.3L18.6 21.8L12 17.8L5.4 21.8L7.2 14.3L1.4 9.3L9 8.6Z" fill="#FFC93C" stroke="' + ink + '" stroke-width="2.2" stroke-linejoin="round"/></svg>' : '');
@@ -554,7 +558,7 @@ const MapView = {
       tapify(hit, () => this.tapIsland(id));
       this.isl[id] = { d, glow, land, hero, cloud, lan, big, flag, hit, deco };
       if (sp) { lan.remove(); big.remove(); flag.remove(); }
-      if (/^soon/.test(id)) { hero.src = 'assets/chars/' + ['hulk', 'thor', 'panther', 'widow', 'hawkeye'][Number(id.slice(4)) % 5] + '.png'; hero.style.filter = 'brightness(0) opacity(.55)'; }
+      if (/^soon/.test(id)) { const sl = WI.soon || []; hero.src = 'assets/chars/' + (sl[Number(id.slice(4)) % Math.max(1, sl.length)] || 'peppa') + '.png'; hero.style.filter = 'brightness(0) opacity(.55)'; }
       if (id === 'gate') d.classList.add('gate');
     });
     this.layout();
@@ -672,7 +676,7 @@ const MapView = {
     const W = ISL[id];
     Voice.sayNow(line || W.hi, { tag: line ? 'unlock' : 'map' });
     const p = this.panel = el('div', '', $('#map'));
-    Object.assign(p.style, { position: 'absolute', inset: 0, zIndex: 30, background: this.set === 'w2' ? 'rgba(14,22,64,.74)' : 'rgba(12,44,74,.6)' });
+    Object.assign(p.style, { position: 'absolute', inset: 0, zIndex: 30, background: this.set === 'w2' ? 'rgba(14,22,64,.74)' : this.set === 'w3' ? 'rgba(52,30,92,.66)' : 'rgba(12,44,74,.6)' });
     tapify(p, () => this.closePanel(), { silent: true });
     const vw = window.innerWidth, vh = window.innerHeight, port = vh > vw * 1.02;
     /* the whole panel (host, island, games, stars, words) fits the screen and is centred: no head cut by the top (R1-06) */
@@ -918,7 +922,7 @@ const Book = {
         const on = learned(it.k), lv = (Store.s.learned[it.k] || {}).p || 0;
         const t = el('div', 'tile' + (on ? '' : ' locked') + (lv >= 3 ? ' gold' : ''), grid);
         t.appendChild(it.kind === 'zh' ? Glyph.zh(it.k, 78) : Glyph.en(it.k, 70));
-        const pic = it.obj ? img('assets/obj/' + it.obj + '.png', 'pic', t) : null;
+        const pic = it.obj ? img(OBJURL(it.obj), 'pic', t) : null;
         el('div', 'en', t, { text: it.en || '' });
         if (on) { const fl = el('div', 'fl', t); for (let i = 0; i < 3; i++) el('i', i < lv ? 'on' : '', fl); }
         else { const lk = el('div', 'lk', t); lk.innerHTML = '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect x="9" y="18" width="22" height="17" rx="4" fill="#FFC93C" stroke="#2B2118" stroke-width="3"/><path d="M13 18V13a7 7 0 0 1 14 0v5" fill="none" stroke="#2B2118" stroke-width="3.5"/></svg>'; }
@@ -1038,7 +1042,7 @@ const Finale = {
         sc.timeout(() => sc.anim(im, [{ transform: 'translateX(-50%) translateY(0)' }, { transform: 'translateX(-50%) translateY(-14px)' }, { transform: 'translateX(-50%) translateY(0)' }], { duration: 520 + (i % 3) * 90, iterations: Infinity, delay: (i * 97) % 400 }), 1600);
       });
     });
-    Voice.say(w === 'w2' ? '星光大派对！' : '大家一起庆祝！', { tag: 'finale' });
+    Voice.say(w === 'w3' ? '彩虹大派对！' : w === 'w2' ? '星光大派对！' : '大家一起庆祝！', { tag: 'finale' });
     Sfx.fanfare();
     this.fireworks(sc);
     sc.timeout(() => { Voice.say('一起拍照，茄子！', { tag: 'finale' }); }, 3500);

@@ -10,7 +10,7 @@ log = Log('voiceflow')
 with sync_playwright() as p, serve() as base:
     br = p.chromium.launch()
     page = new_page(br, base, 1180, 820, fast=False); enter(page); page.wait_for_timeout(2500)
-    games = page.evaluate("ORDER.w1.concat(ORDER.w2).flatMap(i => ISL[i].games.map(g => [i, g]))")
+    games = page.evaluate("ORDER.w1.concat(ORDER.w2, ORDER.w3).flatMap(i => ISL[i].games.map(g => [i, g]))")
     for isl, g in games:
         page.evaluate("window.__speechLog.length = 0")
         page.evaluate("([i, g]) => window.__go(i, g, 0, {seed: 5})", [isl, g])

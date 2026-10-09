@@ -1,13 +1,13 @@
 /* ================================================================ 字字岛 · the games
    Every island: 1 认字 (find the character: a different play on every island), 2 写字 (田字格), 3 写字母 (四线三格),
    4 挑战 (a reasoning test, different on every island). Stars as in 点点岛: only the child's own first try. */
-const LOOK = { 日: '目田月口', 目: '日田', 田: '日目口', 口: '日田', 人: '大从', 大: '人', 木: '禾米本', 禾: '木米', 米: '木禾', 牛: '手', 手: '牛', 马: '鸟', 鸟: '马', 上: '下', 下: '上', 月: '日明', 本: '木', 林: '木休', 从: '人', 休: '林', 明: '日月', 风: '电', 电: '田日', 包: '勺', 勺: '包', 兔: '龙', 杯: '林', 床: '林', 叶: '口', 果: '田', 车: '牛', 门: '口', 衣: '农', 巾: '中', 光: '火', 火: '光' };
+const LOOK = { 一: '二三', 二: '一三', 三: '二一', 八: '人', 十: '七', 七: '十', 白: '日目', 来: '米', 妈: '姐', 姐: '妈', 吃: '喝', 喝: '吃', 红: '绿', 绿: '红', 日: '目田月口白', 目: '日田', 田: '日目口', 口: '日田', 人: '大从', 大: '人', 木: '禾米本', 禾: '木米', 米: '木禾', 牛: '手', 手: '牛', 马: '鸟', 鸟: '马', 上: '下', 下: '上', 月: '日明', 本: '木', 林: '木休', 从: '人', 休: '林', 明: '日月', 风: '电', 电: '田日', 包: '勺', 勺: '包', 兔: '龙', 杯: '林', 床: '林', 叶: '口', 果: '田', 车: '牛', 门: '口', 衣: '农', 巾: '中', 光: '火', 火: '光' };
 const LOOKEN = { E: 'F', F: 'E', M: 'NW', N: 'M', O: 'QC', Q: 'O', P: 'RB', R: 'P', B: 'PD', U: 'V', V: 'U', b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'm', i: 'j', j: 'i', u: 'n', w: 'v', C: 'G', G: 'C', I: 'L', L: 'I' };
 const PICK = (G, name, items) => bagPick(G, name, items);
 /* characters read but not written: the plan writes none over 8 strokes in the first two worlds (A.4) - 是 has 9 */
-const NOWRITE = ['是'];
+const NOWRITE = ['是'].concat(NOWRITE3.split(''));      /* world 3 writes 2 characters an island; the others are read (A.4) */
 /* characters that hold another one inside (明 holds 月): never a look-alike option for it */
-const HOLDS = { 月: '明', 日: '明', 木: '林休本果杯床', 人: '从休', 口: '叶', 火: '灯', 田: '果' };
+const HOLDS = { 月: '明', 日: '明喝', 木: '林休本果杯床', 人: '从休', 口: '叶吃喝哥', 火: '灯', 田: '果', 目: '看', 马: '妈' };
 /* the characters / letters the child can be asked about here (this island + the islands before it, for review) */
 function poolOf(G, kind, review) {
   const isl = G.W, mine = kind === 'zh' ? isl.chars.map(c => c.c) : isl.letters.map(l => l.l);
@@ -43,7 +43,7 @@ const ZX = {
   /* the object a character / letter names, popping out of a point (stage), with its own little motion */
   async alive(st, k, x, y, size) {
     const it = ITEM[k], d = this.thing(st, size, size, 32, 'objpop');
-    if (it.obj) this.pic('assets/obj/' + it.obj + '.png', d); else d.appendChild(Scene.node(FW_SENTS[k][0][1], size));
+    if (it.obj) this.pic(OBJURL(it.obj), d); else d.appendChild(Scene.node(FW_SENTS[k][0][1], size));
     place(d, x - size / 2, y - size / 2, size, size);
     Sfx.sparkle(); Fx.burst(x, y, { n: 14, dist: 110 });
     await st.scope.anim(d, [{ transform: 'scale(.1) translateY(30px)', opacity: 0 }, { transform: 'scale(1.18) translateY(-20px)', opacity: 1, offset: 0.55 }, { transform: 'scale(1) translateY(0)', opacity: 1 }], { duration: 560, easing: EASE.pop });
@@ -74,7 +74,7 @@ const ZX = {
     const it = ITEM[k], L = K.L(), sz = L ? 330 : 380, x = Stage.W / 2, y = L ? Stage.H * 0.5 : Stage.H * 0.46, sc = st.scope;
     const veil = this.thing(st, Stage.W, Stage.H, 34, ''); Object.assign(veil.style, { background: 'rgba(255,248,236,.86)' });
     place(veil, 0, 0, Stage.W, Stage.H);
-    const pic = this.thing(st, sz, sz, 35, 'objpop'); this.pic('assets/obj/' + it.obj + '.png', pic); place(pic, x - sz / 2, y - sz / 2, sz, sz);
+    const pic = this.thing(st, sz, sz, 35, 'objpop'); this.pic(OBJURL(it.obj), pic); place(pic, x - sz / 2, y - sz / 2, sz, sz);
     sc.anim(veil, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     await sc.anim(pic, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, easing: EASE.pop });
     Voice.say(isEn(k) ? '看，它变成字母！' : '看，它变成字！', { tag: 'meet' });
@@ -95,7 +95,7 @@ const ZX = {
     return true;
   },
 };
-const MOTION = { fish: 'swim', bird: 'fly', sun: 'rise', moon: 'rise', fire: 'flicker', water: 'sway', tree: 'sway', riceplant: 'sway', car: 'drive', van: 'drive', bus: 'drive', train: 'drive', big: 'grow', small: 'shrink', up: 'up', down: 'down', wind: 'spin', pinwheel: 'spin', ball: 'hop', kite: 'fly', dragon: 'fly', owl: 'fly', light: 'flicker', lamp: 'flicker', lightning: 'flicker', insect: 'fly', frog: 'hop', rabbit: 'hop', cloud: 'sway', rain: 'down', flower: 'grow', leaf: 'sway' };
+const MOTION = { whale: 'swim', bat: 'fly', walk: 'drive', fan: 'spin', top: 'spin', strawberry: 'grow', banana: 'sway', fish: 'swim', bird: 'fly', sun: 'rise', moon: 'rise', fire: 'flicker', water: 'sway', tree: 'sway', riceplant: 'sway', car: 'drive', van: 'drive', bus: 'drive', train: 'drive', big: 'grow', small: 'shrink', up: 'up', down: 'down', wind: 'spin', pinwheel: 'spin', ball: 'hop', kite: 'fly', dragon: 'fly', owl: 'fly', light: 'flicker', lamp: 'flicker', lightning: 'flicker', insect: 'fly', frog: 'hop', rabbit: 'hop', cloud: 'sway', rain: 'down', flower: 'grow', leaf: 'sway' };
 
 /* ---------------------------------------------------------------- the base of every game here */
 const ZBase = {
@@ -162,7 +162,7 @@ const FindBase = {
     this.place(st);
     /* the task card: level 1 shows the thing to find; from level 2 it is heard - and its picture comes as the second
        hint (10 s stuck): the question said completely, never the answer (R1-04) */
-    st.taskEl = K.task(st, [st.level <= 1 ? ['assets/obj/' + ITEM[q.answer].obj + '.png', 'q'] : ['speaker', 'q']]);
+    st.taskEl = K.task(st, [st.level <= 1 ? [OBJURL(ITEM[q.answer].obj), 'q'] : ['speaker', 'q']]);
     K.say(st, (isEn(q.answer) ? '找到' : '哪个是') + q.answer + (isEn(q.answer) ? '！' : '？'));
     if (isEn(q.answer)) { st.prompt = '找字母'; st.tail = [ITEM[q.answer].say]; Voice.say(ITEM[q.answer].say, { tag: 'prompt' }); }
   },
@@ -177,7 +177,7 @@ const FindBase = {
   gestureHint(st) {
     if (st.picShown || !st.taskEl || st.level <= 1) return;
     st.picShown = true;
-    const it = st.taskEl.querySelector('.it'), im = img('assets/obj/' + ITEM[st.q.answer].obj + '.png', '');
+    const it = st.taskEl.querySelector('.it'), im = img(OBJURL(ITEM[st.q.answer].obj), '');
     im.style.height = '54px'; it.replaceChild(im, it.firstChild);
     st.scope.anim(im, [{ transform: 'scale(.2)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 420, easing: EASE.pop });
     Sfx.sparkle();
@@ -320,7 +320,7 @@ const PlayBush = {
   },
   peek(st, i) {
     const e = st.cards[i], b = box(e), k = st.opts[i];
-    const d = ZX.thing(st, 130, 130, 5, 'objpop'); ZX.pic('assets/obj/' + ITEM[k].obj + '.png', d); place(d, b.x + b.w / 2 - 65, b.y - 40, 130, 130);
+    const d = ZX.thing(st, 130, 130, 5, 'objpop'); ZX.pic(OBJURL(ITEM[k].obj), d); place(d, b.x + b.w / 2 - 65, b.y - 40, 130, 130);
     return st.scope.anim(d, [{ transform: 'translateY(90px)' }, { transform: 'translateY(0)' }], { duration: 400, easing: EASE.pop });
   },
   nope(st, i) { Sfx.whoosh(0.2); this.peek(st, i); },
@@ -407,7 +407,7 @@ const WriteBase = {
     st.prompt = it.line; st.noPraise = true;
     let met = false;                                     /* a letter is first met here: the apple, then the A */
     if (!G.practice) { met = await ZX.meet(st, k); if (!Session.alive(st)) return; }
-    const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); if (it.obj) ZX.pic('assets/obj/' + it.obj + '.png', pic); else pic.appendChild(Scene.node(FW_SENTS[k][0][1], g.os)); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
+    const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); if (it.obj) ZX.pic(OBJURL(it.obj), pic); else pic.appendChild(Scene.node(FW_SENTS[k][0][1], g.os)); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
     K.pop(st, pic);
     const lv = G.practice ? 1 : st.level;
     const W = st.w = new Writer(st, { kind: this.lang === 'zh' ? 'zh' : 'en', glyph: k, level: lv, x: g.x, y: g.y, size: g.size });
@@ -589,7 +589,7 @@ const QMissing = {
     svg('path', { d: 'M512 20V1004M20 512H1004', stroke: '#E8414B', 'stroke-width': 5, 'stroke-dasharray': '26 18', opacity: 0.5, fill: 'none' }, s);
     const g = svg('g', { transform: 'translate(0,900) scale(1,-1)' }, s);
     Hanzi.data[q.ch].s.forEach((o, i) => { const p = svg('path', { d: o, fill: i === q.miss ? 'none' : INK, stroke: i === q.miss && q.outline ? '#E8414B' : 'none', 'stroke-width': 10, 'stroke-dasharray': '30 22' }, g); if (i === q.miss) st.gap = p; });
-    const pic = st.pic = ZX.thing(st, 150, 150, 6, 'objpop'); ZX.pic('assets/obj/' + ITEM[q.ch].obj + '.png', pic);
+    const pic = st.pic = ZX.thing(st, 150, 150, 6, 'objpop'); ZX.pic(OBJURL(ITEM[q.ch].obj), pic);
     st.opts = q.opts.map(o => o[0] + o[1]);
     K.cards(st, q.opts.map(([c, k]) => {
       const sv = svg('svg', { viewBox: '0 0 1024 1024', width: 124, height: 124, class: 'gly' });
@@ -738,7 +738,7 @@ const QMirror = {
     const q = st.q, tf = { ok: '', flipX: 'scaleX(-1)', flipY: 'scaleY(-1)', rot: 'rotate(180deg)' };
     K.cards(st, q.opts.map(t => { const g = Glyph.fit(q.glyph, 124); g.style.transform = tf[t]; return g; }), q.opts, Object.assign({ size: 170, gap: 34 }, this.cardSpot()));
     const it = ITEM[q.glyph];
-    if (it.obj) K.task(st, [['assets/obj/' + it.obj + '.png', 'q']]);
+    if (it.obj) K.task(st, [[OBJURL(it.obj), 'q']]);
     st.lead = isEn(q.glyph) ? it.say : it.line;           /* which one it is about (an A? the 手?) */
     Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '哪个写对了？');

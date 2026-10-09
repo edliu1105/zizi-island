@@ -196,14 +196,14 @@ with sync_playwright() as p, serve() as base:
       Prog.check(false); out.push(Store.s.fin.w3, Supply.low());
       return out;
     }""")
-    log.check(r == [False, True, True, 'due', '', True], 'V-12 the third sea opens after the second (its first island too); a partial sea has no festival; the red dot %s' % r)
+    log.check(r == [False, True, True, 'due', 'due', True], 'V-12 the third sea opens after the second (its first island too); all seven islands of it flagged -> its festival is due; the red dot %s' % r)
     page.evaluate("() => { Store.s.fin.w2 = 'seen'; Store.s.fin.w1 = 'seen'; Store.s.gate2 = true; Store.s.flags = ALL_ISL().filter(flagged); Store.save(); MapView.useSet('w2'); MapView.update(); MapView.after(10); }")
     page.wait_for_function("Store.s.gate3 && MapView.isl.gate.d.classList.contains('sky')", timeout=30000)
     log.check(True, 'V-12 after the second finale the gate turns gold')
     page.wait_for_timeout(800); page.evaluate("MapView.tapIsland('gate')")
     page.wait_for_function("MapView.set === 'w3' && !MapView.sailing", timeout=20000)
     r = page.evaluate("() => ({ soon: Object.keys(MapView.isl).filter(k => /^soon/.test(k)).length, fest: !!MapView.isl.fest, dot: document.querySelector('#gear').classList.contains('dot') })")
-    log.check(r == {'soon': 5, 'fest': False, 'dot': True}, 'V-12 through the gate: the rainbow sea, five islands to come under cloud, no festival yet, the red dot %s' % r)
+    log.check(r == {'soon': 0, 'fest': True, 'dot': True}, 'V-12 through the gate: the rainbow sea, complete (no islands to come, its own festival island), the red dot %s' % r)
     miss = page.evaluate("Array.from(window.__vmiss || [])")
     log.check(not miss, 'every sentence said has a recording %s' % miss[:10])
     log.check(not page.errors, 'no page errors %s' % page.errors[:3])

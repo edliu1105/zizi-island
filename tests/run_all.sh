@@ -29,6 +29,7 @@ run v2r3      tests/test_v2r3.py
 run pointer   tests/test_pointer.py
 run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py
+run w3new     tests/test_w3new.py
 echo "end $(date +%H:%M:%S)" >> "$OUT"
 if [ -n "$BAD" ]; then echo "ALL: FAIL -$BAD" >> "$OUT"; else echo "ALL: PASS" >> "$OUT"; fi
 cat "$OUT"

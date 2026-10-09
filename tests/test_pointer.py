@@ -38,7 +38,7 @@ with sync_playwright() as p, serve() as base:
     for ori, vw, vh in (('L', 1180, 820), ('P', 820, 1180)):
         page = new_page(br, base, vw, vh)
         enter(page)
-        for g, ks in (('peppa:write', '人口手'), ('huluwa:write', '山水火'), ('xiyou:write', '马鸟'), ('robot:write', '灯伞'), ('pj:write', '雨电'), ('robot2:write', '汤'), ('peppa:abc', 'ABC'), ('bluey:abc', 'G'), ('ultra:abc', 'W'), ('peppa2:abc', 'abd'), ('pj:abc', 'jk'), ('xiyou2:abc', 'u')):
+        for g, ks in (('peppa:write', '人口手'), ('huluwa:write', '山水火'), ('xiyou:write', '马鸟'), ('robot:write', '灯伞'), ('pj:write', '雨电'), ('robot2:write', '汤'), ('hulk3:write', '一二'), ('thor3:write', '八十'), ('panther3:write', '白红'), ('widow3:write', '妈弟'), ('hawk3:write', '走来'), ('peppa:abc', 'ABC'), ('bluey:abc', 'G'), ('ultra:abc', 'W'), ('peppa2:abc', 'abd'), ('pj:abc', 'jk'), ('xiyou2:abc', 'u')):
             for wob in (0, 7):
                 bad = []
                 for k in ks:
