@@ -60,6 +60,20 @@ with sync_playwright() as p, serve() as base:
     page.wait_for_timeout(300)
     btn = page.evaluate("""() => { const e = Array.from(document.querySelectorAll('button')).find(x => x.textContent === '结束'); if (!e) return 'no end'; const r = e.getBoundingClientRect(); return Math.round(Math.min(r.width, r.height)); }""")
     log.check(order and '版本 ）' not in rep and btn and btn != 'no end' and btn >= 88, '07 the panel line before the stop/go ritual; the report has a version (%s); the check\'s "结束" %s px' % (rep[-30:], btn))
+    # the client's rule (2026-10-08): each question by itself - the wrong one earns nothing, the next one answered right earns its star
+    from harness import answer_question, step
+    out = {}
+    for isl, g in (('bluey', 'bluey:find'), ('bluey', 'bluey:write'), ('s1', 's1:find')):
+        page.evaluate(OPEN)
+        page.evaluate("([i, g]) => window.__go(i, g, 2, { seed: 5, noDemo: true })", [isl, g])
+        a = wait_phase(page, timeout=30000); s0 = page.evaluate("Session.G.stars")
+        if a['kind'] == 'write': step(page, 'wrong'); page.wait_for_timeout(300); answer_question(page, 'right')      # one stroke wrong, then the character finished
+        else: answer_question(page, 'wrong')
+        b = wait_phase(page, gen=a['gen'], timeout=30000); s1 = page.evaluate("Session.G.stars")
+        answer_question(page, 'right'); wait_phase(page, gen=b['gen'], timeout=30000); s2 = page.evaluate("Session.G.stars")
+        out[g] = [s1 - s0, s2 - s1, b['kind']]
+        page.evaluate("gesture('home')"); page.wait_for_timeout(300)
+    log.check(all(v[:2] == [0, 1] for v in out.values()), 'client rule: a wrong answer earns nothing, the next question answered right earns its star (认字, 写字, 补句子) %s' % out)
     log.check(not page.errors, 'no page errors %s' % page.errors[:3])
     br.close()
 sys.exit(0 if log.close() else 1)

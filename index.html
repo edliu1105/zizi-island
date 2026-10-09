@@ -2757,10 +2757,12 @@ const Session = {
   async round(G) {
     let err = 0;
     while (!G.dead) {
-      /* client rule: after a wrong answer a NEW question of the same kind and level; the round's star is gone */
+      /* client rule: after a wrong answer a NEW question of the same kind and level; each question earns its own star
+         (2026-10-08: the wrong one earns nothing, the next one answered right at its first try earns its star) */
       /* a review question in its slot (never as the replacement after a wrong answer) */
       const rv = err ? null : Review.slot(G);
-      const st = rv ? Review.newQ(G, rv) : this.newQ(G, { retest: err > 0, err });
+      const after = !!G.afterWrong; G.afterWrong = false;
+      const st = rv ? Review.newQ(G, rv) : this.newQ(G, { retest: err > 0 || after, err });
       const res = await this.runQ(G, st);
       if (res === 'dead') return 'dead';
       if (res === 'error') { if (++G.errors >= 3) return 'stop'; continue; }
@@ -2769,9 +2771,11 @@ const Session = {
       if (!G.key && !G.ws.played.includes(G.id)) { G.ws.played.push(G.id); Store.save(); }
       /* a star: the child's own first try - not after the 2nd hint, not in the key round, not when a character was tapped
          to be heard in 读一读 (A.12) */
-      if (res === 'ok') { if (!err && !G.practice && !G.key && !st.noStar && !helped(st)) await this.reward(G, st); return 'ok'; }
+      if (res === 'ok') { if (!G.practice && !G.key && !st.noStar && !helped(st)) await this.reward(G, st); return 'ok'; }
       if (G.practice || G.key) return 'ok';
-      err++;
+      /* a wrong answer earns nothing and the session goes straight on: the next question is the next round (it counts) */
+      G.afterWrong = true;
+      return 'wrong';
     }
     return 'dead';
   },
