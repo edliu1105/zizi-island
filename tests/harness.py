@@ -39,7 +39,7 @@ def serve(root=ROOT):
 
 
 # Recorder + stub. Real engines are kept; a fake voice/engine is added only when getVoices() is empty.
-ENV_NOISE = ('net::ERR_NO_BUFFER_SPACE', 'net::ERR_INSUFFICIENT_RESOURCES')
+ENV_NOISE = ('net::ERR_NO_BUFFER_SPACE', 'net::ERR_INSUFFICIENT_RESOURCES', 'net::ERR_ADDRESS_IN_USE')
 SPEECH_INIT = r"""
 (() => {
   window.__speechCalls = [];

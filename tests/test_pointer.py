@@ -2,6 +2,7 @@
 """Real pointers (mouse moves through the app's own input pipeline), both orientations:
  - writing: characters and letters written stroke by stroke along their strokes (a steady and a wobbly hand) finish
  - writing a stroke backwards is caught (a slip), the character still finishes afterwards
+ - a letter written the old way (a: a circle and a lift) is a slip, in one Zaner-Bloser stroke it is finished
  - the find games: a click on the right target is taken (nothing covers it)
 usage: python tests/test_pointer.py"""
 import os, sys, math
@@ -38,7 +39,7 @@ with sync_playwright() as p, serve() as base:
     for ori, vw, vh in (('L', 1180, 820), ('P', 820, 1180)):
         page = new_page(br, base, vw, vh)
         enter(page)
-        for g, ks in (('peppa:write', '人口手'), ('huluwa:write', '山水火'), ('xiyou:write', '马鸟'), ('robot:write', '灯伞'), ('pj:write', '雨电'), ('robot2:write', '汤'), ('hulk3:write', '一二'), ('thor3:write', '八十'), ('panther3:write', '白红'), ('widow3:write', '妈弟'), ('hawk3:write', '走来'), ('peppa:abc', 'ABC'), ('bluey:abc', 'G'), ('ultra:abc', 'W'), ('peppa2:abc', 'abd'), ('pj:abc', 'jk'), ('xiyou2:abc', 'u')):
+        for g, ks in (('peppa:write', '人口手'), ('huluwa:write', '山水火'), ('xiyou:write', '马鸟'), ('robot:write', '灯伞'), ('pj:write', '雨电'), ('robot2:write', '汤'), ('hulk3:write', '一二'), ('thor3:write', '八十'), ('panther3:write', '白红'), ('widow3:write', '妈弟'), ('hawk3:write', '走来'), ('peppa:abc', 'ABC'), ('bluey:abc', 'G'), ('ultra:abc', 'W'), ('peppa2:abc', 'abd'), ('pj:abc', 'jk'), ('xiyou2:abc', 'u'), ('paw:abc', 'NTYI'), ('ultra2:abc', 'mq')):
             for wob in (0, 7):
                 bad = []
                 for k in ks:
@@ -72,6 +73,21 @@ with sync_playwright() as p, serve() as base:
         r = page.evaluate("({ done: window.__tr.w.done, slips: window.__tr.w.slips })")
         log.check(slip == 1 and r['done'], '%s a stroke written backwards is a slip, the character is then finished %s' % (ori, r))
         page.evaluate("gesture('home')"); page.evaluate(UNFORCE, 'peppa:write'); page.wait_for_timeout(150)
+        # a letter the old way (a: the circle, then lift - not Zaner-Bloser) is a slip; in one stroke it is finished
+        page.evaluate(FORCE, ['peppa2:abc', 'a'])
+        page.evaluate("window.__go('peppa2', 'peppa2:abc', 3, {seed: 2})"); wait_phase(page, timeout=30000); page.wait_for_timeout(100)
+        page.evaluate("() => { window.__tr = Session.st; }")
+        circle = page.evaluate("() => { const w = Session.st.w; return LG.arc(32, 60, 16, 20, -20, -340).map(q => { const p = w.toStage(q), s = Stage.toScreen(p.x, p.y); return [s.x, s.y]; }); }")
+        draw(page, circle, 0); page.wait_for_timeout(60)
+        r0 = page.evaluate("({ k: window.__tr.w.k, slips: window.__tr.w.slips })")
+        for _ in range(4):
+            pts = expected_screen(page)
+            if not pts:
+                break
+            draw(page, pts, 0); page.wait_for_timeout(40)
+        r = page.evaluate("({ done: window.__tr.w.done, slips: window.__tr.w.slips })")
+        log.check(r0 == {'k': 0, 'slips': 1} and r['done'], '%s a written as a circle and a lift is a slip; written in one stroke (Zaner-Bloser) it is finished %s %s' % (ori, r0, r))
+        page.evaluate("gesture('home')"); page.evaluate(UNFORCE, 'peppa2:abc'); page.wait_for_timeout(150)
         # the find games: a real click on the right one
         for isl in page.evaluate("ORDER.w1.concat(ORDER.w2)"):
             g = isl + ':find'

@@ -122,6 +122,16 @@ const PlaySmash = {
     await st.scope.guard(Voice.afterSay(200));
   },
   nope(st, i) { const e = st.cards[i]; if (e) st.scope.anim(e, [{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(0)' }], { duration: 300 }); },
+  /* explain: the rock he hit in blue with its own thing; every rock still holding the asked character in gold, its thing once */
+  async explain(st, ans) {
+    const eC = st.cards[st.tapped], left = st.vals.map((v, i) => (v === st.q.answer && !st.smashed.includes(i) ? i : -1)).filter(i => i >= 0);
+    if (eC) { EX.ring(st, eC, 'chosen'); EX.picOver(st, eC, ans, 'chosen'); }
+    await EX.wait(st, 650);
+    left.forEach(i => { EX.ring(st, st.cards[i], 'right', 8); K.hop(st, st.cards[i], 18); });
+    if (left.length) EX.picOver(st, st.cards[left[0]], st.q.answer, 'right');
+    await EX.say(st, ['对的是这个', ITEM[st.q.answer].line]);
+    await EX.wait(st, 300);
+  },
   next(st, strat) {
     if (!st.vals) return null;
     const i = strat === 'wrong' ? st.vals.findIndex(v => v !== st.q.answer) : st.vals.findIndex((v, j) => v === st.q.answer && !st.smashed.includes(j));
@@ -134,7 +144,7 @@ const PlaySmash = {
 /* 雷神 · 甩锤子 - "throw it": the storm clouds stand round Thor in a fan; flick the hammer TOWARDS the right cloud (the
    direction chooses, nothing is tapped) - its lightning breaks the cloud open. A tap on a cloud or the hammer only says how. */
 const PlayHammer = {
-  rule: 'flick-towards', intro: '甩锤子劈乌云！', props: ['stormcloud'], maxN: 4,
+  rule: 'flick-towards', intro: '甩锤子劈乌云！', props: ['stormcloud'],
   gen(G, o) { const q = FindBase.gen.call(this, G, o); q.moving = o.level >= 5 ? 1 : 0; return q; },     /* level 5: the clouds drift */
   targets(st) {
     st.cards = st.opts.map((k, i) => {
@@ -157,11 +167,13 @@ const PlayHammer = {
     const a = c.path[c.path.length - 1], ang = Math.atan2(a.y - c.y0, a.x - c.x0);
     const d = e => { const cc = e.center(); let x = Math.atan2(cc.y - c.y0, cc.x - c.x0) - ang; while (x > Math.PI) x -= 2 * Math.PI; while (x < -Math.PI) x += 2 * Math.PI; return Math.abs(x); };
     const near = out.sort((p, q) => d(p) - d(q));
-    /* between two clouds (W3R2-08): not a throw at either - the hammer comes back, "throw it" (a miss of the hand, not a wrong answer) */
-    if (!near.length || d(near[0]) > 20 * Math.PI / 180) { if (Session.alive(st) && (!st.toldHow || Clock.t() - st.toldHow > 4000)) { st.toldHow = Clock.t(); Voice.sayNow('把锤子甩出去！', { tag: 'how' }); } return []; }
+    /* between two clouds (W3R2-08): not a throw at either - the hammer comes back, "throw it" (a miss of the hand, not a wrong answer).
+       Five clouds stand closer: the dead zone is 42 % of the angle between two clouds */
+    const g = this.geo(), step = (g.a1 - g.a0) / Math.max(1, st.cards.length - 1);
+    if (!near.length || d(near[0]) > Math.min(20, 0.42 * step) * Math.PI / 180) { if (Session.alive(st) && (!st.toldHow || Clock.t() - st.toldHow > 4000)) { st.toldHow = Clock.t(); Voice.sayNow('把锤子甩出去！', { tag: 'how' }); } return []; }
     return near;
   },
-  geo() { return K.L() ? { cx: 512, cy: 590, R: 330, a0: -165, a1: -15, w: 190, h: 140 } : { cx: 352, cy: 900, R: 330, a0: -145, a1: -35, w: 150, h: 112 }; },
+  geo() { return K.L() ? { cx: 512, cy: 590, R: 330, a0: -165, a1: -15, w: 190, h: 140 } : { cx: 352, cy: 900, R: 310, a0: -150, a1: -30, w: 136, h: 102 }; },     /* five clouds (client 2026-10-10) */
   place(st) {
     if (!st.cards) return;
     const g = this.geo(), n = st.cards.length;
@@ -198,6 +210,7 @@ const PlayHammer = {
   nope(st, i) { this.fly(st, i, true); },
   next(st, strat) { if (!st.cards) return null; const i = strat === 'wrong' ? st.opts.findIndex(v => v !== st.q.answer) : st.opts.indexOf(st.q.answer); return { g: 'drop', p: { id: 'hammer', to: 'card' + i }, to: center(st.cards[i]) }; },
   workEls(st) { return st.hammer ? [st.hammer] : []; },
+  exPrep(st) { if (st.hammer) { st.hammer.getAnimations().forEach(a => a.cancel()); st.hammer.style.transform = ''; } },
   gestureHint(st, reteach) {
     if (!reteach) FindBase.gestureHint.call(this, st);           /* a re-teach shows the throw only, never the picture (W3R2-01) */
     if (st.hammer) st.scope.anim(st.hammer, [{ transform: 'translateY(0)' }, { transform: 'translateY(-60px) rotate(30deg)' }, { transform: 'translateY(0)' }], { duration: 700, easing: EASE.glide });
@@ -312,6 +325,7 @@ const PlayTorch = {
     await ZX.alive(st, st.q.answer, b.x + b.w / 2 + (b.x > Stage.W / 2 ? -150 : 150), b.y + b.h / 2, 150);
   },
   nope(st) { const h = this.home(st); this.light(st, h.x, h.y); },
+  exPrep(st) { if (st.veil) st.scope.anim(st.veil, [{ opacity: 1 }, { opacity: 0.12 }], { duration: 400, fill: 'forwards' }); },      /* the light comes on for the explanation */
   next(st, strat) {
     if (!st.cards) return null;
     const i = strat === 'wrong' ? st.opts.findIndex(v => v !== st.q.answer) : st.opts.indexOf(st.q.answer);
@@ -428,7 +442,9 @@ const ERhyme = {
   gen(G, o) {
     const lv = o.level, words = W3X.words(), rime = w => w.slice(1), fam = {};
     words.forEach(w => (fam[rime(w)] = fam[rime(w)] || []).push(w));
-    const n = [0, 3, 3, 4, 4, 5][lv], allit = lv >= 2, vow = [0, 0, 0, 0, 2, 3][lv];
+    /* five pictures at every level (client 2026-10-10); the levels: 2 one STARTS like the word, 3-5 one, two, three more share
+       its vowel (only the whole ending tells) */
+    const n = 5, allit = lv >= 2, vow = [0, 0, 0, 1, 2, 3][lv];
     const noR = T => words.filter(x => rime(x) !== rime(T));
     const ok = T => fam[rime(T)].length >= 2 && (!allit || noR(T).some(x => x[0] === T[0])) && noR(T).filter(x => x[1] === T[1] && x[0] !== T[0]).length >= vow;
     const last = (G.asked || []).slice(-1)[0], T = bagFrom(G, 'w', words.filter(w => ok(w) && fam[rime(w)].some(x => x !== w && x !== last))), R = G.rng.pick(fam[rime(T)].filter(w => w !== T && w !== last));
@@ -458,20 +474,29 @@ const ERhyme = {
   place(st) { const L = K.L(); if (st.top) place(st.top, L ? 480 : 272, L ? 80 : 230, 160, 160); K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); K.hop(st, st.top, 30); Sfx.reveal(); Voice.say(st.q.target, { tag: 'summary' }); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   wrongLine(st, ans) { Voice.say(ans, { tag: 'wrong' }); Voice.say(st.q.target, { tag: 'wrong' }); },
+  /* explain: the words written under the pictures - the chosen one's ending in blue (it does not end like the word), the word's
+     and the rhyme's ending in gold (they end the same) */
+  async explain(st, ans) {
+    const q = st.q, end = [1, 2];
+    await EX.cards(st, ans, { pics: false, lines: [q.target, q.answer],
+      chosen: async (st2, e) => { if (e) EX.wordUnder(st, e, ans, EX_BLUE, end, 50); },
+      why: async (st2, e) => { EX.wordUnder(st, st.top, q.target, EX_GOLD, end, 50); if (e) EX.wordUnder(st, e, q.answer, EX_GOLD, end, 50); EX.ring(st, st.top, 'right', 6); } });
+  },
   gestureHint(st) { EnHint.again(st, [st.q.target].concat(st.q.opts), [st.top].concat(st.cards || [])); },
   iconNode() { return Glyph.word('hat', 44); },
 };
 
-/* 雷神 · 补元音 - "the middle sound": c _ t under the picture; which vowel goes in the gap? Levels: 2, 3, 4, 5 vowels to choose
-   from; level 5 the word is not said - the child names the picture (only pictures called by that very word). */
-const VOWELS = 'aeiou';
+/* 雷神 · 补元音 - "the middle sound": c _ t under the picture; which vowel goes in the gap? All five vowels are always there to
+   choose from (client 2026-10-10: five options); the levels widen the words asked: 1 words with a or o, 2 + u, 3 + e, 4 all
+   five vowels, 5 the word is not said - the child names the picture (only pictures called by that very word). */
+const VOWELS = 'aeiou', VOWEL_ORDER = 'aouei';
 const EVowel = {
   rule: 'missing-vowel', intro: '补上中间的字母！', softHint: true,
   gen(G, o) {
-    const lv = o.level, n = [0, 2, 3, 4, 5, 5][lv], quiet = lv >= 5;
-    const last = (G.asked || []).slice(-1)[0], all = quiet ? W3X.clear() : W3X.words(), w = bagFrom(G, 'w', all.filter(x => x[1] !== last).length ? all.filter(x => x[1] !== last) : all), v = w[1];
+    const lv = o.level, n = 5, quiet = lv >= 5, kinds = [0, 2, 3, 4, 5, 5][lv], vs = VOWEL_ORDER.slice(0, kinds);
+    const last = (G.asked || []).slice(-1)[0], all = (quiet ? W3X.clear() : W3X.words()).filter(x => vs.includes(x[1])), w = bagFrom(G, 'w', all.filter(x => x[1] !== last).length ? all.filter(x => x[1] !== last) : all), v = w[1];
     const others = G.rng.shuffle(VOWELS.split('').filter(x => x !== v)).slice(0, n - 1);
-    return { k: [w, others.join(''), quiet], word: w, answer: v, item: v, opts: W3X.put(G, others, v), quiet: quiet ? 1 : 0 };
+    return { k: [w, others.join(''), quiet], word: w, answer: v, item: v, opts: W3X.put(G, others, v), quiet: quiet ? 1 : 0, kinds };
   },
   itemOf(st) { return st.q.answer; },
   async present(st) {
@@ -500,24 +525,38 @@ const EVowel = {
     await st.scope.guard(Voice.afterSay(200));
   },
   wrongLine(st, ans) { if (ITEM[ans.toUpperCase()]) Voice.say(ITEM[ans.toUpperCase()].say, { tag: 'wrong' }); },
+  /* explain: the chosen vowel tried in the gap (blue: c o t is not the picture), then the right one flies in, in gold, and the
+     word is said */
+  async explain(st, ans) {
+    const gap = st.slots[1], s = box(gap);
+    await EX.cards(st, ans, { pics: false, lines: [st.q.word],
+      chosen: async () => { gap.innerHTML = ''; gap.appendChild(Glyph.en(ans, 84, EX_BLUE)); gap.style.borderColor = EX_BLUE; await EX.wait(st, 600); gap.innerHTML = ''; },
+      move: async (st2, e) => { const b = box(e); await K.flyTo(st, e, s.x + (s.w - b.w) / 2, s.y + (s.h - b.h) / 2, 380, 50, s.w / b.w); },
+      why: async () => { K.hop(st, st.top, 24); EX.ring(st, st.top, 'right', 6); } });
+  },
   gestureHint(st) { if (st.q.quiet && !st.hintDone) st.realHelp = true; EnHint.again(st, [st.q.word, '缺了哪个字母？'], [st.top, st.slots && st.slots[1]]); },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.style.alignItems = 'center'; d.appendChild(Glyph.en('c', 34)); const b = el('div', '', d); Object.assign(b.style, { width: '22px', height: '30px', border: '3px dashed #2B2118', borderRadius: '6px', margin: '0 3px' }); d.appendChild(Glyph.en('t', 34)); return d; },
 };
 
-/* 黑豹 · 首字母 - "the first sound": the picture and its word (said, not written); which letter does it start with? Levels:
-   1 three letters, 2 four, 3 the one that looks alike is there too (b / d, p / q, m / n), 4 five, 5 the word is not said. */
+/* 黑豹 · 首字母 - "the first sound": the picture and its word (said, not written); which letter does it start with? Five letters
+   at every level (client 2026-10-10). Levels: 1 none of the word's other letters is there; 2 one of them is (cat: a or t - in the
+   word, but not first); 3 the one that looks alike too (b / d, p / q, m / n); 4 both other letters of the word; 5 the word is not
+   said. */
 const EFirst = {
   rule: 'first-letter', intro: '第一个字母是谁？', softHint: true,
   gen(G, o) {
-    const lv = o.level, n = [0, 3, 4, 4, 5, 5][lv], look = lv >= 3, quiet = lv >= 5;
+    const lv = o.level, n = 5, look = lv >= 3, quiet = lv >= 5, inN = [0, 0, 1, 1, 2, 2][lv];
     const lk = w => (LOOKEN[w[0]] || '').split('').filter(x => /[a-z]/.test(x) && ITEM[x]);
     let words = quiet ? W3X.clear() : W3X.words(); if (look) words = words.filter(w => lk(w).length);
     const last = (G.asked || []).slice(-1)[0], w = bagFrom(G, 'w', words.filter(x => x[0] !== last).length ? words.filter(x => x[0] !== last) : words), a = w[0], others = [];
-    const add = x => { if (others.length < n - 1 && x !== a && !others.includes(x) && ITEM[x] && (look || !lk(w).includes(x))) others.push(x); };
+    const inw = w.slice(1).split('').filter((x, i, arr) => x !== a && arr.indexOf(x) === i && ITEM[x]);
+    const add = x => { if (others.length < n - 1 && x !== a && !others.includes(x) && ITEM[x]) others.push(x); };
+    G.rng.shuffle(inw).slice(0, inN).forEach(add);
     if (look) lk(w).forEach(add);
-    G.rng.shuffle(W3X.words().map(x => x[0])).forEach(add);
-    G.rng.shuffle('abcdefghijklmnoprstuvwxyz'.split('')).forEach(add);
-    return { k: [w, others.join(''), quiet], word: w, answer: a, item: a, opts: W3X.put(G, others, a), look: others.filter(x => lk(w).includes(x)).length, quiet: quiet ? 1 : 0 };
+    const not = x => !w.includes(x) && (look || !lk(w).includes(x));
+    G.rng.shuffle(W3X.words().map(x => x[0])).filter(not).forEach(add);
+    G.rng.shuffle('abcdefghijklmnoprstuvwxyz'.split('')).filter(not).forEach(add);
+    return { k: [w, others.join(''), quiet], word: w, answer: a, item: a, opts: W3X.put(G, others, a), look: others.filter(x => lk(w).includes(x)).length, inword: others.filter(x => inw.includes(x)).length, quiet: quiet ? 1 : 0 };
   },
   itemOf(st) { return st.q.answer; },
   async present(st) {
@@ -538,6 +577,13 @@ const EFirst = {
     await st.scope.guard(Voice.afterSay(200));
   },
   wrongLine(st, ans) { if (ITEM[ans.toUpperCase()]) Voice.say(ITEM[ans.toUpperCase()].say, { tag: 'wrong' }); },
+  /* explain: the chosen letter in blue; the word written under the picture with its FIRST letter in gold, the right card in gold */
+  async explain(st, ans) {
+    const q = st.q, i = q.word.indexOf(ans);
+    await EX.cards(st, ans, { pics: false, lines: [ITEM[q.answer.toUpperCase()].say, q.word],
+      /* the word under the picture: its first letter in gold - and the chosen letter, if it is in the word too, in blue (in it, not first) */
+      why: async () => { EX.wordUnder(st, st.top, q.word, q.word.split('').map((c, j) => (j === 0 ? EX_GOLD : j === i ? EX_BLUE : INK)), [], 56); EX.ring(st, st.top, 'right', 6); } });
+  },
   gestureHint(st) { if (st.q.quiet && !st.hintDone) st.realHelp = true; EnHint.again(st, [st.q.word, '第一个字母是？'], [st.top]); },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.en('b', 44)); d.appendChild(Glyph.en('d', 44)); return d; },
 };
@@ -548,14 +594,17 @@ const EFirst = {
 const ESecret = {
   rule: 'read-word-silently', intro: '读密码单词！', softHint: true,
   gen(G, o) {
-    const lv = o.level, n = [0, 3, 3, 3, 4, 5][lv], want = [0, 0, 1, 2, 2, 2][lv], words = W3X.words();
+    /* five pictures at every level (client 2026-10-10). Levels: 2 one word differs from it in one letter, 3 two do; 4 another
+       one shares a letter in the same place, 5 two do */
+    const lv = o.level, n = 5, want = [0, 0, 1, 2, 2, 2][lv], shareN = [0, 0, 0, 0, 1, 2][lv], words = W3X.words();
     const d1 = (a, b) => a.split('').filter((c, i) => c !== b[i]).length === 1, nb = w => words.filter(x => d1(w, x) && W3X.obj(x) !== W3X.obj(w));
     const last = (G.asked || []).slice(-1)[0], cw = words.filter(x => nb(x).length >= want), w = bagFrom(G, 'w', cw.filter(x => x !== last).length ? cw.filter(x => x !== last) : cw), objs = new Set([W3X.obj(w)]), others = [];
     const add = x => { if (others.length < n - 1 && x !== w && !others.includes(x) && !objs.has(W3X.obj(x))) { objs.add(W3X.obj(x)); others.push(x); } };
     G.rng.shuffle(nb(w)).slice(0, want).forEach(add);
-    const share = x => x.split('').some((c, i) => c === w[i]), rest = G.rng.shuffle(words.filter(x => !d1(w, x)));
-    (lv >= 4 ? rest.filter(share).concat(rest.filter(x => !share(x))) : rest.filter(x => !share(x)).concat(rest.filter(share))).forEach(add);
-    return { k: [w, others.join()], answer: w, item: w, opts: W3X.put(G, others, w), near: others.filter(x => d1(w, x)).length };
+    const share = x => x.split('').some((c, i) => c === w[i]), rest = G.rng.shuffle(words.filter(x => !d1(w, x) && x !== w));
+    rest.filter(share).slice(0, shareN).forEach(add);
+    rest.filter(x => !share(x)).concat(rest.filter(share)).forEach(add);
+    return { k: [w, others.join()], answer: w, item: w, opts: W3X.put(G, others, w), near: others.filter(x => d1(w, x)).length, share: others.filter(x => !d1(w, x) && share(x)).length };
   },
   async present(st) {
     const q = st.q;
@@ -574,26 +623,39 @@ const ESecret = {
   },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); K.hop(st, st.note, 20); Sfx.reveal(); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   wrongLine(st, ans) { Voice.say(ans, { tag: 'wrong' }); },
+  /* explain: the chosen picture's own word under it, the letters that are not the secret word's in blue; the secret word's
+     picture in gold with its word under it */
+  async explain(st, ans) {
+    const q = st.q, diff = ans.split('').map((c, i) => (c !== q.answer[i] ? i : -1)).filter(i => i >= 0);
+    await EX.cards(st, ans, { pics: false, lines: [q.answer],
+      chosen: async (st2, e) => { if (e) EX.wordUnder(st, e, ans, EX_BLUE, diff, 48); },
+      why: async (st2, e) => { if (e) EX.wordUnder(st, e, q.answer, EX_GOLD, [0, 1, 2], 48); K.hop(st, st.note, 16); EX.ring(st, st.note, 'right', 6); } });
+  },
   gestureHint(st) { if (st.hintDone || !st.note) return; st.hintDone = true; K.hop(st, st.note, 16); Voice.say('可以点单词听听！', { tag: 'prompt' }); },
   iconNode() { return Glyph.word('map', 44); },
 };
 
 /* 鹰眼 · 我看见 (I spy) - "something beginning with ...": a letter is said and shown; which picture's word starts with it?
-   The pictures are not named (only words a 4-year-old calls by that very name). Levels: 1 three pictures; 2 four; 3 another
-   picture has the letter at its end or inside (b: web); 4 five pictures; 5 one starts with a letter that looks alike (b / d). */
+   The pictures are not named (only words a 4-year-old calls by that very name). Five pictures at every level (client
+   2026-10-10). Levels: 2 another picture RHYMES with the right one (bat - cat: the same ending, another start); 3 another picture
+   has the letter at its end or inside too (b: web); 4 the letter is shown, not said; 5 one starts with a letter that looks
+   alike (b / d). */
 const ESpy = {
   rule: 'i-spy-first-letter', intro: '我看见……', softHint: true,
   gen(G, o) {
-    const lv = o.level, clear = W3X.clear(), n = [0, 3, 4, 4, 5, 5][lv], trap = lv >= 3, look = lv >= 5, lk = L => (LOOKEN[L] || '').split('');
-    const okL = L => clear.some(x => x[0] === L) && (!trap || clear.some(x => x[0] !== L && x.includes(L))) && (!look || clear.some(x => lk(L).includes(x[0])));
-    const last = (G.asked || []).slice(-1)[0], Ls = Array.from(new Set(clear.map(w => w[0]))).filter(okL), L = bagFrom(G, 'l', Ls.filter(x => x !== (last || ' ')[0]).length ? Ls.filter(x => x !== (last || ' ')[0]) : Ls), w = G.rng.pick(clear.filter(x => x[0] === L));
+    const lv = o.level, clear = W3X.clear(), n = 5, rime = lv >= 2, trap = lv >= 3, quiet = lv >= 4, look = lv >= 5, lk = L => (LOOKEN[L] || '').split('');
+    const rhymes = w => clear.filter(x => x[0] !== w[0] && x.slice(1) === w.slice(1));
+    const okW = w => !rime || rhymes(w).length > 0;
+    const okL = L => clear.some(x => x[0] === L && okW(x)) && (!trap || clear.some(x => x[0] !== L && x.includes(L))) && (!look || clear.some(x => lk(L).includes(x[0])));
+    const last = (G.asked || []).slice(-1)[0], Ls = Array.from(new Set(clear.map(w => w[0]))).filter(okL), L = bagFrom(G, 'l', Ls.filter(x => x !== (last || ' ')[0]).length ? Ls.filter(x => x !== (last || ' ')[0]) : Ls), w = G.rng.pick(clear.filter(x => x[0] === L && okW(x)));
     const others = [], used = new Set([L]), add = x => { if (others.length < n - 1 && !used.has(x[0])) { used.add(x[0]); others.push(x); return true; } return false; };
-    const traps = trap ? clear.filter(x => x[0] !== L && x.includes(L)) : [], isT = x => x.includes(L), isK = x => lk(L).includes(x[0]);
+    const traps = trap ? clear.filter(x => x[0] !== L && x.includes(L)) : [], isT = x => x.includes(L), isK = x => lk(L).includes(x[0]), isR = x => x[0] !== L && x.slice(1) === w.slice(1);
     if (look) { const both = traps.filter(isK); if (both.length) add(G.rng.pick(both)); }          /* bed for d: ends with d, starts like it */
     if (trap && !others.some(isT)) G.rng.shuffle(traps).some(add);
     if (look && !others.some(isK)) G.rng.shuffle(clear.filter(isK)).some(add);
-    G.rng.shuffle(clear.filter(x => x[0] !== L && !isT(x) && !isK(x))).forEach(add);
-    return { k: [L, w, others.join()], letter: L, answer: w, item: w, opts: W3X.put(G, others, w), trap: others.some(isT) ? 1 : 0, look: others.some(isK) ? 1 : 0 };
+    if (rime && !others.some(isR)) G.rng.shuffle(clear.filter(x => isR(x) && !isK(x))).some(add);
+    G.rng.shuffle(clear.filter(x => x[0] !== L && !isT(x) && !isK(x) && !isR(x))).forEach(add);
+    return { k: [L, w, others.join(), quiet], letter: L, answer: w, item: w, opts: W3X.put(G, others, w), rime: others.some(isR) ? 1 : 0, trap: others.some(isT) ? 1 : 0, look: others.some(isK) ? 1 : 0, quiet: quiet ? 1 : 0 };
   },
   itemOf(st) { return st.q.letter; },
   async present(st) {
@@ -601,6 +663,7 @@ const ESpy = {
     const big = st.top = ZX.thing(st, 160, 160, 6, 'card'); big.appendChild(Glyph.en(q.letter, 124)); K.pop(st, big);
     this.picCards(st, q.opts, Object.assign({ size: 150, gap: 24 }, this.cardSpot()));
     this.place(st);
+    if (q.quiet) { st.prompt = '哪张图是它开头？'; Voice.say(st.prompt, { tag: 'prompt' }); return; }          /* level 4+: the letter is shown, not said */
     st.lead = '谁的第一个字母是'; st.prompt = ITEM[q.letter.toUpperCase()].say;
     Voice.say('谁的第一个字母是', { tag: 'prompt' }); Voice.say(st.prompt, { tag: 'prompt' });
   },
@@ -613,7 +676,14 @@ const ESpy = {
     Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
   wrongLine(st, ans) { Voice.say(ans, { tag: 'wrong' }); },
-  gestureHint(st) { EnHint.again(st, ['谁的第一个字母是', st.prompt], [null, st.top]); },
+  /* explain: the words under the pictures - the chosen one's first letter in blue (not this letter), the right one's in gold */
+  async explain(st, ans) {
+    const q = st.q;
+    await EX.cards(st, ans, { pics: false, lines: [ITEM[q.letter.toUpperCase()].say, q.answer],
+      chosen: async (st2, e) => { if (e) EX.wordUnder(st, e, ans, EX_BLUE, [0], 48); },
+      why: async (st2, e) => { if (e) EX.wordUnder(st, e, q.answer, EX_GOLD, [0], 48); EX.ring(st, st.top, 'right', 6); } });
+  },
+  gestureHint(st) { if (st.q.quiet && !st.hintDone) st.realHelp = true; EnHint.again(st, st.q.quiet ? [ITEM[st.q.letter.toUpperCase()].say, st.prompt] : ['谁的第一个字母是', st.prompt], [st.top, null]); },
   iconNode() { const d = el('div'); d.innerHTML = ICONS.eye; const s = d.firstChild; s.setAttribute('width', 60); s.setAttribute('height', 60); return d; },
 };
 
@@ -624,13 +694,18 @@ const ESpy = {
 const COUNTABLE = ['apple', 'ball', 'star', 'fish', 'duck', 'cat', 'strawberry', 'banana', 'car', 'bird'];
 const QCount = {
   kind0: 'count', verb: '数！', intro: '数一数！', rule: 'count-to-character', props: [], softHint: true,
+  /* five numbers at every level (client 2026-10-10): levels 1-2 three / four of them are the numbers learned here and the others
+     numbers not met yet (六 七 ... can never be the count of five things or fewer); level 3 all five, one more / one fewer among
+     them, the things scattered; level 4 the things of two sizes (a big one counts one too); level 5 two groups */
   gen(G, o) {
-    const lv = o.level, pool = W3X.known(G, NUMS), answer = W3X.pick(G, pool), n = numOf(answer), m = Math.min(pool.length, [0, 3, 4, 4, 5, 5][lv]);
+    const lv = o.level, pool = W3X.known(G, NUMS), answer = W3X.pick(G, pool), n = numOf(answer), m = Math.min(pool.length, [0, 3, 4, 5, 5, 5][lv]);
     const near = pool.filter(k => Math.abs(numOf(k) - n) === 1), far = pool.filter(k => k !== answer && !near.includes(k));
-    const others = (lv >= 3 ? G.rng.shuffle(near).concat(G.rng.shuffle(far)) : G.rng.shuffle(far).concat(G.rng.shuffle(near))).slice(0, m - 1);
-    const thing = PICK(G, 'thing', COUNTABLE), scatter = lv >= 3, groups = lv >= 5 && n >= 2, a = groups ? G.rng.int(1, n - 1) : n;
+    const known = (lv >= 3 ? G.rng.shuffle(near).concat(G.rng.shuffle(far)) : G.rng.shuffle(far).concat(G.rng.shuffle(near))).slice(0, m - 1);
+    const big = Math.max(n, ...pool.map(numOf)), unknown = NUMS.split('').filter(k => numOf(k) > big && !pool.includes(k)), others = known.concat(unknown.slice(0, 5 - 1 - known.length));
+    const thing = PICK(G, 'thing', COUNTABLE), scatter = lv >= 3, vary = lv >= 4, groups = lv >= 5 && n >= 2, a = groups ? G.rng.int(1, n - 1) : n;
     const cells = groups ? K.cells(G.rng, a, 2, 3, 0.4).map(([u, v]) => [u * 0.42, v]).concat(K.cells(G.rng, n - a, 2, 3, 0.4).map(([u, v]) => [0.58 + u * 0.42, v])) : scatter ? K.cells(G.rng, n, 4, 3, 0.5) : null;
-    return { k: [answer, thing, others.join(''), a], answer, n, thing, scatter: scatter ? 1 : 0, groups: groups ? 1 : 0, cells, opts: W3X.put(G, others, answer), near: others.filter(k => near.includes(k)).length };
+    const sizes = vary ? Array.from({ length: n }, (_, i) => (i % 2 ? 0.62 : 1)) : null;
+    return { k: [answer, thing, others.join(''), a, vary ? 1 : 0], answer, n, thing, scatter: scatter ? 1 : 0, groups: groups ? 1 : 0, vary: vary ? 1 : 0, sizes, cells, opts: W3X.put(G, others, answer), near: others.filter(k => near.includes(k)).length, known: others.filter(k => pool.includes(k)).length + 1 };
   },
   async present(st) {
     const q = st.q;
@@ -649,7 +724,7 @@ const QCount = {
     const rows = q.n > 5 ? [5, q.n - 5] : q.n <= 3 ? [q.n] : q.n === 4 ? [2, 2] : [3, 2], s = Math.min(110, W / 5.6, H / (rows.length + 0.8));
     let k = 0;
     if (!q.cells) rows.forEach((c, r) => { for (let i = 0; i < c; i++) { const t = st.things[k++]; Object.assign(t.style, { width: s + 'px', height: s + 'px', left: (W / 2 + (i - (c - 1) / 2) * s * 1.15 - s / 2) + 'px', top: (H / 2 + (r - (rows.length - 1) / 2) * s * 1.15 - s / 2) + 'px' }); } });
-    else { const z = Math.min(q.groups ? 78 : 86, W / 5, H / 3.6); st.things.forEach((t, i) => { const [u, v] = q.cells[i]; Object.assign(t.style, { width: z + 'px', height: z + 'px', left: (u * (W - 20) + 10 - z / 2) + 'px', top: (v * (H - 20) + 10 - z / 2) + 'px' }); }); }
+    else { const z0 = Math.min(q.groups ? 78 : 86, W / 5, H / 3.6); st.things.forEach((t, i) => { const [u, v] = q.cells[i], z = z0 * (q.sizes ? q.sizes[i] : 1); Object.assign(t.style, { width: z + 'px', height: z + 'px', left: (u * (W - 20) + 10 - z / 2) + 'px', top: (v * (H - 20) + 10 - z / 2) + 'px' }); }); }
     K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot()));
   },
   async reveal(st) {
@@ -659,6 +734,15 @@ const QCount = {
     sayItem(st.q.answer); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); if (ITEM[ans]) Voice.say(ITEM[ans].line, { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen number in blue with its own picture (that many apples); the things on the board counted one by one,
+     the right number in gold */
+  async explain(st, ans) {
+    await EX.cards(st, ans, { rightPic: false, lines: ['对的是这个', ITEM[st.q.answer].line],
+      why: async () => {
+        EX.ring(st, st.board, 'right', 6);
+        for (let i = 0; i < st.things.length; i++) { if (st.ff || st.scope.dead) break; Sfx.count(i + 1); st.scope.anim(st.things[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.35) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 260 }); await EX.wait(st, 200); }
+      } });
+  },
   /* the 2nd hint: the question again and the board lit (no counting aloud - that would be the answer) */
   gestureHint(st) { if (st.hintDone || !st.board) return; st.hintDone = true; K.hop(st, st.board, 14); Voice.say(st.q.groups ? '一共有几个？' : '有几个？', { tag: 'prompt' }); },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.style.alignItems = 'center'; d.appendChild(Glyph.zh('三', 46)); const i = img(OBJURL('num3'), '', d); i.style.width = i.style.height = '40px'; return d; },
@@ -720,6 +804,20 @@ const QFrame = Object.assign({}, ReadHint, {
     sayItem(st.q.answer); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
   async feedback(st, ans) { if (st.doneEl) K.wiggle(st, st.doneEl); Voice.say('亮了' + CNQ(ans) + '盏灯', { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain (a build task): the lamps lit too many go out (blue), the missing ones come on - exactly this many, counted, and
+     the number card in gold */
+  async explain(st, ans) {
+    const n = st.q.n, on = st.on.map((v, i) => (v ? i : -1)).filter(i => i >= 0);
+    on.slice(n).forEach(i => { EX.ring(st, st.lamps[i], 'chosen', 2); st.on[i] = false; st.lamps[i].innerHTML = W3X.bulb(false, st.q.style); });
+    await EX.wait(st, 450);
+    for (let i = 0; st.on.filter(Boolean).length < n && i < 10; i++) if (!st.on[i]) { st.on[i] = true; st.lamps[i].innerHTML = W3X.bulb(true, st.q.style); }
+    if (st.readEl) EX.ring(st, st.readEl, 'right', 6);
+    const lit = st.lamps.filter((_, i) => st.on[i]);
+    for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.wait(st, 160); }
+    await EX.say(st, [ITEM[st.q.answer].line]);
+    await EX.wait(st, 250);
+    void ans;
+  },
   next(st, strat) {
     if (!st.lamps) return null;
     const want = strat === 'wrong' ? (st.q.n === 10 ? 9 : st.q.n + 1) : st.q.n, n = st.on.filter(Boolean).length;
@@ -735,6 +833,7 @@ const QFrame = Object.assign({}, ReadHint, {
 /* 黑豹 · 涂颜色 - "paint it": a colour character is shown (read, not said); dip into the right pot: the picture takes the
    paint. Levels: 1 three pots; 2 four; 3 five; 4 a phrase (红衣 · 白云 · 绿叶 · 黄花); 5 two phrases - paint both, in order. */
 const PAINT_NOUN = ['衣', '云', '叶', '花'];
+const COLORS_X = { 紫: '#9B3FC8', 棕: '#8B5A2B', 黑: '#2B2118' };          /* pots that are none of the five colours (levels 1-2) */
 const QPaint = Object.assign({}, ReadHint, {
   kind0: 'paint', verb: '涂！', intro: '涂颜色！', rule: 'read-colour-paint', props: [],
   gen(G, o) {
@@ -742,8 +841,9 @@ const QPaint = Object.assign({}, ReadHint, {
     const answer = W3X.pick(G, pool), two = lv >= 5 && pool.length > 1 && nouns.length > 1;
     const n1 = lv >= 4 && nouns.length ? G.rng.pick(nouns) : null, c2 = two ? G.rng.pick(pool.filter(k => k !== answer)) : null, n2 = two ? G.rng.pick(nouns.filter(x => x !== n1)) : null;
     const seq = two ? [answer, c2] : [answer], others = G.rng.shuffle(pool.filter(k => !seq.includes(k))).slice(0, m - seq.length);
-    const opts = W3X.put(G, others.concat(seq.slice(1)), answer);
-    return { k: [seq.join(''), n1, n2, opts.join('')], answer: two ? 'all' : answer, item: answer, seq, nouns: two ? [n1, n2] : [n1], text: two ? answer + n1 + '，' + c2 + n2 : answer + (n1 || ''), opts, noun: n1 ? 1 : 0, two: two ? 1 : 0 };
+    const extra = G.rng.shuffle(Object.keys(COLORS_X)).slice(0, Math.max(0, 5 - others.length - seq.length));      /* five pots (client 2026-10-10) */
+    const opts = W3X.put(G, others.concat(extra, seq.slice(1)), answer);
+    return { k: [seq.join(''), n1, n2, opts.join('')], answer: two ? 'all' : answer, item: answer, seq, nouns: two ? [n1, n2] : [n1], text: two ? answer + n1 + '，' + c2 + n2 : answer + (n1 || ''), opts, noun: n1 ? 1 : 0, two: two ? 1 : 0, known: opts.filter(k => COLORS[k]).length };
   },
   itemOf(st) { return W3X.own(st, st.q.item); },
   itemsOf(st) { return st.q.seq.slice(1); },
@@ -753,7 +853,7 @@ const QPaint = Object.assign({}, ReadHint, {
     W3X.readCard(st, q.text, q.two ? 100 : 120); K.pop(st, st.readEl);
     st.shapes = q.nouns.map((nn, i) => { const sh = ZX.thing(st, 220, 250, 6, 'item'); sh._kind = nn || 'balloon'; sh.appendChild(W3X.svgShape(sh._kind, '#E9E4DA')); K.pop(st, sh, 120 + 80 * i); return sh; });
     st.shape = st.shapes[0];
-    K.cards(st, q.opts.map(k => W3X.pot(COLORS[k])), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => W3X.pot(COLORS[k] || COLORS_X[k])), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
     this.place(st);
     K.say(st, '涂上这个颜色！');
   },
@@ -785,6 +885,15 @@ const QPaint = Object.assign({}, ReadHint, {
     this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
   async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say('这是' + st.q.opts[st.tapped] + '色', { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the shape takes the chosen paint for a moment (blue ring on that pot: this is what it makes); then the right pot in
+     gold and the shape takes ITS paint, the card is said */
+  async explain(st) {
+    const q = st.q, k = q.opts[st.tapped], step = Math.min(st.step || 0, q.seq.length - 1), want = q.seq[step], c = COLORS[k] || COLORS_X[k];
+    const sh = st.shapes[step];
+    await EX.cards(st, want, { right: want, pics: false, lines: [q.noun ? q.text.split('，')[step] + '！' : ITEM[want].line],
+      chosen: async () => { if (!sh || !c) return; sh.innerHTML = ''; sh.appendChild(W3X.svgShape(sh._kind, c)); await EX.wait(st, 500); },
+      why: async () => { this.paint(st, step, want); if (st.readEl) EX.ring(st, st.readEl, 'right', 6); } });
+  },
   next(st, strat) {           /* the pot for the shape to paint now (right) or another pot (wrong) */
     const q = st.q, c = q.seq[st.step || 0]; if (!st.cards) return null;
     const i = q.opts.findIndex(k => (strat === 'wrong') !== (k === c));
@@ -804,6 +913,9 @@ const FAMS = {
   bluey: { who: ['bandit', 'chilli', 'bluey', 'bingo'], kin: { bandit: '爸爸', chilli: '妈妈', bluey: '姐姐', bingo: '妹妹' } },
 };
 const KIN_OF = id => { for (const f in FAMS) if (FAMS[f].kin[id]) return FAMS[f].kin[id]; return ''; };
+/* five people in the photo at every level (client 2026-10-10): at level 1 the family's photo is made up with friends who are
+   nobody's 爸爸 / 妈妈 / ... here (heroes); from level 2 with people from the other families (never the asked word) */
+const FAM_GUESTS = ['ultraman', 'wukong', 'catboy', 'chase', 'optimus'];
 const FAM_Q = [
   { fam: 'pig', text: '爸爸', ans: 'daddy_pig' }, { fam: 'pig', text: '妈妈', ans: 'mummy_pig' }, { fam: 'pig', text: '姐姐', ans: 'peppa' }, { fam: 'pig', text: '弟弟', ans: 'george' },
   { fam: 'gourd', text: '哥哥', ans: 'gourd1' }, { fam: 'gourd', text: '弟弟', ans: 'gourd7' },
@@ -822,14 +934,16 @@ const QFamily = Object.assign({}, ReadHint, {
     const kc = needPick(G, Array.from(new Set(can.map(x => x.text.slice(-1)))), 'kin'), x = G.rng.pick(can.filter(y => y.text.slice(-1) === kc));
     const fam = FAMS[x.fam], last2 = x.text.slice(-2), first2 = rel === 2 ? x.text.slice(0, 2) : null;
     const others = Object.keys(FAMS).filter(f => f !== x.fam).flatMap(f => FAMS[f].who);
-    let o2 = null, isTrap = 0;
+    let isTrap = 0; const add = [], need = 5 - fam.who.length;
     if (out) {
       const traps = trap ? others.filter(id => KIN_OF(id) === last2 && KIN_OF(id) !== first2) : [];
-      const safe = others.filter(id => KIN_OF(id) !== last2 && KIN_OF(id) !== first2);
-      if (traps.length) { o2 = G.rng.pick(traps); isTrap = 1; } else o2 = G.rng.pick(safe);
-    }
-    const who = G.rng.shuffle(fam.who.concat(o2 ? [o2] : []));
-    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: o2 ? 1 : 0, trap: isTrap };
+      const safe = G.rng.shuffle(others.filter(id => KIN_OF(id) !== last2 && KIN_OF(id) !== first2));
+      if (traps.length) { add.push(G.rng.pick(traps)); isTrap = 1; }
+      safe.forEach(id => { if (add.length < need && !add.includes(id)) add.push(id); });
+    } else G.rng.shuffle(FAM_GUESTS).slice(0, need).forEach(id => add.push(id));
+    const who = G.rng.shuffle(fam.who.concat(add)), i0 = who.indexOf(x.ans), at = PICK(G, 'pos5', [0, 1, 2, 3, 4]);
+    who.splice(i0, 1); who.splice(at, 0, x.ans);                    /* the answer's place from a position bag */
+    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: add.length, kinOut: add.filter(id => KIN_OF(id)).length, trap: isTrap };
   },
   itemOf(st) { return W3X.own(st, st.q.item); },
   async present(st) {
@@ -857,21 +971,32 @@ const QFamily = Object.assign({}, ReadHint, {
     if (st.q.rel) Voice.say(st.q.text + '！', { tag: 'summary' }); else sayItem(st.q.item);
     this.cheerAll(st); await st.scope.guard(Voice.afterSay(200));
   },
-  async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const k = KIN_OF(ans); if (k) Voice.say('这是' + k, { tag: 'wrong' }); await st.scope.wait(900); },
+  async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const k = KIN_OF(ans); if (k) Voice.say('这是' + k, { tag: 'wrong' }); else if (CHARS[ans]) Voice.say('这是' + CHARS[ans][0], { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen person in blue (the line just said who that is); the asked one in gold, the card said */
+  async explain(st, ans) {
+    const q = st.q;
+    await EX.cards(st, ans, { pics: false, lines: q.rel ? [q.text + '！'] : ['对的是这个', ITEM[q.item].line],
+      why: async () => { if (st.readEl) EX.ring(st, st.readEl, 'right', 6); } });
+  },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('爸', 34)); d.appendChild(Glyph.zh('妈', 34)); return d; },
 });
 
 /* 鹰眼 · 照着做 - "do as it says": the command is written (吃 · 喝 · 看 · 走 · 来), read, not said; tap the picture of doing it.
    Levels: 1 three pictures; 2 four; 3 five; 4 two commands, in their order (看，走); 5 three. */
+const ACT_THING = { 吃: '饭', 喝: '水', 看: '书', 走: '车', 来: '门' };
 const QDo = Object.assign({}, ReadHint, {
   kind0: 'do', verb: '做！', intro: '照着做！', rule: 'read-command-act', props: [],
+  /* five pictures at every level (client 2026-10-10): levels 1-2 three / four of them a boy doing the actions, the others a THING
+     that goes with an action (a bowl of rice for 吃, water for 喝, a book for 看, a car for 走, a door for 来) - not doing it */
   gen(G, o) {
     const lv = o.level, pool = W3X.known(G, ACTS), m = Math.min(pool.length, [0, 3, 4, 5, 5, 5][lv]), len = Math.min(m, [0, 1, 1, 1, 2, 3][lv]);
     const first = W3X.pick(G, pool), seq = [first];
     while (seq.length < len) seq.push(G.rng.pick(pool.filter(k => !seq.includes(k))));
     const others = G.rng.shuffle(pool.filter(k => !seq.includes(k))).slice(0, m - seq.length);
-    const opts = G.rng.shuffle(others.concat(seq.slice(1))); opts.splice(PICK(G, 'pos' + m, Array.from({ length: m }, (_, i) => i)) % (opts.length + 1), 0, first);
-    return { k: [seq.join(''), opts.join('')], seq, answer: seq.length > 1 ? 'all' : first, item: first, opts, len: seq.length };
+    const things = [ACT_THING[first]].concat(G.rng.shuffle(seq.concat(others).filter(k => k !== first).map(k => ACT_THING[k]))).concat(G.rng.shuffle(Object.values(ACT_THING)));
+    const extra = things.filter((k, i) => k && things.indexOf(k) === i && ITEM[k]).slice(0, Math.max(0, 5 - others.length - seq.length));
+    const opts = W3X.put(G, others.concat(extra, seq.slice(1)), first);
+    return { k: [seq.join(''), opts.join('')], seq, answer: seq.length > 1 ? 'all' : first, item: first, opts, len: seq.length, acts: opts.filter(k => ACTS.includes(k)).length };
   },
   itemOf(st) { return W3X.own(st, st.q.seq[0]); },
   itemsOf(st) { return st.q.seq.slice(1); },
@@ -898,6 +1023,11 @@ const QDo = Object.assign({}, ReadHint, {
   },
   async reveal(st) { Sfx.reveal(); st.q.seq.forEach(k => Voice.say(ITEM[k].line, { tag: 'summary' })); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const k = st.q.opts[st.tapped]; if (ITEM[k]) Voice.say(ITEM[k].line, { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen picture in blue (its line was just said); the picture doing the command due now in gold, said */
+  async explain(st) {
+    const want = st.q.seq[Math.min(st.step || 0, st.q.seq.length - 1)];
+    await EX.cards(st, st.q.opts[st.tapped], { right: want, pics: false, lines: ['对的是这张', ITEM[want].line], why: async () => { if (st.readEl) EX.ring(st, st.readEl, 'right', 6); } });
+  },
   next(st, strat) {
     if (!st.cards) return null;
     const want = st.q.seq[st.step || 0], i = strat === 'wrong' ? st.q.opts.findIndex(k => k !== want) : st.q.opts.indexOf(want);

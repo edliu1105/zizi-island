@@ -1599,35 +1599,38 @@ const K = {
   },
   /* bindings made for a question are undone when it ends (persistent scene pieces never keep a stale id) */
   reg(st, id, e, spec) { st.map = st.map || {}; st.map[id] = e; if (spec) { Input.bind(e, Object.assign({ id }, spec)); (st.bound || (st.bound = [])).push(e); } return e; },
-  /* answer cards: one node per option (a character, a letter, a picture), all the same size */
+  /* answer cards: one node per option (a character, a letter, a picture), all the same size. opt.cols: at most this many in a
+     row (five options: 3 + 2 where one row would not fit clear of the friends, docs/OPTIONS-EXPLAIN-SPEC.md) */
   cards(st, nodes, vals, opt) {
     opt = opt || {};
-    const W = Stage.W, H = Stage.H, gap = opt.gap || 34;
-    /* the row always fits the stage width (portrait has 704): cards shrink, never below 110 */
-    const size = Math.max(110, Math.min(opt.size || 150, Math.floor((W - 36 - (nodes.length - 1) * gap) / nodes.length)));
-    const total = nodes.length * size + (nodes.length - 1) * gap;
     st.cardSize = opt.size || 150;
-    const cx = opt.cx != null ? opt.cx : W / 2, cy = opt.cy != null ? opt.cy : H - size / 2 - 24;
     const cards = nodes.map((nd, i) => {
       const c = el('div', 'card ' + (opt.cls || ''), Stage.el);
       c.style.position = 'absolute';
       if (nd) c.appendChild(nd);
-      place(c, Math.round(cx - total / 2 + i * (size + gap)), Math.round(cy - size / 2), size, size);
       this.reg(st, 'card' + i, c, {});
       st.els.push(c);
       st.scope.anim(c, [{ transform: 'scale(0) rotate(-8deg)' }, { transform: 'scale(1)' }], { duration: 320, delay: 60 * i, easing: EASE.pop, fill: 'backwards' });
       return c;
     });
     st.cards = cards; st.opts = vals;
+    this.cardsPlace(st, opt);
     return cards;
   },
+  /* the row always fits the stage width (portrait has 704): cards shrink, never below 110 (the gap shrinks first) */
   cardsPlace(st, opt) {
     if (!st.cards) return;
     opt = opt || {};
-    const gap = opt.gap || 34, n = st.cards.length, size = Math.max(110, Math.min(st.cardSize || parseFloat(st.cards[0].style.width), Math.floor((Stage.W - 36 - (n - 1) * gap) / n)));
-    const total = n * size + (n - 1) * gap;
-    const cx = opt.cx != null ? opt.cx : Stage.W / 2, cy = opt.cy != null ? opt.cy : Stage.H - size / 2 - 24;
-    st.cards.forEach((c, i) => place(c, Math.round(cx - total / 2 + i * (size + gap)), Math.round(cy - size / 2), size, size));
+    const n = st.cards.length, cols = Math.max(1, Math.min(n, opt.cols || n)), rows = Math.ceil(n / cols);
+    let gap = opt.gap || 34;
+    const size = Math.max(110, Math.min(opt.size || st.cardSize || parseFloat(st.cards[0].style.width), Math.floor((Stage.W - 36 - (cols - 1) * gap) / cols)));
+    if (cols > 1 && cols * size + (cols - 1) * gap > Stage.W - 20) gap = Math.max(8, Math.floor((Stage.W - 20 - cols * size) / (cols - 1)));
+    const rg = opt.rowGap != null ? opt.rowGap : gap, H = rows * size + (rows - 1) * rg;
+    const cx = opt.cx != null ? opt.cx : Stage.W / 2, cy = opt.cy != null ? opt.cy : Stage.H - H / 2 - 24;
+    st.cards.forEach((c, i) => {
+      const r = Math.floor(i / cols), inRow = Math.min(cols, n - r * cols), total = inRow * size + (inRow - 1) * gap;
+      place(c, Math.round(cx - total / 2 + (i - r * cols) * (size + gap)), Math.round(cy - H / 2 + r * (size + rg)), size, size);
+    });
   },
   cardIndex(id) { return /^card\d$/.test(id || '') ? Number(id.slice(4)) : -1; },
   /* generic next() for card questions: right / wrong / pos:k / rand */

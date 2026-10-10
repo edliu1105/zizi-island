@@ -6,7 +6,8 @@
    arrow / this stroke first). Tolerances are made for a 4-year-old's finger; direction and order are what is taught.
    Scaffolding by level: 1 the brush shows every stroke first, dot + arrow + outline; 2 dot + outline (arrow after a slip);
    3 outline only; 4 a faint outline; 5 the empty grid (from memory; a slip shows that stroke).
-   Character data: Make Me a Hanzi (Arphic Public License, assets/data/LICENSE-hanzi.txt) - outlines + centre lines. */
+   Character data: Make Me a Hanzi (Arphic Public License, assets/data/LICENSE-hanzi.txt) - outlines + centre lines, in
+   the order of 《通用规范汉字笔顺规范》GF 0023-2020 (every character checked: tests/data/stroke_order.json, test_strokes.py). */
 const STROKE_NAMES = {
   我: '撇 横 竖钩 提 斜钩 撇 点', 你: '撇 竖 撇 横钩 竖钩 撇 点', 他: '撇 竖 横折钩 竖 竖弯钩', 是: '竖 横折 横 横 横 竖 横 撇 捺', 的: '撇 竖 横折 横 横 撇 横折钩 点',
   了: '横撇 竖钩', 不: '横 撇 竖 点', 有: '横 撇 竖 横折钩 横 横', 在: '横 撇 竖 横 竖 横', 这: '点 横 撇 点 点 横折折撇 捺',
@@ -56,9 +57,10 @@ const Geo = {
   /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size) */
   judge(drawn, want, S, others, opt) {
     /* a hook (竖钩, 横折钩 ...) may be left off: the stroke without it is judged too - one rule for every hook (R3-03) */
+    const end = !!(opt && opt.end);
     if (opt && opt.hook) {
-      const r = this.judge(drawn, want, S, others), u = this.unhook(want);
-      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others).ok ? { ok: true } : r);
+      const r = this.judge(drawn, want, S, others, { end }), u = this.unhook(want);
+      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { end }).ok ? { ok: true } : r);
     }
     const L = this.len(want), Ld = this.len(drawn), short = L < 0.16 * S;
     const d0 = drawn[0], d1 = drawn[drawn.length - 1], w0 = want[0], w1 = want[want.length - 1];
@@ -79,7 +81,10 @@ const Geo = {
     }
     /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame */
     const tol = Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
-    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && this.bendOk(drawn, want)) return { ok: true };
+    /* a letter's stroke is written to its end, with the start's tolerance: one Zaner-Bloser stroke may go back over itself
+       (a: circle back, push up, pull down) and stopping before that last part is not the letter (a circle is not an a) */
+    const endOk = !end || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
+    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && this.bendOk(drawn, want)) return { ok: true };
     if (mRev < tol && dsRev < 0.22 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
     if (m < tol && ds < 0.22 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
     if (closer || this.which(drawn, others, S)) return { ok: false, why: 'order' };
@@ -251,11 +256,12 @@ class Writer {
     const shown = [];
     for (const i of ids) {
       if (st.scope.dead) return;
-      const sk = this.strokes[i], dur = Math.max(420, Math.min(900, sk.L / this.S * 1400));
+      /* a letter's one long stroke (m: down, up, over, down, up, over, down) gets a little more time */
+      const sk = this.strokes[i], dur = Math.max(420, Math.min(this.kind === 'en' ? 1300 : 900, sk.L / this.S * 1400));
       shown.push(this.ink(i, color || '#FF9F43', dur));
       Sfx.nz(0, dur / 1000, 1400, 900, 0.6, 0.05);
-      /* the brush tip follows the centre line */
-      const pts = Geo.resample(sk.med, 10).map(q => this.toStage(q));
+      /* the brush tip follows the centre line (enough points to go up and back down a retraced line) */
+      const pts = Geo.resample(sk.med, Math.max(10, Math.round(sk.L / this.S * 16))).map(q => this.toStage(q));
       const kf = pts.map(q => ({ left: (q.x - bs * 0.18) + 'px', top: (q.y - bs * 0.92) + 'px' }));
       place(brush, pts[0].x - bs * 0.18, pts[0].y - bs * 0.92, bs, bs);
       await sc.anim(brush, kf, { duration: dur, easing: 'linear', fill: 'forwards' });
@@ -279,7 +285,7 @@ class Writer {
     const drawn = pts.map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
     if (!this.trail) { this.trail = drawn; this.trailEl = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); }
     const sk = this.strokes[this.k];
-    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || '') });
+    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), end: this.kind === 'en' });
     if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(res.ok ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
     this.trail = null;
     if (res.ok) {

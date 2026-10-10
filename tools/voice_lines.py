@@ -11,6 +11,9 @@ CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十
 CNQ = lambda n: '两' if n == 2 else CN[n]
 # said through a variable or a ternary the scan does not see
 EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字', '玩得真开心！', '我们去字字岛吧！', 'Hello!']
+# the explain step after a wrong answer (docs/OPTIONS-EXPLAIN-SPEC.md): its own short lines (said from arrays / variables)
+EXTRA += ['对的是这个', '对的是这张', '看，是这样', '它照镜子啦', '它躺下啦', '它翻跟头啦', '哪张图是它开头？']      # 哪个写对了: a nested ternary the scan misses
+EXTRA += ['这是' + n for n in ('奥特曼', '悟空', '猫小子', '阿奇', '擎天柱')]       # 全家福's guests at level 1 (src/w3.js FAM_GUESTS)
 
 
 def literals():
@@ -87,6 +90,8 @@ def data_lines():
     zh = [c for lst in (W1, W2, W3) for d in lst if not d.get('fw') for c, _, _, _ in d['chars']]
     out |= {'砸碎所有的' + c + '！' for c in zh}                          # 绿巨人 · 砸石头 (its review questions too)
     out |= {'亮了' + CNQ(n) + '盏灯' for n in range(1, 11)}               # 雷神 · 十格灯: what was lit
+    for c in '紫棕黑':                                                    # 涂颜色: the pots that are none of the five (levels 1-2)
+        out.add('这是' + c + '色')
     for c in '红黄蓝绿白':                                                # 黑豹 · 涂颜色
         out.add('这是' + c + '色')
         for nn in '衣云叶花':

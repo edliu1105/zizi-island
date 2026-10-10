@@ -39,9 +39,11 @@ const Glyph = {
   },
   any(g, size, color) { return /^[A-Za-z]$/.test(g) ? this.en(g, size, color) : this.zh(g, size, color); },
   /* a word: its letters on one shared base line, each as wide as it is (never touching) */
-  word(w, h, color) {
+  word(w, h, color) { return this.wordC(w, h, w.split('').map(() => color || INK), true); },
+  /* the same with a colour per letter (the explain step: the first letter, the rhyme ending, the letters that differ) */
+  wordC(w, h, colors, plain) {
     let x = 0; const g = svg('g', {});
-    w.split('').forEach(c => { const b = letterBox(c), dx = x - b.x0; LETTERS[c].forEach(p => svg('path', { d: p.map((q, i) => (i ? 'L' : 'M') + (q[0] + dx).toFixed(1) + ' ' + q[1].toFixed(1)).join(''), fill: 'none', stroke: color || INK, 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g)); x += b.x1 - b.x0 + 18; });
+    w.split('').forEach((c, j) => { const b = letterBox(c), dx = x - b.x0; LETTERS[c].forEach(p => svg('path', { d: p.map((q, i) => (i ? 'L' : 'M') + (q[0] + dx).toFixed(1) + ' ' + q[1].toFixed(1)).join(''), fill: 'none', stroke: colors[j] || INK, 'stroke-width': !plain && colors[j] && colors[j] !== INK ? 13 : 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g)); x += b.x1 - b.x0 + 18; });
     const W = x - 18 + 26, s = svg('svg', { viewBox: '-13 -8 ' + W + ' 136', width: Math.round(h * W / 136), height: h, class: 'gly' });
     s.appendChild(g);
     return s;
@@ -175,6 +177,14 @@ const Clock = {
    after two failed gestures only shows how to play (W3R2-01) and costs nothing */
 const ownHint = g => !!(g && typeof g.gestureHint === 'function' && g.gestureHint !== GameBase.gestureHint);
 const helped = st => !!st.realHelp || ((st.assists || []).some(a => /^hint[23]/.test(a)) && ownHint(st.game) && !st.game.softHint && !st.noHelp);
+/* the options of a choice question (docs/OPTIONS-EXPLAIN-SPEC.md rule 1): no option twice and, where the answer is one of
+   them, exactly one right one; a generator whose draw breaks this simply draws again (Session.genQ) */
+function optsSound(q) {
+  if (!q || !Array.isArray(q.opts)) return true;
+  const key = o => (Array.isArray(o) ? o.join(':') : String(o)), ks = q.opts.map(key);
+  if (new Set(ks).size !== ks.length) return false;
+  return q.answer == null || !ks.includes(key(q.answer)) || ks.filter(k => k === key(q.answer)).length === 1;
+}
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -274,6 +284,7 @@ const Session = {
     let q = null, again = null;
     for (let i = 0; i < 60; i++) {
       q = g.gen(G, { level, rng: G.rng });
+      if (!optsSound(q) && i < 59) continue;          /* the generator's own check: one right answer, no option twice (spec rule 1) */
       const k = g.key(q);
       if (k === ws.lastKey && i < 59) continue;
       if (seen.has(k)) { if (!again) again = q; continue; }
@@ -351,7 +362,15 @@ const Session = {
       }
       G.streak = 0;
       st.phase = 'correcting';
-      await g.feedback(st, ans);                 /* says what is wrong (never "you are wrong", never the answer) */
+      await g.feedback(st, ans);                 /* says what the picked one IS (never "you are wrong") */
+      if (!this.alive(my)) return 'dead';
+      /* then the explain step (docs/OPTIONS-EXPLAIN-SPEC.md, client 2026-10-10): the chosen one for what it is, the right one
+         in a gold ring and why it is right - no cheering (cheerAll does nothing while explaining), no praise, 2-5 s, a tap
+         skips it. The question that follows is a new one, so showing this answer helps nobody tap through */
+      st.phase = 'explain'; st.explaining = true;
+      const t0 = now();
+      if (g.explain) await g.explain(st, ans); else await g.reveal(st);
+      { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0) }); if (L.length > 60) L.shift(); }     /* for the tests */
       if (!this.alive(my)) return 'dead';
       if (!G.practice) Voice.say(g.again || AGAIN[(G.again = (G.again || 0) + 1) % AGAIN.length], { tag: 'again' });      /* writing: 再写一个！ (a new character comes, R2-06) */
       await st.scope.guard(Voice.afterSay(200));
@@ -436,7 +455,7 @@ const Session = {
     const G = this.G; if (!G || G.dead) return;
     if (G.finishing) { if (!G.ffDone) { G.ffDone = true; Voice.hush('ff'); G.scope.fastForward(); } return; }
     const st = this.st;
-    if (!st || st.scope.dead || st.ff || !['reveal', 'praise', 'correcting'].includes(st.phase)) return;
+    if (!st || st.scope.dead || st.ff || !['reveal', 'praise', 'correcting', 'explain'].includes(st.phase)) return;
     st.ff = true;
     Voice.hush('ff', 'summary');
     st.scope.fastForward();
@@ -1149,7 +1168,7 @@ function boot() {
     get() {
       const st = Session.st; if (!st) return null;
       const g = st.game, snap = g.snap ? g.snap(st) : {};
-      return Object.assign({ id: st.id, gen: st.gen, world: st.G.world, game: st.G.id, kind: st.kind, level: st.level, phase: st.phase, hinted: st.hinted, retest: st.retest, err: st.err, ops: st.ops, childOps: st.childOps, submitted: st.submitted, answer: st.q.answer, assists: st.assistT || [], clock: Math.round(Clock.t()), q: JSON.parse(JSON.stringify(st.q, (k, v) => (typeof v === 'function' || (v && v.nodeType)) ? undefined : v)) }, snap);
+      return Object.assign({ id: st.id, gen: st.gen, world: st.G.world, game: st.G.id, kind: st.kind, level: st.level, phase: st.phase, hinted: st.hinted, retest: st.retest, err: st.err, ops: st.ops, childOps: st.childOps, submitted: st.submitted, answer: st.q.answer, assists: st.assistT || [], clock: Math.round(Clock.t()), explaining: !!st.explaining, ex: st.ex || null, q:JSON.parse(JSON.stringify(st.q, (k, v) => (typeof v === 'function' || (v && v.nodeType)) ? undefined : v)) }, snap);
     },
   });
   window.__state = () => JSON.parse(JSON.stringify(Store.s));

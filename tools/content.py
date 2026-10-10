@@ -186,6 +186,56 @@ READ = [
     ('你来！', alone('come', .8), [alone('walk', .8), alone('eat', .8)]),
     ('我看月。', [('look', .32, .6, .62), ('moon', .76, .3, .36)], [[('look', .32, .6, .62), ('sun', .76, .3, .36)], [('eat', .32, .6, .62), ('moon', .76, .3, .36)]]),
 ]
+# 读一读 with five pictures (client 2026-10-10, docs/OPTIONS-EXPLAIN-SPEC.md): two more wrong pictures for every sentence, each
+# clearly NOT what it says (another thing, the other relation, another count / colour / person) - never a second right one: no
+# other family's 妈妈 / 爸爸 / 姐姐 / 弟弟, no colour next to the asked one (orange for 红), no car alone for 我的车
+READ_MORE = {
+    '马是大的。': [small('cow'), big('sheep')],
+    '牛是小的。': [big('horse'), small('sheep')],
+    '我的车。': [withp('door'), withp('cow')],
+    '他的伞。': [withp('lamp'), withp('horse')],
+    '鸟不大。': [big('cow'), small('sheep')],
+    '这是月。': [alone('tree'), alone('mountain')],
+    '火大了。': [small('water'), big('tree')],
+    '鸟在木上。': [on('sheep', 'tree'), under('bird', 'car')],
+    '羊在山上。': [on('sheep', 'tree'), under('cow', 'mountain')],
+    '木上有鸟。': [on('bird', 'car'), on('sheep', 'tree')],
+    '羊不大。': [big('horse'), small('bird')],
+    '伞在车上。': [on('lamp', 'car'), under('umbrella', 'door')],
+    '日在山上。': [on('sun', 'tree'), under('moon', 'mountain')],
+    '我有伞。': [withp('lamp'), withp('horse')],
+    '这是我的车。': [withp('door'), withp('umbrella')],
+    '马在门下。': [under('horse', 'tree'), on('cow', 'door')],
+    '马是我的。': [withp('sheep'), withp('umbrella')],
+    '你的门。': [withp('car'), withp('horse')],
+    '他的牛。': [withp('car'), withp('lamp')],
+    '羊是大的。': [big('cow'), small('horse')],
+    '鸟是小的。': [small('sheep'), big('horse')],
+    '我的灯。': [withp('umbrella'), withp('cow')],
+    '我有一本书。': [withn('book', 3), withn('cup', 2)],
+    '我有三本书。': [withn('book', 2), withn('book', 5)],
+    '他有五杯水。': [withn('cup', 3), withn('book', 4)],
+    '这是八本书。': [many('book', 7), many('book', 9)],
+    '我有十本书。': [withn('book', 9), withn('book', 8)],
+    '车是红的。': [tint(alone('car'), 'hue-rotate(60deg) saturate(1.4)'), alone('van')],
+    '鸟是蓝的。': [tint(alone('bird'), 'hue-rotate(-100deg) saturate(1.4)'), alone('whale')],
+    '叶是绿的。': [tint(alone('leaf'), 'hue-rotate(120deg) saturate(1.3)'), alone('dino')],
+    '这是白兔。': [alone('polarbear'), tint(alone('rabbit'), 'sepia(1) hue-rotate(180deg) saturate(3) brightness(.8)')],
+    '我的衣是黄的。': [withp('banana'), tint(withp('shirt'), 'hue-rotate(100deg) saturate(1.4)')],
+    '这是我妈妈。': [who('george'), who('gourd1')],
+    '爸爸有车。': [who('peppa', 'car'), who('daddy_pig', 'book')],
+    '姐姐有伞。': [who('mummy_pig', 'umbrella'), who('peppa', 'book')],
+    '弟弟在木下。': [on('@george', 'tree'), under('@mummy_pig', 'tree')],
+    '弟弟吃饭。': [who('george', 'book'), who('daddy_pig', 'ricebowl')],
+    '妈妈喝汤。': [who('peppa', 'soup'), who('mummy_pig', 'meat')],
+    '哥哥看书。': [who('gourd1', 'soup'), who('peppa', 'book')],
+    '我喝水。': [alone('walk', .8), alone('come', .8)],
+    '我吃饭。': [alone('look', .8), alone('come', .8)],
+    '我走了。': [alone('eat', .8), alone('drink', .8)],
+    '你来！': [alone('look', .8), alone('drink', .8)],
+    '我看月。': [[('look', .32, .6, .62), ('cloud', .76, .3, .36)], [('walk', .32, .6, .62), ('moon', .76, .3, .36)]],
+}
+READ = [(t, r, w + READ_MORE[t]) for t, r, w in READ]
 # story books: six pages, one sentence (<= 8 characters) and one picture a page, only characters taught before they open
 BOOKS = [
     dict(id='b1', title='小马的车', after='s1', pages=[

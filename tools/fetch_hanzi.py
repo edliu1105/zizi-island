@@ -30,3 +30,13 @@ js = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
 open(os.path.join(ROOT, 'assets', 'data', 'hanzi.json'), 'w', encoding='utf-8').write(js)
 print(len(out), 'characters,', len(js) // 1024, 'KB', ''.join(chars))
 print('strokes', {c: len(out[c]['s']) for c in chars})
+# the order of the data is checked against 《通用规范汉字笔顺规范》GF 0023-2020 (docs/DESIGN.md 笔顺标准): a new character needs
+# its entry in tests/data/stroke_order.json - its GF code and page, read from the standard, and the data's order checked
+# stroke by stroke against the standard's 跟随式 (tests/test_strokes.py fails without it and prints a draft entry)
+table = json.load(open(os.path.join(ROOT, 'tests', 'data', 'stroke_order.json'), encoding='utf-8'))['hanzi']
+new = [c for c in chars if c not in table]
+bad = [c for c in chars if c in table and len(table[c]['gf']) != len(out[c]['s'])]
+if new:
+    print('NOT YET CHECKED against GF 0023-2020 (add to tests/data/stroke_order.json):', ''.join(new))
+if bad:
+    print('STROKE COUNT differs from GF 0023-2020 - check these before using them:', ''.join(bad))

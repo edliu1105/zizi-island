@@ -19,6 +19,7 @@ from harness import serve, new_page, enter, wait_phase, q, step, answer_question
 
 log = Log('w3new')
 NEW = ['hulk3', 'thor3', 'panther3', 'widow3', 'hawk3']
+DIFF = ('copies', 'rev', 'vow', 'allit', 'near', 'share', 'inword', 'look', 'trap', 'rime', 'quiet', 'moving', 'stroop', 'groups', 'two', 'rel', 'kinOut', 'vary', 'kinds', 'known', 'acts')
 OPEN = "() => { Store.reset(); Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; ISL[id].chars.forEach(c => { Store.s.met[c.c] = true; }); }); Store.save(); }"
 AUDIT = """() => {
   const out = [];
@@ -85,7 +86,8 @@ with sync_playwright() as p, serve() as base:
                 if not ok:
                     bad.append((g, lv, [s0, s1, s2, s3], k1, k2, k3))
                 q0 = cur['q']
-                lvinfo.setdefault(g, {})[lv] = len(q0.get('opts') or []) + (q0.get('copies') or 0) + (10 if q0.get('pivot') or len(q0.get('seq') or []) > 1 or q0.get('noun') or q0.get('scatter') else 0)
+                # five options at every level now (client 2026-10-10): what makes a level harder is in the question's own features
+                lvinfo.setdefault(g, {})[lv] = len(q0.get('opts') or []) + sum(float(q0.get(f) or 0) for f in DIFF) + (10 if q0.get('pivot') or len(q0.get('seq') or []) > 1 or q0.get('noun') or q0.get('scatter') else 0)
             except Exception as e:
                 bad.append((g, lv, 'ERR', str(e)[:140]))
             page.evaluate("gesture('home')"); page.wait_for_timeout(120)
@@ -97,8 +99,8 @@ with sync_playwright() as p, serve() as base:
     log.check(set(r[0]) == set('六七八九十') and set(r[1]) > set(r[0]), '01 十格灯: levels 1-2 the island\'s numbers, from level 3 every number known (1-10) %s' % r)
     r = page.evaluate("""() => { const G = { world: 'widow3', W: ISL.widow3, rng: RNG(3), bags: {}, needPass: [], ws: Store.w('widow3') }, one = [], five = [];
       for (let i = 0; i < 40; i++) { one.push(GAMES['widow3:quiz'].gen(G, { level: 1 })); five.push(GAMES['widow3:quiz'].gen(G, { level: 5 })); }
-      return [one.filter(q => q.rel || q.extra).length, five.filter(q => q.rel === 2 && q.extra).length, five.filter(q => q.trap).length]; }""")
-    log.check(r[0] == 0 and r[1] == 40 and r[2] > 0, '01 全家福: level 1 a word in one family photo; level 5 two words ("弟弟的姐姐") with someone from another family, often of that name too %s' % r)
+      return [one.filter(q => q.rel || q.kinOut).length, five.filter(q => q.rel === 2 && q.kinOut).length, five.filter(q => q.trap).length, one.concat(five).filter(q => q.opts.length !== 5).length]; }""")
+    log.check(r[0] == 0 and r[1] == 40 and r[2] > 0 and r[3] == 0, '01 全家福 (five people at every level): level 1 a word in one family photo (the others heroes of no family); level 5 two words ("弟弟的姐姐") with people from other families, often of that name too %s' % r)
 
     # 02 real mouse input
     for ori, vw, vh in (('L', 1180, 820), ('P', 820, 1180)):

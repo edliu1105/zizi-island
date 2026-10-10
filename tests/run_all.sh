@@ -27,9 +27,11 @@ run v2r1      tests/test_v2r1.py
 run v2r2      tests/test_v2r2.py
 run v2r3      tests/test_v2r3.py
 run pointer   tests/test_pointer.py
+run strokes   tests/test_strokes.py
 run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py
 run w3new     tests/test_w3new.py
+run options   tests/test_options.py
 echo "end $(date +%H:%M:%S)" >> "$OUT"
 if [ -n "$BAD" ]; then echo "ALL: FAIL -$BAD" >> "$OUT"; else echo "ALL: PASS" >> "$OUT"; fi
 cat "$OUT"

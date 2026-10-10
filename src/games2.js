@@ -87,7 +87,7 @@ const PlayFuse = {
   targets(st) { st.cards = st.opts.map((k, i) => { const d = ZX.thing(st, 150, 150, 6, 'card'); d.appendChild(Glyph.zh(k, 118)); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 80 * i); return d; }); },
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 260, y: 160, w: 680, h: n > 3 ? 360 : 200 } : { x: 60, y: 300, w: 584, h: n > 3 ? 440 : 240 };
-    spots(n, r, L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n)).forEach((p, i) => place(st.cards[i], p.x - 75, p.y - 75, 150, 150));
+    spots(n, r, L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n)).forEach((p, i) => place(st.cards[i], p.x - 75, p.y - 75, 150, 150));
   },
   decor(G) { const L = K.L(), a = G.actors.zero; if (a) showActor(a, L ? 120 : 600, L ? 690 : 1016, L ? 290 : 200); },
   async win(st, i) {
@@ -178,8 +178,8 @@ const PlayEnergy = {
     K.reg(st, 'cube', cube, { drag: true, drops: () => st.cards.map((c, i) => ({ id: 'bot' + i, rect: () => box(c) })) });
   },
   place(st) {
-    const L = K.L(), n = st.cards.length, r = L ? { x: 250, y: 280, w: 720, h: n > 3 ? 380 : 260 } : { x: 50, y: 470, w: 604, h: n > 3 ? 460 : 260 };
-    spots(n, r, L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n)).forEach((p, i) => place(st.cards[i], p.x - 75, p.y - 80, 150, 200));
+    const L = K.L(), n = st.cards.length, r = L ? { x: 250, y: 260, w: 720, h: n > 3 ? 420 : 260 } : { x: 50, y: 470, w: 604, h: n > 3 ? 460 : 260 };
+    spots(n, r, L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n)).forEach((p, i) => place(st.cards[i], p.x - 75, p.y - 80, 150, 200));
     place(st.cube, L ? 70 : 290, L ? 150 : 260, 120, 120);
   },
   onGesture(st, name, p) {
@@ -242,6 +242,23 @@ const QSpell = {
   },
   async reveal(st) { Sfx.reveal(); K.hop(st, st.pic, 40); Voice.say(st.q.word, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st) { const d = st.tileEls[st.tapped]; if (d) K.wiggle(st, d); Voice.say(ITEM[st.q.tiles[st.tapped].toUpperCase()].say, { tag: 'wrong' }); Voice.say(st.q.word, { tag: 'wrong' }); await st.scope.wait(1200); },
+  /* explain (a build task: nothing to choose among, so the "why" is the word built): the tapped tile in blue; the letter that
+     was due in gold - then the rest of the word goes into its slots in order and the picture says the word */
+  async explain(st) {
+    const q = st.q, want = q.word[st.got], wi = q.tiles.findIndex((c, j) => c === want && !st.used.includes(j));
+    EX.ring(st, st.tileEls[st.tapped], 'chosen', 8);
+    await EX.wait(st, 500);
+    for (let k = st.got; k < q.word.length; k++) {
+      const j = q.tiles.findIndex((c, jj) => c === q.word[k] && !st.used.includes(jj)); if (j < 0 || st.scope.dead) break;
+      st.used.push(j); const d = st.tileEls[j], sb = box(st.slots[k]); d._in = true;
+      await K.flyTo(st, d, sb.x, sb.y, 260); Sfx.place();
+    }
+    if (wi >= 0) EX.ring(st, st.tileEls[wi], 'right', 8);           /* the letter that was due, now in its slot */
+    st.slots.forEach(sl => { sl.style.boxShadow = '0 0 0 6px ' + EX_GOLD; });
+    K.hop(st, st.pic, 30);
+    await EX.say(st, [q.word]);
+    await EX.wait(st, 300);
+  },
   next(st, strat) { if (st.got >= st.q.word.length) return null; const want = st.q.word[st.got]; const i = strat === 'wrong' ? st.q.tiles.findIndex((c, j) => c !== want && !st.used.includes(j)) : st.q.tiles.findIndex((c, j) => c === want && !st.used.includes(j)); return { g: 'tap', p: { id: 'T' + i } }; },
   workEls(st) { return st.tileEls || []; },
   snap(st) { return { got: st.got || 0 }; },
@@ -251,21 +268,28 @@ const QSpell = {
 const QCase = {
   kind0: 'case', verb: '配！', intro: '大小写找朋友！', props: [],
   gen(G, o) {
-    const lv = o.level, answer = PICK(G, 'ans', poolOf(G, 'lo', lv >= 3)), n = lv <= 2 ? 3 : 4;
+    const lv = o.level, answer = PICK(G, 'ans', poolOf(G, 'lo', lv >= 3)), n = 5;      /* five (client 2026-10-10) */
     return { k: [answer, n], answer, big: answer.toUpperCase(), opts: optsFor(G, 'lo', Math.max(3, lv), n, answer) };
   },
   async present(st) {
     const q = st.q;
     const big = st.big = ZX.thing(st, 200, 200, 6, 'card'); big.appendChild(Glyph.en(q.big, 170)); K.pop(st, big);
-    K.cards(st, q.opts.map(k => Glyph.en(k, 110)), q.opts, Object.assign({ size: 150, gap: 28 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => Glyph.en(k, 104)), q.opts, Object.assign({ size: 140, gap: 24 }, this.cardSpot()));
     this.place(st);
     st.prompt = '小写在哪里？'; st.lead = ITEM[q.big].say;
     Voice.say(ITEM[q.big].say, { tag: 'prompt' }); Voice.say('小写在哪里？', { tag: 'prompt' });
   },
-  cardSpot() { return K.L() ? { cx: 600, cy: 520 } : { cx: 352, cy: 760 }; },
-  place(st) { if (!st.big) return; const L = K.L(); place(st.big, L ? 500 : 252, L ? 120 : 260, 200, 200); K.cardsPlace(st, Object.assign({ gap: 28 }, this.cardSpot())); },
+  cardSpot() { return K.L() ? { cx: 600, cy: 488, cols: 3, size: 140, gap: 24 } : { cx: 352, cy: 760 }; },
+  place(st) { if (!st.big) return; const L = K.L(); place(st.big, L ? 500 : 252, L ? 112 : 260, 200, 200); K.cardsPlace(st, Object.assign({ gap: 24 }, this.cardSpot())); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], bb = box(st.big); await K.flyTo(st, e, bb.x + bb.w + 20, bb.y + 25, 360, 40); Sfx.reveal(); Voice.say(ITEM[st.q.answer].line, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); if (ITEM[ans]) Voice.say(ITEM[ans.toUpperCase()].say, { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen small letter in blue with its own capital over it (that is ITS friend); the right one goes next to the
+     big letter, in gold */
+  async explain(st, ans) {
+    const bb = box(st.big);
+    await EX.cards(st, ans, { picOf: k => Glyph.en(k.toUpperCase(), 76), rightPic: false, lines: ['对的是这个', ITEM[st.q.answer].line],
+      move: async (st2, e) => { await K.flyTo(st, e, bb.x + bb.w + 20, bb.y + 30, 360, 40); } });
+  },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.en('A', 44)); d.appendChild(Glyph.en('a', 44)); return d; },
 };
 /* 睡衣小英雄 · 组词: 火 + ? = 火车 - which character is missing? */
@@ -276,30 +300,38 @@ const QWord2 = {
   gen(G, o) {
     const lv = o.level, ok = WORDS2_LIST.filter(w => ITEM[w[0]] && ITEM[w[1]]);
     const w = PICK(G, 'w', ok.map(x => x[0] + x[1])), [a, b] = w.split('');
-    const pool = poolOf(G, 'zh', true).filter(k => k !== b && k !== a && !ok.some(x => x[0] === a && x[1] === k) && !(WORD_ALSO[a] || '').includes(k)), n = lv <= 2 ? 3 : 4;
-    const others = G.rng.shuffle(pool).slice(0, n - 1);
-    const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, b);
-    return { k: [w, others.join('')], word: w, a, answer: b, opts: others };
+    const pool = poolOf(G, 'zh', true).filter(k => k !== b && k !== a && !ok.some(x => x[0] === a && x[1] === k) && !(WORD_ALSO[a] || '').includes(k)), n = 5;      /* five (client 2026-10-10) */
+    /* levels 3+: a look-alike of the missing character first (车 / 牛, 门 / 口 ...) */
+    const look = lv >= 3 ? G.rng.shuffle((LOOK[b] || '').split('').filter(k => pool.includes(k))) : [];
+    const others = look.concat(G.rng.shuffle(pool.filter(k => !look.includes(k)))).slice(0, n - 1);
+    return { k: [w, others.join('')], word: w, a, answer: b, opts: putAt(G, others, b) };
   },
   async present(st) {
     const q = st.q, obj = WORDS2_OBJ[q.word];
     const pic = st.pic = ZX.thing(st, 170, 170, 6, 'objpop'); ZX.pic(OBJURL(obj), pic); K.pop(st, pic);
     st.first = ZX.thing(st, 140, 140, 6, 'card'); st.first.appendChild(Glyph.zh(q.a, 110));
     st.blank = ZX.thing(st, 140, 140, 6, 'card'); st.blank.style.border = '5px dashed #2B2118'; st.blank.style.background = 'rgba(255,255,255,.6)'; const qm = el('div', '', st.blank); qm.innerHTML = ICONS.q; qm.style.width = qm.style.height = '60px';
-    K.cards(st, q.opts.map(k => Glyph.zh(k, 108)), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => Glyph.zh(k, 100)), q.opts, Object.assign({ size: 130, gap: 22 }, this.cardSpot()));
     this.place(st);
     K.say(st, q.word + '缺哪个字？');
   },
-  cardSpot() { return K.L() ? { cx: 512, cy: 540 } : { cx: 352, cy: 780 }; },
+  cardSpot() { return K.L() ? { cx: 560, cy: 524, cols: 3, size: 130, gap: 22 } : { cx: 352, cy: 780 }; },
   place(st) {
     if (!st.pic) return;
     const L = K.L();
     place(st.pic, L ? 190 : 267, L ? 160 : 160, 170, 170);
     place(st.first, L ? 420 : 200, L ? 175 : 380, 140, 140);
     place(st.blank, L ? 580 : 364, L ? 175 : 380, 140, 140);
-    K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot()));
+    K.cardsPlace(st, Object.assign({ gap: 22 }, this.cardSpot()));
   },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], bb = box(st.blank); await K.flyTo(st, e, bb.x, bb.y, 360, 50); st.blank.style.visibility = 'hidden'; Sfx.reveal(); Voice.say(st.q.word + '！', { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
+  /* explain: the chosen one in blue (with its own picture); the right one flies into the blank in gold, the word's picture hops */
+  async explain(st, ans) {
+    const bb = box(st.blank);
+    await EX.cards(st, ans, { rightPic: false, lines: [st.q.word + '！'],
+      move: async (st2, e) => { const cb = box(e); await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 360, 50); st.blank.style.visibility = 'hidden'; },
+      why: async () => { K.hop(st, st.pic, 30); EX.ring(st, st.pic, 'right', 6); } });
+  },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('火', 40)); d.appendChild(Glyph.zh('车', 40)); return d; },
 };
 /* 赛罗 · 合体字: 木 + 木 = ?   (later: 明 = 日 + ?) */
@@ -308,10 +340,12 @@ const QFuse = {
   gen(G, o) {
     const lv = o.level, list = Object.keys(PARTS2), k = PICK(G, 'k', list), [a, b] = PARTS2[k], rev = lv >= 3 && G.rng.chance(0.5);
     let answer, opts;
-    if (!rev) { answer = k; opts = G.rng.shuffle(list.filter(x => x !== k)).slice(0, lv <= 2 ? 2 : 3); }
-    else { answer = b; opts = G.rng.shuffle(['人', '木', '日', '月', '口', '大'].filter(x => x !== b && x !== a)).slice(0, 3); }
-    const n = opts.length + 1, pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); opts.splice(pos, 0, answer);
-    return { k: [k, rev], whole: k, a, b, rev, answer, opts };
+    /* five (client 2026-10-10): the whole asked -> the other made characters and one of its parts (木 is not 木 + 木); a part
+       asked -> the other parts. Never a character that is also right */
+    if (!rev) { answer = k; opts = G.rng.shuffle(list.filter(x => x !== k)).concat(G.rng.shuffle([a, b, '大', '口'].filter(x => x !== k && ITEM[x])).slice(0, 1)); }
+    else { answer = b; opts = G.rng.shuffle(['人', '木', '日', '月', '口', '大'].filter(x => x !== b && x !== a)); }
+    opts = opts.filter((x, i) => opts.indexOf(x) === i).slice(0, 4);
+    return { k: [k, rev], whole: k, a, b, rev, answer, opts: putAt(G, opts, answer) };
   },
   async present(st) {
     const q = st.q, L = K.L();
@@ -320,14 +354,21 @@ const QFuse = {
     const sym = t => { const s = el('div', '', row); s.textContent = t; Object.assign(s.style, { font: '900 64px/1 system-ui', color: '#fff', webkitTextStroke: '10px #2B2118', paintOrder: 'stroke fill' }); };
     if (!q.rev) { card(q.a); sym('+'); card(q.b); sym('='); st.blank = card(null, true); }
     else { card(q.whole); sym('='); card(q.a); sym('+'); st.blank = card(null, true); }
-    K.cards(st, q.opts.map(k => Glyph.zh(k, 108)), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => Glyph.zh(k, 100)), q.opts, Object.assign({ size: 130, gap: 22 }, this.cardSpot()));
     this.place(st);
     K.say(st, q.rev ? q.whole + '是' + q.a + '加什么？' : q.a + '加' + q.b + '是什么？');
   },
-  cardSpot() { return K.L() ? { cx: 560, cy: 520 } : { cx: 352, cy: 760 }; },
-  place(st) { if (!st.row) return; const L = K.L(); place(st.row, L ? 300 : 92, L ? 170 : 340, L ? 660 : 520, 150); K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
+  cardSpot() { return K.L() ? { cx: 600, cy: 504, cols: 3, size: 130, gap: 22 } : { cx: 352, cy: 760 }; },
+  place(st) { if (!st.row) return; const L = K.L(); place(st.row, L ? 300 : 92, L ? 150 : 340, L ? 660 : 520, 150); K.cardsPlace(st, Object.assign({ gap: 22 }, this.cardSpot())); },
   decor(G) { const L = K.L(), a = G.actors.zero; if (a) showActor(a, L ? 120 : 610, L ? 690 : 1016, L ? 290 : 190); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); Sfx.zap(); Fx.burst(Stage.W / 2, 240, { n: 20, colors: ['#7FE4FF', '#FFFFFF'], dist: 130 }); sayItem(st.q.whole); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
+  /* explain: the chosen one in blue; the right one flies into the blank in gold - the sum reads whole */
+  async explain(st, ans) {
+    const bb = EX.rect(st.blank);
+    await EX.cards(st, ans, { pics: false, lines: ['对的是这个', ITEM[st.q.whole].line],
+      move: async (st2, e) => { const cb = box(e); await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 360, 50); },
+      why: async () => { EX.ring(st, st.row, 'right', 6); } });
+  },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('日', 36)); d.appendChild(Glyph.zh('月', 36)); return d; },
 };
 /* 葫芦娃 · 找部件: which character has 木 inside? */
@@ -340,45 +381,56 @@ const QPart = {
     const lv = o.level, known = poolOf(G, 'zh', true);
     const comps = Object.keys(PART_IN).filter(c => ITEM[c] && PART_IN[c].split('').some(k => known.includes(k)));
     const comp = PICK(G, 'c', comps), withIt = PART_IN[comp].split('').filter(k => known.includes(k));
-    const answer = G.rng.pick(withIt), n = lv <= 2 ? 3 : 4;
+    const answer = G.rng.pick(withIt), n = 5;      /* five (client 2026-10-10) */
     const others = G.rng.shuffle(known.filter(k => !PART_IN[comp].includes(k) && !(PART_ALSO[comp] || '').includes(k) && k !== comp)).slice(0, n - 1);
-    const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, answer);
-    return { k: [comp, answer, others.join('')], comp, answer, opts: others };
+    return { k: [comp, answer, others.join('')], comp, answer, opts: putAt(G, others, answer) };
   },
   async present(st) {
     const q = st.q;
     const c = st.compEl = ZX.thing(st, 150, 150, 6, 'card'); c.appendChild(Glyph.zh(q.comp, 116, '#2E6FD8')); K.pop(st, c);
-    K.cards(st, q.opts.map(k => Glyph.zh(k, 108)), q.opts, Object.assign({ size: 145, gap: 26 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => Glyph.zh(k, 100)), q.opts, Object.assign({ size: 130, gap: 22 }, this.cardSpot()));
     this.place(st);
     K.say(st, '哪个字里有' + q.comp + '？');
   },
-  cardSpot() { return K.L() ? { cx: 560, cy: 500 } : { cx: 352, cy: 740 }; },
-  place(st) { if (!st.compEl) return; const L = K.L(); place(st.compEl, L ? 485 : 277, L ? 140 : 300, 150, 150); K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
+  cardSpot() { return K.L() ? { cx: 560, cy: 496, cols: 3, size: 130, gap: 22 } : { cx: 352, cy: 740 }; },
+  place(st) { if (!st.compEl) return; const L = K.L(); place(st.compEl, L ? 485 : 277, L ? 120 : 300, 150, 150); K.cardsPlace(st, Object.assign({ gap: 22 }, this.cardSpot())); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); e.classList.add('hi'); Sfx.reveal(); sayItem(st.q.answer); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
+  /* explain: the chosen one in blue (no such part in it); the part flies into the right one, which is ringed in gold */
+  async explain(st, ans) {
+    await EX.cards(st, ans, { pics: false, lines: ['对的是这个', ITEM[st.q.answer].line],
+      why: async (st2, e) => {
+        if (!e) return;
+        const b = box(e), c = ZX.thing(st, 90, 90, 63, 'card'); c.appendChild(Glyph.zh(st.q.comp, 72, EX_BLUE)); const cb = box(st.compEl);
+        place(c, cb.x + 30, cb.y + 30, 90, 90);
+        await K.flyTo(st, c, b.x + (b.w - 90) / 2, b.y + (b.h - 90) / 2, 420, 40);
+        await st.scope.anim(c, [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.3)' }], { duration: 380, fill: 'forwards' });
+      } });
+  },
   iconNode() { const d = el('div'); d.appendChild(Glyph.zh('林', 56, '#46C27A')); return d; },
 };
 /* 大黄蜂 · 读单词: which word did you hear? */
 const QRead = {
   kind0: 'read', verb: '读！', intro: '听一听，读一读！', props: [],
   gen(G, o) {
-    const lv = o.level, w = PICK(G, 'w', CVC_WORDS.map(x => x[0])), n = lv <= 2 ? 3 : 4;
+    const lv = o.level, w = PICK(G, 'w', CVC_WORDS.map(x => x[0])), n = 5;      /* five (client 2026-10-10) */
     const sim = CVC_WORDS.map(x => x[0]).filter(x => x !== w).sort((a, b) => (b.split('').filter(c => w.includes(c)).length - a.split('').filter(c => w.includes(c)).length) || (G.rng() - 0.5));
     const others = (lv >= 3 ? sim.slice(0, n - 1) : G.rng.shuffle(sim).slice(0, n - 1));
-    const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, w);
-    return { k: [w, others.join()], answer: w, opts: others };
+    return { k: [w, others.join()], answer: w, opts: putAt(G, others, w) };
   },
   async present(st) {
     const q = st.q;
     /* the letters side by side on one line of the four, never touching (R1-05) */
-    K.cards(st, q.opts.map(w => Glyph.word(w, 96)), q.opts, Object.assign({ size: 190, gap: 24 }, this.cardSpot()));
+    K.cards(st, q.opts.map(w => Glyph.word(w, 76)), q.opts, Object.assign({ size: 170, gap: 24 }, this.cardSpot()));
     K.task(st, [['speaker', 'q']]);
     st.prompt = q.answer; st.lead = '听一听';
     Voice.say('听一听', { tag: 'prompt' }); Voice.say(q.answer, { tag: 'prompt' });
   },
-  cardSpot() { return K.L() ? { cx: 512, cy: 400 } : { cx: 352, cy: 560 }; },
-  place(st) { K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot())); },
-  async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], b = box(e); K.hop(st, e, 30); Sfx.reveal(); const d = ZX.thing(st, 150, 150, 32, 'objpop'); ZX.pic(OBJURL(CVC_OBJ[st.q.answer]), d); place(d, b.x + b.w / 2 - 75, b.y - 170, 150, 150); K.pop(st, d); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
+  cardSpot() { return K.L() ? { cx: 560, cy: 420, cols: 3, size: 170, gap: 24 } : { cx: 352, cy: 580, cols: 3, size: 170, gap: 24 }; },
+  place(st) { K.cardsPlace(st, Object.assign({ gap: 24 }, this.cardSpot())); },
+  async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)], b = box(e); K.hop(st, e, 30); Sfx.reveal(); const d = ZX.thing(st, 150, 150, 32, 'objpop'); ZX.pic(OBJURL(CVC_OBJ[st.q.answer]), d); place(d, b.x + b.w / 2 - 75, Math.max(96, b.y - 170), 150, 150); K.pop(st, d); Voice.say(st.q.answer, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say(ans, { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen word in blue with its own picture (what it says); the heard word in gold with ITS picture */
+  async explain(st, ans) { await EX.cards(st, ans, { lines: ['对的是这个', st.q.answer] }); },
   iconNode() { return Glyph.word('dog', 44); },
 };
 

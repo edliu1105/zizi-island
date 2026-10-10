@@ -8,7 +8,7 @@
  R2-04 认字: a look-alike option is a character already learned, and never one that holds the answer (明 for 月)
  R2-05 认字 from level 2: the task card shows a speaker (the task is heard)
  R2-06 写字 after a slip: "再写一个！" (not "再试一次！") - a new character comes
- R2-07 缺了一笔: four stroke cards stay clear of the friend on the stage
+ R2-07 缺了一笔: five stroke cards (client 2026-10-10) stay clear of the friend on the stage
 usage: python tests/test_r2.py"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -62,10 +62,12 @@ with sync_playwright() as p, serve() as base:
       const bad = [];
       ALL_ISL().forEach(isl => { for (let lv = 3; lv <= 5; lv++) { const G = { world: isl, W: ISL[isl], rng: RNG(lv), bags: {} }, known = poolOf(G, 'zh', true);
         for (let i = 0; i < 200; i++) { const qq = FindBase.gen.call(GAMES[isl + ':find'], G, { level: lv, rng: G.rng });
-          qq.opts.forEach(k => { if (!known.includes(k)) bad.push(isl + ' L' + lv + ' ' + qq.answer + ':' + k); if ((HOLDS[qq.answer] || '').includes(k)) bad.push(isl + ' holds ' + qq.answer + ':' + k); }); } } });
+          /* five options (client 2026-10-10): only where fewer than five are known (the very first island) one not met yet */
+          if (qq.opts.filter(k => !known.includes(k)).length > Math.max(0, 5 - known.length)) qq.opts.forEach(k => { if (!known.includes(k)) bad.push(isl + ' L' + lv + ' ' + qq.answer + ':' + k); });
+          qq.opts.forEach(k => { if ((HOLDS[qq.answer] || '').includes(k)) bad.push(isl + ' holds ' + qq.answer + ':' + k); }); } } });
       return Array.from(new Set(bad));
     }""")
-    log.check(not r, 'R2-04 认字 L3-5: every option already learned, none holding the answer (14 islands x 600 questions) %s' % r[:10])
+    log.check(not r, 'R2-04 认字 L3-5: every option already learned (only the first island, with four characters, shows one not met yet to make five), none holding the answer (all islands x 600 questions) %s' % r[:10])
     page.evaluate("window.__go('bluey', 'bluey:find', 2, {seed: 3})"); wait_phase(page, timeout=30000); page.wait_for_timeout(300)
     sp = page.evaluate("Session.st.taskEl.innerHTML.includes('M16.5 8.5') || Session.st.taskEl.innerHTML.includes('M4 9h4')")
     log.check(sp, 'R2-05 认字 L2: the task card shows a speaker')
@@ -90,7 +92,7 @@ with sync_playwright() as p, serve() as base:
         pg = new_page(br, base, vw, vh); enter(pg); pg.wait_for_function("!!Hanzi.data", timeout=15000)
         pg.evaluate("window.__go('huluwa', 'huluwa:quiz', 5, {seed: 2})"); wait_phase(pg, timeout=30000); pg.wait_for_timeout(500)
         ov = pg.evaluate("""() => { const st = Session.st, out = []; Object.values(st.G.actors).forEach(a => { const ab = a.root.getBoundingClientRect(); if (ab.right < 0 || ab.left > innerWidth) return; st.cards.forEach((c, i) => { const cb = c.getBoundingClientRect(); const ix = Math.min(ab.right, cb.right) - Math.max(ab.left, cb.left), iy = Math.min(ab.bottom, cb.bottom) - Math.max(ab.top, cb.top); if (ix > 4 && iy > 4) out.push(a.id + ' x card' + i); }); }); return { n: st.cards.length, out }; }""")
-        log.check(ov['n'] == 4 and not ov['out'], 'R2-07 %s 缺了一笔 with four cards: no friend under a card %s' % (ori, ov))
+        log.check(ov['n'] == 5 and not ov['out'], 'R2-07 %s 缺了一笔 with five cards: no friend under a card %s' % (ori, ov))
         pg.context.close()
     br.close()
 sys.exit(0 if log.close() else 1)

@@ -1,15 +1,17 @@
 /* W3R1-01: how hard each new game is at levels 1-5, measured on its own generated questions (tests/test_w3new.py 10).
+   Since 2026-10-10 every level has five options (docs/OPTIONS-EXPLAIN-SPEC.md): the levels rise by what the options are
+   (look-alikes, old characters, rhymes, letters of the word, things that only go with an action ...), not by how many.
    For every game a few features of a question (more choices, look-alikes, old characters, traps, two steps ...); averaged over
    many questions per level. A level must be no easier than the one below in any feature and clearly harder in one. */
 (() => {
   const N = 60, out = {};
   const F = {
-    find: q => [q.pic ? 0 : 1, q.look ? 1 : 0, q.rev ? 1 : 0, q.opts.length],
+    find: q => [q.pic ? 0 : 1, q.look ? 1 : 0, q.rev, q.opts.length],          /* five options at every level: level 3 one old character, level 4 two, level 5 three */
     'hulk3:find': q => [q.copies], 'thor3:find': q => [q.moving], 'panther3:find': q => [q.stroop], 'widow3:find': q => [q.dark], 'hawk3:find': q => [],
-    'hulk3:en': q => [q.opts.length, q.allit, q.vow], 'thor3:en': q => [q.opts.length, q.quiet], 'panther3:en': q => [q.opts.length, q.look ? 1 : 0, q.quiet],
-    'widow3:en': q => [q.opts.length, q.near], 'hawk3:en': q => [q.opts.length, q.trap, q.look],
-    'hulk3:quiz': q => [q.opts.length, q.scatter, q.near ? 1 : 0, q.groups], 'thor3:quiz': q => [q.help ? 0 : 1, q.range, q.scatter, q.mess],
-    'panther3:quiz': q => [q.opts.length, q.noun, q.two], 'widow3:quiz': q => [q.rel, q.extra, q.trap], 'hawk3:quiz': q => [q.opts.length, q.len],
+    'hulk3:en': q => [q.opts.length, q.allit, q.vow], 'thor3:en': q => [q.opts.length, q.kinds, q.quiet], 'panther3:en': q => [q.opts.length, q.inword, q.look ? 1 : 0, q.quiet],
+    'widow3:en': q => [q.opts.length, q.near, q.share], 'hawk3:en': q => [q.opts.length, q.rime, q.trap, q.quiet, q.look],
+    'hulk3:quiz': q => [q.opts.length, q.known, q.scatter, q.near ? 1 : 0, q.vary, q.groups], 'thor3:quiz': q => [q.help ? 0 : 1, q.range, q.scatter, q.mess],
+    'panther3:quiz': q => [q.opts.length, q.known, q.noun, q.two], 'widow3:quiz': q => [q.rel, q.kinOut ? 1 : 0, q.trap], 'hawk3:quiz': q => [q.opts.length, q.acts, q.len],
   };
   ['hulk3', 'thor3', 'panther3', 'widow3', 'hawk3'].forEach(isl => ['find', 'en', 'quiz'].forEach(slot => {
     const g = isl + ':' + slot, game = GAMES[g], lv = [];

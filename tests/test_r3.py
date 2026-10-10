@@ -6,7 +6,7 @@
  R3-04 写字, the first meeting: the character's line is said once before "看我写一遍" (not twice in a row)
  R3-05 组词: 2000 questions at levels 2-5 - no wrong option makes a word with the first character (the app's own list
        and the common ones: 雨水, 小狗, 大人 ...)
- R3-06 停车场 portrait: the three cars do not overlap
+ R3-06 停车场 portrait: the cars (five since 2026-10-10) do not overlap
 usage: python tests/test_r3.py"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -33,22 +33,32 @@ function poolOf(G, kind, review) {
   return mine.concat(old);
 }
 /* answer + options: the answer from a bag (every one of the island's items once before any comes again), the others
-   look-alikes first (level >= 3), then the island's own, then review; the answer's place from a position bag */
+   look-alikes first (level >= 3), then the island's own, then review; the answer's place from a position bag.
+   Five options at every level (client 2026-10-10, docs/OPTIONS-EXPLAIN-SPEC.md), so the levels rise by WHAT the four others
+   are: levels 1-2 the island's own; level 3 the look-alikes and one old character (from an earlier island), level 4 two,
+   level 5 three. Where the child knows fewer than five (the very first island has four characters), a look-alike not met
+   yet comes in, then any other one of the kind - never one that holds the answer (明 for 月) */
 function optsFor(G, kind, level, n, answer) {
   const own = poolOf(G, kind, false), rev = poolOf(G, kind, true).filter(k => !own.includes(k));
-  const known = poolOf(G, kind, true), holds = HOLDS[answer] || '';
-  const look = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => ITEM[k] && known.includes(k) && !holds.includes(k));      /* R2-04 */
+  const known = poolOf(G, kind, true), holds = HOLDS[answer] || '', same = k => ITEM[k] && (kind === 'zh' ? ITEM[k].kind === 'zh' : ITEM[k].kind === ITEM[answer].kind && !!ITEM[k].isl);
+  const lookAll = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => same(k) && !holds.includes(k));
+  const look = lookAll.filter(k => known.includes(k));      /* R2-04 */
   const cand = [];
   if (level >= 3) look.forEach(k => cand.push(k));
-  /* level 4: an old character among them (DESIGN §3) - also on islands with enough characters of their own (W3R1-01) */
-  if (level >= 4) { const old = rev.filter(k => !holds.includes(k) && k !== answer); if (old.length) cand.push(G.rng.pick(old)); }
+  /* old characters among them (DESIGN §3) - also on islands with enough characters of their own (W3R1-01): level 3 one (an
+     old look-alike counts), level 4 two, level 5 three */
+  if (level >= 3) { const have = cand.filter(k => rev.includes(k)).length; G.rng.shuffle(rev.filter(k => !holds.includes(k) && k !== answer && !cand.includes(k))).slice(0, Math.max(0, level - 2 - have)).forEach(k => cand.push(k)); }
   G.rng.shuffle(own).forEach(k => cand.push(k));
   if (level >= 4 || cand.length < n + 1) G.rng.shuffle(rev).forEach(k => cand.push(k));
-  const others = cand.filter((k, i) => k !== answer && cand.indexOf(k) === i).slice(0, n - 1);
+  lookAll.forEach(k => cand.push(k));
+  G.rng.shuffle(ITEMS.filter(x => same(x.k) && !x.fw === !(ITEM[answer] && ITEM[answer].fw)).map(x => x.k)).forEach(k => cand.push(k));
+  const others = cand.filter((k, i) => k !== answer && cand.indexOf(k) === i && !holds.includes(k)).slice(0, n - 1);
   const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i));
   const out = G.rng.shuffle(others); out.splice(Math.min(pos, out.length), 0, answer);
   return out;
 }
+/* the answer's place among n options from a position bag (every place once before any comes again) */
+function putAt(G, others, answer) { const n = others.length + 1, pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)), out = G.rng.shuffle(others.slice()); out.splice(Math.min(pos, out.length), 0, answer); return out; }
 const isEn = k => /^[A-Za-z]$/.test(k);
 const sayItem = (k, opt) => { const it = ITEM[k]; Voice.say(it.line, Object.assign({ tag: 'summary' }, opt || {})); if (it.en && Store.s.settings.en) Voice.say(it.en, { tag: 'summary' }); };
 
@@ -115,6 +125,99 @@ const ZX = {
 };
 const MOTION = { whale: 'swim', bat: 'fly', walk: 'drive', fan: 'spin', top: 'spin', strawberry: 'grow', banana: 'sway', fish: 'swim', bird: 'fly', sun: 'rise', moon: 'rise', fire: 'flicker', water: 'sway', tree: 'sway', riceplant: 'sway', car: 'drive', van: 'drive', bus: 'drive', train: 'drive', big: 'grow', small: 'shrink', up: 'up', down: 'down', wind: 'spin', pinwheel: 'spin', ball: 'hop', kite: 'fly', dragon: 'fly', owl: 'fly', light: 'flicker', lamp: 'flicker', lightning: 'flicker', insect: 'fly', frog: 'hop', rabbit: 'hop', cloud: 'sway', rain: 'down', flower: 'grow', leaf: 'sway' };
 
+/* ---------------------------------------------------------------- the explain step after a wrong answer (docs/OPTIONS-EXPLAIN-SPEC.md,
+   client 2026-10-10). Session.runQ calls game.explain(st, ans) after the factual line (feedback): 1 the chosen one for what it
+   is - a calm blue ring and its picture / its word / what it shows; 2 the right one in a GOLD ring and why it is right (its
+   picture, its sentence, the word's first letter, the rhyme ending ...). No cheering, no praise, no red, never "wrong";
+   about 2-5 s, a tap skips it. st.ex records what was ringed (the tests look at it). */
+const EX_GOLD = '#FFB400', EX_BLUE = '#5B9BE0';
+const EX = {
+  idOf(st, e) {
+    if (!e) return null;
+    if (e.dataset && e.dataset.gid) return e.dataset.gid;
+    for (const k in (st.map || {})) if (st.map[k] === e) return k;
+    const i = (st.cards || []).indexOf(e); if (i >= 0) return 'card' + i;
+    return (e.dataset && e.dataset.ex) || 'el';
+  },
+  /* the stage box of an element: its own place, or (a piece inside another element) from the screen */
+  rect(e) {
+    if (e.parentNode === Stage.el && e.style.left && /px$/.test(e.style.width) && /px$/.test(e.style.height) && !/scale|rotate/.test(e.style.transform || '')) return box(e);
+    const r = e.getBoundingClientRect(), s = Stage.s || 1, a = Stage.toStage(r.left, r.top);
+    return { x: a.x, y: a.y, w: r.width / s, h: r.height / s };
+  },
+  /* a ring round an element: 'right' gold (solid, glowing), 'chosen' a calm blue dashed one - never red */
+  ring(st, e, role, pad) {
+    if (!e || st.scope.dead) return null;
+    const b = this.rect(e), p = pad == null ? 12 : pad, r = el('div', 'exring ' + role, Stage.el);
+    Object.assign(r.style, { position: 'absolute', zIndex: 60, pointerEvents: 'none', borderRadius: '28px', boxSizing: 'border-box',
+      border: role === 'right' ? '8px solid ' + EX_GOLD : '6px dashed ' + EX_BLUE,
+      boxShadow: role === 'right' ? '0 0 0 4px #fff, 0 0 26px 8px rgba(255,190,40,.85)' : '0 0 0 3px rgba(255,255,255,.85)' });
+    place(r, b.x - p, b.y - p, b.w + 2 * p, b.h + 2 * p);
+    st.els.push(r);
+    const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex[role].push(this.idOf(st, e));
+    st.scope.anim(r, [{ transform: 'scale(1.25)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, easing: EASE.pop });
+    if (role === 'right') Sfx.sparkle();
+    return r;
+  },
+  /* the picture of an item (a character's thing, a function word's scene, a letter's word, an English word), or null */
+  picNode(k, size) {
+    const it = ITEM[k];
+    if (it && it.obj) return Glyph.obj(it.obj);
+    if (it && it.fw && FW_SENTS[k]) return Scene.node(FW_SENTS[k][0][1], size);
+    const w = (typeof WORDS3 !== 'undefined' && WORDS3.find(x => x[0] === k)) || null, o = w ? w[1] : (typeof CVC_OBJ !== 'undefined' && CVC_OBJ[k]);
+    return o ? Glyph.obj(o) : null;
+  },
+  /* that picture on a little white card over (or under) an element */
+  picOver(st, e, k, role, size) {
+    size = size || 104;
+    const nd = typeof k === 'string' ? this.picNode(k, size * 0.86) : k; if (!nd || !e) return null;
+    const b = this.rect(e), d = ZX.thing(st, size, size, 61, 'objpop');
+    Object.assign(d.style, { background: '#fff', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+      boxShadow: '0 0 0 4px ' + (role === 'right' ? EX_GOLD : EX_BLUE) + ', 0 6px 0 rgba(43,33,24,.2)' });
+    if (nd.tagName === 'IMG') Object.assign(nd.style, { width: '86%', height: '86%' });
+    d.appendChild(nd); d.dataset.ex = 'pic-' + role;
+    /* above it when there is room under the top bar and no other option there; otherwise on its top-right corner (never nearer
+       another option) */
+    const up = { x: b.x + b.w / 2 - size / 2, y: b.y - size - 18, w: size, h: size }, hit = r => r.x < up.x + up.w && up.x < r.x + r.w && r.y < up.y + up.h && up.y < r.y + r.h;
+    const above = up.y > 96 && !(st.cards || []).concat(st.rights || [], st.lefts || [], st.taskEl ? [st.taskEl] : []).some(c => c !== e && c.isConnected && hit(this.rect(c)));
+    if (!above) { size = Math.round(size * 0.8); place(d, clamp(b.x + b.w - size * 0.6, 8, Stage.W - size - 8), Math.max(8, b.y - size * 0.3), size, size); }
+    else place(d, clamp(b.x + b.w / 2 - size / 2, 8, Stage.W - size - 8), b.y - size - 18, size, size);
+    K.pop(st, d);
+    return d;
+  },
+  /* a word written under an element with some letters coloured (the first letter, the rhyme ending, the letters that differ) */
+  wordUnder(st, e, w, color, idx, h) {
+    h = h || 58;
+    const cols = Array.isArray(color) ? color : w.split('').map((c, i) => (idx.includes(i) ? color : INK)), b = this.rect(e), g = Glyph.wordC(w, h, cols);
+    if (Array.isArray(color)) color = EX_GOLD;
+    const d = ZX.thing(st, 10, 10, 61, 'item'); d.style.width = d.style.height = 'auto';
+    Object.assign(d.style, { background: '#FFFDF4', borderRadius: '14px', padding: '2px 8px', boxShadow: '0 0 0 3px ' + color, pointerEvents: 'none' });
+    d.appendChild(g); d.dataset.ex = 'word';
+    const gw = g.getAttribute('width') * 1 + 16, below = b.y + b.h + h + 18 < Stage.H;
+    place(d, clamp(b.x + b.w / 2 - gw / 2, 6, Stage.W - gw - 6), below ? b.y + b.h + 8 : b.y - h - 14);
+    d.style.width = d.style.height = 'auto';
+    K.pop(st, d);
+    return d;
+  },
+  wait(st, ms) { return st.ff ? Promise.resolve() : st.scope.wait(ms); },
+  /* one or two short lines (each recorded, <= 8 characters), then the step waits for them */
+  async say(st, lines) { [].concat(lines).filter(Boolean).slice(0, 2).forEach(l => Voice.say(l, { tag: 'explain' })); await st.scope.guard(Voice.afterSay(250)); },
+  /* the common card question: the chosen card (blue ring, its picture), the right card (gold ring, its picture), its line */
+  async cards(st, ans, o) {
+    o = o || {};
+    const opts = st.opts || [], right = o.right != null ? o.right : st.q.answer, iR = opts.indexOf(right);
+    const iC = st.tapped != null && st.tapped >= 0 ? st.tapped : opts.indexOf(ans), eC = st.cards && st.cards[iC], eR = st.cards && st.cards[iR];
+    if (eC && iC !== iR) { this.ring(st, eC, 'chosen'); if (o.pics !== false) this.picOver(st, eC, o.picOf ? o.picOf(opts[iC]) : opts[iC], 'chosen'); }
+    if (o.chosen) await o.chosen(st, eC, iC);
+    await this.wait(st, o.gap == null ? 650 : o.gap);
+    if (eR && o.move) await o.move(st, eR, iR);             /* the right one goes where it belongs (the gap, the blank ...) */
+    if (eR) { this.ring(st, eR, 'right'); if (!o.move) K.hop(st, eR, 22); if (o.pics !== false && o.rightPic !== false) this.picOver(st, eR, o.picOf ? o.picOf(right) : right, 'right'); }
+    if (o.why) await o.why(st, eR, iR);
+    await this.say(st, o.lines || ['对的是这个', ITEM[right] ? (isEn(right) ? ITEM[right].say : ITEM[right].line) : null]);
+    await this.wait(st, 300);
+  },
+};
+
 /* ---------------------------------------------------------------- the base of every game here */
 const ZBase = {
   boost: 0,
@@ -135,7 +238,8 @@ const ZBase = {
   snap(st) { return { opts: st.opts || null }; },
   key(q) { return this.id + ':' + JSON.stringify(q.k); },
   icon() { const d = el('div'); d.style.width = d.style.height = '100%'; d.appendChild(this.iconNode ? this.iconNode() : Glyph.zh('口', 60)); return d; },
-  cheerAll(st) { this.chars.slice(0, 2).forEach(id => { const a = st.G.actors[id]; if (a && a.x > 0) a.cheer(); }); },
+  cheerAll(st) { if (st.explaining) return; this.chars.slice(0, 2).forEach(id => { const a = st.G.actors[id]; if (a && a.x > 0) a.cheer(); }); },     /* no cheering after a wrong answer (spec rule 2) */
+  async explain(st, ans) { await EX.cards(st, ans); },
   next(st, strat) { return K.cardNext(st, strat); },
   onGesture(st, name, p) {
     if (name !== 'tap' || st.picked) return false;
@@ -165,10 +269,10 @@ function zGame(rule, spec) {
 const FindBase = {
   kind0: 'find', verb: '找！',
   gen(G, o) {
-    const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 5;
+    const lv = o.level, n = 5;                 /* five at every level (client 2026-10-10) */
     const lang = this.lang || 'zh', pool = poolOf(G, lang, false), answer = needPick(G, pool);      /* still to pass first, at most twice (W3R1-02) */
-    const opts = optsFor(G, lang, lv, Math.min(n, this.maxN || 9), answer), lk = (lang === 'zh' ? LOOK : LOOKEN)[answer] || '';
-    /* what the level is made of: the picture on the card (L1), look-alikes (L3), old characters (L4), five (L5) */
+    const opts = optsFor(G, lang, lv, n, answer), lk = (lang === 'zh' ? LOOK : LOOKEN)[answer] || '';
+    /* what the level is made of: the picture on the card (L1), look-alikes and an old character (L3), two (L4), three (L5) */
     return { k: [answer, opts.join('')], answer, opts, pic: lv <= 1, look: opts.filter(k => k !== answer && lk.includes(k)).length, rev: opts.filter(k => !pool.includes(k)).length };
   },
   async present(st) {
@@ -191,6 +295,9 @@ const FindBase = {
     this.cheerAll(st);
     await st.scope.guard(Voice.afterSay(200));
   },
+  /* after a wrong one (spec rule 2): its thing over the chosen sign (the factual line just named it), then the right sign in a
+     gold ring with ITS thing - the play's own show (a jump, a pop, a robot) stays for the right answers */
+  async explain(st, ans) { if (this.exPrep) this.exPrep(st); await EX.cards(st, ans); },
   workEls(st) { return st.cards || []; },
   gestureHint(st, reteach) {
     if (reteach) { (this.workEls ? this.workEls(st) : []).forEach((e, i) => st.scope.timeout(() => K.hop(st, e, 22), 120 * i)); return; }     /* how to play only (W3R2-01) */
@@ -255,7 +362,7 @@ const PlayBalloon = {
   },
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 170, y: 130, w: 690, h: n > 3 ? 400 : 300 } : { x: 70, y: 260, w: 564, h: n > 3 ? 520 : 340 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n);          /* five balloons in portrait: 3 + 2, strings clear */
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 85, p.y - 115, 170, 230));
   },
   async win(st, i) {
@@ -281,7 +388,7 @@ const PlayGourd = {
   },
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 150, y: 120, w: 720, h: n > 3 ? 420 : 260 } : { x: 60, y: 250, w: 584, h: n > 3 ? 560 : 320 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n);          /* five gourds in portrait: 3 + 2 */
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 85, p.y - 105, 170, 210));
   },
   async win(st, i) {
@@ -310,8 +417,8 @@ const PlayMound = {
     });
   },
   place(st) {
-    const L = K.L(), n = st.cards.length, r = L ? { x: 160, y: 330, w: 700, h: n > 3 ? 320 : 210 } : { x: 60, y: 340, w: 584, h: n > 3 ? 520 : 300 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
+    const L = K.L(), n = st.cards.length, r = L ? { x: 160, y: 330, w: 700, h: n > 3 ? 320 : 210 } : { x: n > 4 ? 40 : 60, y: 340, w: n > 4 ? 624 : 584, h: n > 3 ? 520 : 300 };
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n);          /* five in portrait: 3 + 2 */
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 100, p.y - 95, 200, 190));
   },
   async win(st, i) {
@@ -334,9 +441,9 @@ const PlayBush = {
     });
   },
   place(st) {
-    const L = K.L(), n = st.cards.length, r = L ? { x: 160, y: 300, w: 700, h: n > 3 ? 340 : 230 } : { x: 60, y: 330, w: 584, h: n > 3 ? 540 : 300 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
-    spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 105, p.y - 100, 210, 200));
+    const L = K.L(), n = st.cards.length, r = L ? { x: 160, y: 300, w: 700, h: n > 3 ? 340 : 230 } : { x: n > 4 ? 40 : 60, y: 330, w: n > 4 ? 624 : 584, h: n > 3 ? 540 : 300 };
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n), k = !L && n > 4 ? 0.92 : 1;      /* five in portrait: 3 + 2 */
+    spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 105 * k, p.y - 100 * k, 210 * k, 200 * k));
   },
   peek(st, i) {
     const e = st.cards[i], b = box(e), k = st.opts[i];
@@ -361,7 +468,7 @@ const PlayBeam = {
   },
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 300, y: 200, w: 620, h: n > 3 ? 380 : 260 } : { x: 70, y: 300, w: 564, h: n > 3 ? 500 : 300 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n);          /* five in portrait: 3 + 2 */
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 85, p.y - 90, 170, 220));
   },
   decor(G) { const L = K.L(), a = G.actors.ultraman; if (a) showActor(a, L ? 130 : 110, L ? 690 : 1016, L ? 300 : 230); },
@@ -398,7 +505,7 @@ const PlayPark = {
   },
   place(st) {
     const L = K.L(), n = st.cards.length, r = L ? { x: 150, y: 300, w: 720, h: n > 3 ? 330 : 220 } : { x: 60, y: 320, w: 584, h: n > 3 ? 540 : 300 };
-    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 3 ? 2 : n);
+    const cols = L ? (n > 3 ? Math.ceil(n / 2) : n) : (n > 4 ? 3 : n > 3 ? 2 : n);          /* five cars in portrait: 3 + 2, apart (R3-06) */
     const cw = Math.min(210, Math.floor(r.w / cols) - 14), ch = Math.round(cw * 190 / 210);     /* three in a portrait row: smaller, apart (R3-06) */
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - cw / 2, p.y - ch / 2, cw, ch));
   },
@@ -460,6 +567,7 @@ const WriteBase = {
       if (this.lang === 'zh' && r.name) Voice.sayNow(r.name, { tag: 'stroke' });
       if (r.done) { st.ok2 = !st.w.slips; this.finished(st); }
     } else {
+      const sa = st.slipAt || (st.slipAt = []); if (!sa.includes(st.w.k)) sa.push(st.w.k);
       Voice.sayNow(SLIP[r.why] || SLIP.shape, { tag: 'slip' });
       if (st.level >= 4 || st.w.slips >= 2) { st.w.demo(st, st.w.k); }
     }
@@ -472,7 +580,7 @@ const WriteBase = {
     st.w.el.animate([{ filter: 'none' }, { filter: 'drop-shadow(0 0 22px #FFD93C)' }, { filter: 'none' }], { duration: T(900) + 1 });
     await st.scope.wait(350);
     Voice.hush('done');
-    await ZX.alive(st, k, c.x, c.y - (K.L() ? 40 : 60), K.L() ? 210 : 230);
+    st.alivePic = await ZX.alive(st, k, c.x, c.y - (K.L() ? 40 : 60), K.L() ? 210 : 230);
     sayItem(k);
     await st.scope.guard(Voice.afterSay(200));
     Session.submit(st, st.ok2 ? 'clean' : 'slips');
@@ -481,6 +589,16 @@ const WriteBase = {
   async reveal(st) { this.cheerAll(st); if (st.G.practice) { Voice.say(PICKP(), { tag: 'praise' }); } },
   again: '再写一个！',
   async feedback(st) { Voice.say('下次每笔都写对', { tag: 'wrong' }); await st.scope.wait(600); },
+  /* the explain step for writing: the paper in a gold ring and the stroke(s) that slipped written once more by the brush, in
+     gold (the character itself is already finished on the paper) */
+  async explain(st) {
+    if (!st.w) return;
+    if (st.alivePic) st.scope.anim(st.alivePic, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });      /* the paper in view again */
+    EX.ring(st, st.w.el, 'right', 4);
+    const ks = (st.slipAt || []).slice(0, 2);
+    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); } }
+    await st.scope.guard(Voice.afterSay(200));
+  },
   next(st, strat) { if (!st.w || st.w.done) return null; const pts = st.w.expected(strat === 'wrong'); return pts ? { g: 'stroke', p: { id: 'paper', pts } } : null; },
   gestureHint(st) { if (st.w && !st.w.done && !st.w.paused) st.w.demo(st, st.w.k); },
   workEls(st) { return st.w ? [st.w.el] : []; },
@@ -494,12 +612,12 @@ function writeGame(spec) { return zGame(WriteBase, spec); }
 const QMemory = {
   kind0: 'memory', verb: '记！', intro: '记住它们！', props: ['card'],
   gen(G, o) {
-    const lv = o.level, n = lv <= 2 ? 3 : lv <= 4 ? 4 : 6;
+    const lv = o.level, n = lv <= 4 ? 5 : 6;                 /* five cards (client 2026-10-10); six at level 5 as before */
     const pool = poolOf(G, 'zh', lv >= 4).concat(lv >= 3 ? poolOf(G, 'up', false) : []);
     const answer = needPick(G, poolOf(G, 'zh', false));
-    const others = G.rng.shuffle(pool.filter(k => k !== answer)).slice(0, n - 1);
-    const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, answer);
-    return { k: [answer, others.join('')], answer, opts: others, show: lv <= 2 ? 3600 : lv <= 4 ? 3000 : 2600 };
+    /* the first island has four characters: the island's letters (known) make up the five at levels 1-2 */
+    const more = G.rng.shuffle(poolOf(G, 'up', false).filter(k => !pool.includes(k))), others = G.rng.shuffle(pool.filter(k => k !== answer)).concat(more).slice(0, n - 1);
+    return { k: [answer, others.join('')], answer, opts: putAt(G, others, answer), show: lv <= 2 ? 3800 : lv <= 4 ? 3200 : 2600 };
   },
   async present(st) {
     const q = st.q;
@@ -525,11 +643,12 @@ const QMemory = {
   },
   place(st) {
     if (!st.cards) return;
-    const L = K.L(), n = st.cards.length, cols = L ? (n > 4 ? 3 : n) : (n > 3 ? 2 : n), r = L ? { x: 170, y: 150, w: 690, h: n > 4 ? 440 : 280 } : { x: 70, y: 280, w: 564, h: n > 3 ? 560 : 300 };
+    const L = K.L(), n = st.cards.length, cols = L ? (n > 4 ? 3 : n) : (n > 3 ? 2 : n), r = L ? { x: 170, y: 150, w: 690, h: n > 4 ? 440 : 280 } : { x: 70, y: 280, w: 564, h: n > 4 ? 580 : n > 3 ? 560 : 300 };
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 75, p.y - 95, 150, 190));
   },
   async reveal(st) {
     const e = st.cards[st.opts.indexOf(st.q.answer)];
+    e.style.perspective = 'none';                       /* Chrome does not repaint a face shown again under a 3D perspective */
     e._back.style.opacity = 0; e._face.style.opacity = 1;
     st.scope.anim(e, [{ transform: 'rotateY(90deg) scale(1)' }, { transform: 'rotateY(0) scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420 });
     Sfx.reveal(); sayItem(st.q.answer); this.cheerAll(st);
@@ -537,9 +656,13 @@ const QMemory = {
   },
   async feedback(st, ans) {
     const e = st.cards[st.tapped];
-    if (e) { e._back.style.opacity = 0; e._face.style.opacity = 1; K.wiggle(st, e); }
+    if (e) { e.style.perspective = 'none'; e._back.style.opacity = 0; e._face.style.opacity = 1; K.wiggle(st, e); }
     if (ITEM[ans]) Voice.say(ITEM[ans].line, { tag: 'wrong' });
     await st.scope.wait(1100);
+  },
+  /* explain: the turned-up card in blue with its picture; the right card turns over in a gold ring, with its picture */
+  async explain(st, ans) {
+    await EX.cards(st, ans, { gap: 400, why: async (st2, e) => { if (!e) return; e.style.perspective = 'none'; e._back.style.opacity = 0; e._face.style.opacity = 1; st.scope.anim(e, [{ transform: 'rotateY(90deg)' }, { transform: 'rotateY(0)' }], { duration: 360 }); } });
   },
   workEls(st) { return st.cards || []; },
   iconNode() { return Glyph.zh('口', 56); },
@@ -553,10 +676,8 @@ const QOrder = {
     const known = poolOf(G, this.lower ? 'lo' : 'up', true), last = Math.max(...known.map(k => abc.indexOf(k)));
     const len = lv <= 2 ? 4 : 5, start = G.rng.int(0, Math.max(0, last - len + 1)), seq = abc.slice(start, start + len).split('');
     const gap = lv <= 1 ? len - 1 : G.rng.int(1, len - 1), answer = seq[gap];
-    const near = [abc[abc.indexOf(answer) + 1], abc[abc.indexOf(answer) - 1], abc[abc.indexOf(answer) + 2]].filter(Boolean).filter(k => k !== answer && ITEM[k]);
-    const opts = [answer].concat(G.rng.shuffle(near).slice(0, 2));
-    const pos = PICK(G, 'pos3', [0, 1, 2]); const o2 = opts.slice(1); o2.splice(pos, 0, answer);
-    return { k: [seq.join(''), gap], seq, gap, answer, opts: o2 };
+    const i0 = abc.indexOf(answer), near = [1, -1, 2, -2, 3, -3, 4, -4].map(d => abc[i0 + d]).filter(k => k && ITEM[k]).slice(0, 4);
+    return { k: [seq.join(''), gap], seq, gap, answer, opts: putAt(G, near, answer) };      /* five: the four nearest letters (client 2026-10-10) */
   },
   async present(st) {
     const q = st.q, L = K.L(), n = q.seq.length, bs = L ? 120 : 112, gap = 14, total = n * bs + (n - 1) * gap, x0 = Stage.W / 2 - total / 2, y = L ? 210 : 330;
@@ -567,15 +688,21 @@ const QOrder = {
       place(d, x0 + i * (bs + gap), y, bs, bs); K.pop(st, d, 60 * i);
       return d;
     });
-    K.cards(st, q.opts.map(k => Glyph.en(k, 110)), q.opts, Object.assign({ size: 150, gap: 30 }, this.cardSpot()));
+    K.cards(st, q.opts.map(k => Glyph.en(k, 100)), q.opts, Object.assign({ size: 140, gap: 26 }, this.cardSpot()));
     K.say(st, '排队缺了谁？');
   },
-  cardSpot() { return K.L() ? { cx: 512, cy: 520 } : { cx: 352, cy: 720 }; },
+  cardSpot() { return K.L() ? { cx: 512, cy: 470, size: 140, gap: 26 } : { cx: 352, cy: 720 }; },
   place(st) {
     if (!st.blocks) return;
     const L = K.L(), n = st.blocks.length, bs = L ? 120 : 112, gap = 14, total = n * bs + (n - 1) * gap, x0 = Stage.W / 2 - total / 2, y = L ? 210 : 330;
     st.blocks.forEach((d, i) => place(d, x0 + i * (bs + gap), y, bs, bs));
-    K.cardsPlace(st, Object.assign({ gap: 30 }, this.cardSpot()));
+    K.cardsPlace(st, Object.assign({ gap: 26 }, this.cardSpot()));
+  },
+  /* explain: the chosen letter in blue; the right one in gold flies into the gap, and the train's letters hop in order */
+  async explain(st, ans) {
+    await EX.cards(st, ans, { pics: false, lines: [ITEM[st.q.answer].say],
+      move: async (st2, card) => { const b = st.blocks[st.q.gap], bb = box(b), cb = box(card); await K.flyTo(st, card, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 50, bb.w / cb.w); b.style.opacity = 1; },
+      why: async () => { for (let i = 0; i < st.blocks.length && !st.ff; i++) { K.hop(st, st.blocks[i], 16); await EX.wait(st, 110); } } });
   },
   async reveal(st) {
     const q = st.q, card = st.cards[st.opts.indexOf(q.answer)], b = st.blocks[q.gap];
@@ -599,10 +726,9 @@ const QMissing = {
     for (const k of pool) {
       const nm = (STROKE_NAMES[k] || '').split(' '), cand = G.rng.shuffle(nm.map((x, i) => [x, i])).find(([x]) => !used.has(x));
       if (cand) { used.add(cand[0]); fo.push([k, cand[1]]); }
-      if (fo.length >= (lv >= 3 ? 3 : 2)) break;
+      if (fo.length >= 4) break;               /* five strokes to choose from (client 2026-10-10) */
     }
-    const opts = [[answer, miss]].concat(fo);
-    const pos = PICK(G, 'pos' + opts.length, opts.map((_, i) => i)); const right = opts.shift(); opts.splice(pos, 0, right);
+    const opts = putAt(G, fo, [answer, miss]);
     return { k: [answer, miss], answer: answer + miss, ch: answer, miss, opts, outline: lv <= 2 };
   },
   async present(st) {
@@ -626,8 +752,8 @@ const QMissing = {
     Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '少了哪一笔？');
   },
-  cardSpot() { return K.L() ? { cx: 600, cy: 560 } : { cx: 352, cy: 780 }; },
-  decor(G) { const L = K.L(), a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L ? 96 : 76, L ? 698 : 1016, L ? 190 : 140); },      /* one friend: four cards keep clear (R2-07) */
+  cardSpot() { return K.L() ? { cx: 600, cy: 580, size: 130, gap: 22 } : { cx: 352, cy: 780 }; },
+  decor(G) { const L = K.L(), a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L ? 96 : 76, L ? 698 : 1016, L ? 190 : 140); },      /* one friend: five cards keep clear (R2-07) */
   place(st) {
     if (!st.big) return;
     const L = K.L();
@@ -644,13 +770,32 @@ const QMissing = {
     await st.scope.guard(Voice.afterSay(200));
   },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const o = st.q.opts[st.tapped], nm = o && (STROKE_NAMES[o[0]] || '').split(' ')[o[1]]; Voice.say(nm ? '这是' + nm : '放上去不对哦', { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen stroke is laid on the character in blue, where it really sits - it does not fill the gap; then it goes
+     back and the right one flies in, in gold, and the gap is filled */
+  async explain(st, ans) {
+    const q = st.q, card = st.cards[st.tapped], bb = box(st.big);
+    await EX.cards(st, ans, { pics: false, gap: 250, lines: ['对的是这个', ITEM[q.ch].line],
+      chosen: async (st2, e) => {
+        if (!e) return;
+        const cb = box(e), p = e.querySelector('path:last-child'); if (p) p.setAttribute('fill', EX_BLUE);
+        const look = [e.style.background, e.style.boxShadow, e.style.borderColor];
+        e.style.zIndex = 62; e.style.background = 'transparent'; e.style.boxShadow = 'none'; e.style.borderColor = 'transparent';
+        await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 40, bb.w / cb.w);
+        await EX.wait(st, 650);                                  /* it sits where it belongs in its own character - not in the gap */
+        await K.flyTo(st, e, cb.x, cb.y, 320, 30, 1);
+        [e.style.background, e.style.boxShadow, e.style.borderColor] = look; e.style.zIndex = '';
+      },
+      move: async (st2, e) => { const cb = box(e); await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 50, bb.w / cb.w); e.style.opacity = 0; st.gap.setAttribute('fill', EX_GOLD); st.gap.setAttribute('stroke', 'none'); },
+    });
+    void card;
+  },
   iconNode() { return Glyph.zh('山', 56, '#46C27A'); },
 };
 /* 汪汪队 · 听音找字母: the pup badges - which one did you hear? */
 const QHear = {
   kind0: 'hear', verb: '听！', intro: '听字母！', props: ['badge'],
   gen(G, o) {
-    const lv = o.level, kind = this.lower ? 'lo' : 'up', answer = PICK(G, 'ans', poolOf(G, kind, lv >= 3)), n = lv <= 2 ? 3 : 4;
+    const lv = o.level, kind = this.lower ? 'lo' : 'up', answer = PICK(G, 'ans', poolOf(G, kind, lv >= 3)), n = 5;      /* five (client 2026-10-10) */
     return { k: [answer, n], answer, opts: optsFor(G, kind, lv, n, answer) };
   },
   async present(st) {
@@ -669,11 +814,12 @@ const QHear = {
   },
   place(st) {
     if (!st.cards) return;
-    const L = K.L(), n = st.cards.length, cols = L ? n : (n > 3 ? 2 : n), r = L ? { x: 170, y: 250, w: 690, h: 260 } : { x: 70, y: 330, w: 564, h: n > 3 ? 480 : 300 };
+    const L = K.L(), n = st.cards.length, cols = n > 4 ? 3 : L ? n : (n > 3 ? 2 : n), r = L ? (n > 4 ? { x: 170, y: 140, w: 690, h: 420 } : { x: 170, y: 250, w: 690, h: 260 }) : (n > 4 ? { x: 52, y: 300, w: 600, h: 440 } : { x: 70, y: 330, w: 564, h: n > 3 ? 480 : 300 });
     spots(n, r, cols).forEach((p, i) => place(st.cards[i], p.x - 85, p.y - 85, 170, 170));
   },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 40); Sfx.reveal(); const b = box(e); await ZX.alive(st, st.q.answer, b.x + b.w / 2, b.y - 70, 130); Voice.say(ITEM[st.q.answer].line, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); if (ITEM[ans]) Voice.say(ITEM[ans].say, { tag: 'wrong' }); await st.scope.wait(900); },
+  async explain(st, ans) { await EX.cards(st, ans, { lines: ['对的是这个', ITEM[st.q.answer].line] }); },
   iconNode() { return Glyph.en('M', 60); },
 };
 /* 西游 · 连一连: each picture to its character (a picture, then its character; every pair right) */
@@ -683,8 +829,13 @@ const QConnect = {
     const lv = o.level, n = lv <= 1 ? 2 : lv <= 3 ? 3 : 4;
     const pool = poolOf(G, 'zh', lv >= 3), pick = G.rng.shuffle(poolOf(G, 'zh', false)).slice(0, Math.min(n, 4));
     while (pick.length < n) { const k = G.rng.pick(pool); if (!pick.includes(k)) pick.push(k); }
-    const right = G.rng.shuffle(pick);
-    return { k: [pick.join(''), right.join('')], left: pick, right, answer: 'all' };
+    /* five characters to choose from on the right at every level (client 2026-10-10): the pictures' own and others - look-alikes
+       of them first - that belong to no picture here (a picture never has two characters that fit it) */
+    const objs = new Set(pick.map(k => ITEM[k].obj)), ok = k => !pick.includes(k) && !objs.has(ITEM[k].obj);
+    const look = G.rng.shuffle(pick.flatMap(k => (LOOK[k] || '').split('')).filter(k => ITEM[k] && poolOf(G, 'zh', true).includes(k) && ok(k)));
+    const extra = look.concat(G.rng.shuffle(poolOf(G, 'zh', true).filter(ok))).filter((k, i, a) => a.indexOf(k) === i).slice(0, 5 - n);
+    const right = G.rng.shuffle(pick.concat(extra));
+    return { k: [pick.join(''), right.join('')], left: pick, right, extra, answer: 'all' };
   },
   async present(st) {
     const q = st.q;
@@ -697,12 +848,13 @@ const QConnect = {
   },
   place(st) {
     if (!st.lefts) return;
-    const L = K.L(), n = st.lefts.length, h = (L ? 520 : 700) / n, y0 = L ? 110 : 200;
+    const L = K.L(), n = st.lefts.length, m = st.rights.length, span = L ? 580 : 668, y0 = L ? 108 : 180;
+    const h = span / n, rs = Math.min(130, Math.floor((span - (m - 1) * (L ? 16 : 22)) / m)), rh = (span - rs) / Math.max(1, m - 1);
     st.lefts.forEach((d, i) => place(d, L ? 230 : 90, y0 + i * h + (h - 130) / 2, 130, 130));
-    st.rights.forEach((d, i) => place(d, L ? 664 : 484, y0 + i * h + (h - 130) / 2, 130, 130));
+    st.rights.forEach((d, i) => place(d, (L ? 664 : 484) + (130 - rs) / 2, y0 + i * rh, rs, rs));
     this.redraw(st);
   },
-  redraw(st) { if (!st.svgL) return; st.svgL.innerHTML = ''; Object.keys(st.pairs).forEach(li => { const a = center(st.lefts[li]), b = center(st.rights[st.pairs[li]]); svg('line', { x1: a.x + 65, y1: a.y, x2: b.x - 65, y2: b.y, stroke: '#2E6FD8', 'stroke-width': 10, 'stroke-linecap': 'round' }, st.svgL); }); },
+  redraw(st) { if (!st.svgL) return; st.svgL.innerHTML = ''; Object.keys(st.pairs).forEach(li => { const a = box(st.lefts[li]), b = box(st.rights[st.pairs[li]]); svg('line', { x1: a.x + a.w, y1: a.y + a.h / 2, x2: b.x, y2: b.y + b.h / 2, stroke: '#2E6FD8', 'stroke-width': 10, 'stroke-linecap': 'round' }, st.svgL); }); },
   onGesture(st, name, p) {
     if (name !== 'tap' || st.submitted) return false;
     const m = /^([LR])(\d)$/.exec(p.id || ''); if (!m) return false;
@@ -719,6 +871,17 @@ const QConnect = {
   },
   async reveal(st) { Sfx.reveal(); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st) { const [l, r] = st.wrongPair; K.wiggle(st, st.rights[r]); Voice.say(ITEM[st.q.right[r]].line, { tag: 'wrong' }); st.lefts[l].classList.remove('hi'); await st.scope.wait(900); },
+  /* explain: the chosen character in blue with its own picture; the picture's own character in gold, joined by a gold line */
+  async explain(st) {
+    const [l, r] = st.wrongPair, k = st.q.left[l], ri = st.q.right.indexOf(k), eC = st.rights[r], eR = st.rights[ri], eL = st.lefts[l];
+    EX.ring(st, eC, 'chosen', 8); EX.picOver(st, eC, st.q.right[r], 'chosen', 92);
+    await EX.wait(st, 650);
+    const a = box(eL), b = box(eR);
+    svg('line', { x1: a.x + a.w, y1: a.y + a.h / 2, x2: b.x, y2: b.y + b.h / 2, stroke: EX_GOLD, 'stroke-width': 12, 'stroke-linecap': 'round' }, st.svgL);
+    EX.ring(st, eL, 'right', 8); EX.ring(st, eR, 'right', 8);
+    await EX.say(st, ['对的是这个', ITEM[k].line]);
+    await EX.wait(st, 300);
+  },
   next(st, strat) {
     const q = st.q;
     if (st.sel == null) { const li = q.left.findIndex((_, i) => st.pairs[i] == null); return li < 0 ? null : { g: 'tap', p: { id: 'L' + li } }; }
@@ -737,52 +900,83 @@ const Mirror = {
   /* which turns of a glyph clearly look wrong (and unlike each other) - checked by eye, glyph by glyph (R2-01):
      symmetric ones keep only the turn that changes them (A upside down; B, C, D, E mirrored); letters whose turned shape
      is another real letter (M W N P U and the small letters) and characters like 上 / 下 / 车 / 米 are not in the table */
-  T: { A: 'flipY', B: 'flipX', C: 'flipX', D: 'flipX', E: 'flipX', F: 'flipX flipY rot', G: 'flipX flipY rot', J: 'flipX flipY rot', K: 'flipX', L: 'flipX flipY rot',
-       Q: 'flipX flipY rot', R: 'flipX flipY rot', S: 'flipX', T: 'flipY', V: 'flipY', Y: 'flipY', Z: 'flipX',
-       月: 'flipX flipY rot', 手: 'flipX flipY', 牛: 'flipX flipY rot', 石: 'flipX flipY rot', 马: 'flipX flipY rot', 鸟: 'flipX flipY rot', 门: 'flipX flipY rot', 灯: 'flipX flipY rot', 禾: 'flipX flipY', 火: 'flipY', 羊: 'flipY' },
+  /* five cards (client 2026-10-10): four wrong ones are needed, so a glyph is asked only when it has four turns that all look
+     different - lying on its side (r90 / r270) added to the turns checked by eye; measured point by point (> 4.5 % of the glyph
+     apart, tests/test_options.py). Symmetric glyphs (A B C D E K S T V Y Z 羊 火) have only three different turns and are not
+     asked any more */
+  T: { A: 'flipY', B: 'flipX', C: 'flipX', D: 'flipX', E: 'flipX', F: 'flipX flipY rot r90 r270', G: 'flipX flipY rot r90 r270', J: 'flipX flipY rot r90 r270', K: 'flipX', L: 'flipX flipY rot r90 r270',
+       Q: 'flipX flipY rot r90 r270', R: 'flipX flipY rot r90 r270', S: 'flipX', T: 'flipY', V: 'flipY', Y: 'flipY', Z: 'flipX',
+       月: 'flipX flipY rot r90 r270', 手: 'flipX flipY r90 r270', 牛: 'flipX flipY rot r90 r270', 石: 'flipX flipY rot r90 r270', 马: 'flipX flipY rot r90 r270', 鸟: 'flipX flipY rot r90 r270', 门: 'flipX flipY rot r90 r270', 灯: 'flipX flipY rot r90 r270', 禾: 'flipX flipY r90 r270', 火: 'flipY', 羊: 'flipY' },
   wrongs(k) { return (this.T[k] || '').split(' ').filter(Boolean); },
+  /* the table's turns that REALLY look different from the right one and from each other with the glyph as it is drawn now
+     (measured point by point, > 4.5 % of the glyph apart; the letters' shapes follow the writing standard and may change) */
+  seen: {},
+  clear(k) {
+    if (this.seen[k]) return this.seen[k];
+    const w = this.wrongs(k); let P;
+    try { P = this.pts(k); } catch (e) { return []; }
+    const xs = P.map(p => p[0]), ys = P.map(p => p[1]), c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+    const size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
+    const d = (X, Y) => X.reduce((s, a) => s + Math.min(...Y.map(b => Math.hypot(a[0] - b[0], a[1] - b[1]))), 0) / X.length, far = (A, B) => (d(A, B) + d(B, A)) / 2 / size > 0.045;
+    const keep = [['ok', P]];
+    w.forEach(t => { const V = this.tf(P, t, c); if (keep.every(([, Q]) => far(V, Q))) keep.push([t, V]); });
+    return (this.seen[k] = keep.slice(1).map(x => x[0]));
+  },
+  css: { ok: '', flipX: 'scaleX(-1)', flipY: 'scaleY(-1)', rot: 'rotate(180deg)', r90: 'rotate(90deg)', r270: 'rotate(-90deg)' },
   pts(k) {
     if (isEn(k)) return LETTERS[k].flatMap(st => Geo.resample(st, 14));
     return Hanzi.data[k].m.flatMap(m => Geo.resample(m.map(([x, y]) => [x, 900 - y]), 14));
   },
-  tf(P, t, c) { return P.map(([x, y]) => t === 'flipX' ? [2 * c[0] - x, y] : t === 'flipY' ? [x, 2 * c[1] - y] : t === 'rot' ? [2 * c[0] - x, 2 * c[1] - y] : [x, y]); },
+  tf(P, t, c) { return P.map(([x, y]) => t === 'flipX' ? [2 * c[0] - x, y] : t === 'flipY' ? [x, 2 * c[1] - y] : t === 'rot' ? [2 * c[0] - x, 2 * c[1] - y] : t === 'r90' ? [c[0] - (y - c[1]), c[1] + (x - c[0])] : t === 'r270' ? [c[0] + (y - c[1]), c[1] - (x - c[0])] : [x, y]); },
 };
 const QMirror = {
   kind0: 'mirror', verb: '看！', intro: '哪个写对了？', props: [],
-  /* how many wrong ones: 1 (levels 1-2: is it this one or that one), 2 (level 3), 3 (levels 4-5) */
+  /* five cards: four wrong ones at every level (client 2026-10-10). Levels 1-2: the plain turns (upside down, round, lying on
+     its side); from level 3 the mirror image (the hard one) is always among them */
   gen(G, o) {
-    const lv = o.level, n = lv <= 2 ? 1 : lv === 3 ? 2 : 3;
-    const pool = poolOf(G, 'up', true).concat(lv >= 3 ? poolOf(G, 'zh', true) : []).filter(k => Mirror.wrongs(k).length >= n);
-    const glyph = PICK(G, 'g' + lv, pool.length ? pool : ['R', 'F', 'G']);
-    const wr = G.rng.shuffle(Mirror.wrongs(glyph)).slice(0, n);
-    const pos = PICK(G, 'pos' + (n + 1), Array.from({ length: n + 1 }, (_, i) => i)); wr.splice(pos, 0, 'ok');
-    return { k: [glyph, wr.join()], answer: 'ok', glyph, opts: wr };
+    const lv = o.level, n = 4, easy = lv <= 2, turns = k => Mirror.clear(k).filter(t => !easy || t !== 'flipX');
+    const pool = poolOf(G, 'up', true).concat(poolOf(G, 'zh', true)).filter(k => turns(k).length >= n);
+    const glyph = PICK(G, 'g' + lv, pool.length ? pool : ['R', 'F', 'G']), t = turns(glyph);
+    const wr = (easy || !t.includes('flipX') ? G.rng.shuffle(t) : ['flipX'].concat(G.rng.shuffle(t.filter(x => x !== 'flipX')))).slice(0, n);
+    return { k: [glyph, wr.join()], answer: 'ok', glyph, opts: putAt(G, wr, 'ok'), mirror: wr.includes('flipX') ? 1 : 0 };
   },
   async present(st) {
-    const q = st.q, tf = { ok: '', flipX: 'scaleX(-1)', flipY: 'scaleY(-1)', rot: 'rotate(180deg)' };
-    K.cards(st, q.opts.map(t => { const g = Glyph.fit(q.glyph, 124); g.style.transform = tf[t]; return g; }), q.opts, Object.assign({ size: 170, gap: 34 }, this.cardSpot()));
+    const q = st.q, tf = Mirror.css;
+    K.cards(st, q.opts.map(t => { const g = Glyph.fit(q.glyph, 120); g.style.transform = tf[t]; return g; }), q.opts, Object.assign({ size: 150, gap: 24 }, this.cardSpot()));
     const it = ITEM[q.glyph];
     if (it.obj) K.task(st, [[OBJURL(it.obj), 'q']]);
     st.lead = isEn(q.glyph) ? it.say : it.line;           /* which one it is about (an A? the 手?) */
     Voice.say(st.lead, { tag: 'prompt' });
     K.say(st, '哪个写对了？');
   },
-  cardSpot() { return K.L() ? { cx: 560, cy: 400 } : { cx: 352, cy: 560 }; },
-  place(st) { K.cardsPlace(st, Object.assign({ gap: 34 }, this.cardSpot())); },
+  cardSpot() { return K.L() ? { cx: 560, cy: 336, cols: 3, size: 150, gap: 24 } : { cx: 352, cy: 580, cols: 3, size: 150, gap: 24 }; },
+  place(st) { K.cardsPlace(st, Object.assign({ gap: 24 }, this.cardSpot())); },
   decor(G) { const L = K.L(), a = G.actors.ultraman; if (a) showActor(a, L ? 120 : 600, L ? 690 : 1016, L ? 280 : 200); },
   async reveal(st) { const e = st.cards[st.opts.indexOf('ok')]; K.hop(st, e, 30); Sfx.reveal(); sayItem(st.q.glyph); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
-  async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say(ans === 'flipX' ? '它照镜子啦' : '它翻跟头啦', { tag: 'wrong' }); await st.scope.wait(900); },
+  async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); Voice.say(ans === 'flipX' ? '它照镜子啦' : ans === 'r90' || ans === 'r270' ? '它躺下啦' : '它翻跟头啦', { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen one (blue ring) turns back the right way round before the child's eyes - it was the same glyph, turned;
+     then the right one in a gold ring */
+  async explain(st, ans) {
+    const q = st.q;
+    await EX.cards(st, ans, { pics: false, lines: ['对的是这个', isEn(q.glyph) ? ITEM[q.glyph].say : ITEM[q.glyph].line],
+      chosen: async (st2, e) => {
+        const g = e && e.querySelector('svg'); if (!g) return;
+        await EX.wait(st, 350);
+        await st.scope.anim(g, [{ transform: Mirror.css[ans] || 'none' }, { transform: 'none' }], { duration: 650, easing: EASE.glide });      /* turned the right way it is the same glyph */
+        g.style.transform = 'none'; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';
+      } });
+  },
   iconNode() { const d = el('div'); d.style.display = 'flex'; const a = Glyph.en('R', 44), b = Glyph.en('R', 44); b.style.transform = 'scaleX(-1)'; d.appendChild(a); d.appendChild(b); return d; },
 };
 /* 变形金刚 · 听英文找东西: which thing did you hear? */
 const QListen = {
   kind0: 'listen', verb: '听！', intro: '听英文找东西！', props: [],
   gen(G, o) {
-    const lv = o.level, kind = this.lower ? 'lo' : 'up', pool = poolOf(G, kind, true), own = poolOf(G, kind, false), n = lv <= 2 ? 3 : 4;
+    const lv = o.level, kind = this.lower ? 'lo' : 'up', pool = poolOf(G, kind, true), own = poolOf(G, kind, false), n = 5;      /* five pictures (client 2026-10-10) */
     const answer = PICK(G, 'ans', own);
-    const others = G.rng.shuffle(pool.filter(k => k !== answer && ITEM[k].obj !== ITEM[answer].obj)).slice(0, n - 1);
-    const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i)); others.splice(pos, 0, answer);
-    return { k: [answer, others.join('')], answer, opts: others };
+    /* levels 3+: the island's own words first among the others (the newest, the most alike to the ear) */
+    const near = lv >= 3 ? G.rng.shuffle(own.filter(k => k !== answer)) : [], others = near.concat(G.rng.shuffle(pool.filter(k => k !== answer && !near.includes(k)))).filter(k => ITEM[k].obj !== ITEM[answer].obj).slice(0, n - 1);
+    return { k: [answer, others.join('')], answer, opts: putAt(G, others, answer) };
   },
   async present(st) {
     const q = st.q;
@@ -795,5 +989,7 @@ const QListen = {
   place(st) { K.cardsPlace(st, Object.assign({ gap: 30 }, this.cardSpot())); },
   async reveal(st) { const e = st.cards[st.opts.indexOf(st.q.answer)]; K.hop(st, e, 30); Sfx.reveal(); Voice.say(ITEM[st.q.answer].line, { tag: 'summary' }); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st, ans) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); if (ITEM[ans]) Voice.say(ITEM[ans].word, { tag: 'wrong' }); await st.scope.wait(900); },
+  /* explain: the chosen picture (its word was just said) in blue, the heard one in gold with its letter and word */
+  async explain(st, ans) { const a = st.q.answer; await EX.cards(st, ans, { pics: false, lines: ['对的是这张', ITEM[a].word], why: async (st2, e) => { if (e) EX.picOver(st, e, Glyph.en(a, 80), 'right', 96); } }); },
   iconNode() { const d = el('div'); d.innerHTML = ICONS.speaker; d.firstChild.setAttribute('width', 60); d.firstChild.setAttribute('height', 60); return d; },
 };
