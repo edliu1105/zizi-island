@@ -13,7 +13,8 @@ CNQ = lambda n: '两' if n == 2 else CN[n]
 EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字', '玩得真开心！', '我们去字字岛吧！', 'Hello!']
 # the explain step after a wrong answer (docs/OPTIONS-EXPLAIN-SPEC.md): its own short lines (said from arrays / variables)
 EXTRA += ['对的是这个', '对的是这张', '看，是这样', '它照镜子啦', '它躺下啦', '它翻跟头啦', '哪张图是它开头？']      # 哪个写对了: a nested ternary the scan misses
-EXTRA += ['这是' + n for n in ('奥特曼', '悟空', '猫小子', '阿奇', '擎天柱')]       # 全家福's guests at level 1 (src/w3.js FAM_GUESTS)
+EXTRA += ['这是师父']                                                        # 全家福's guest at level 1 who has no kin word (src/w3.js FAM_GUESTS)
+EXTRA += ['放不进去']                                                        # 缺了一笔: the chosen stroke does not go into the gap (OX1)
 
 
 def literals():
@@ -26,7 +27,7 @@ def literals():
             out.add(m.group(1))
         for m in re.finditer(r"(?:intro|hi|line|bye|again):\s*'([^'\\]+)'", s):
             out.add(m.group(1))
-        for name in ('PRAISE', 'AGAIN', 'CHEER'):
+        for name in ('PRAISE', 'AGAIN', 'CHEER', 'NEXTQ'):
             m = re.search(r'const ' + name + r" = \[([^\]]+)\]", s)
             if m:
                 out |= set(re.findall(r"'([^']+)'", m.group(1)))

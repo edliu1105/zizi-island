@@ -10,6 +10,9 @@
  04 layout at 1180x820, 820x1180 and 1024x768: the five options of every choice game (levels 1, 3, 5), the review cards,
     补句子 and 读一读 - every option >= 88 px, on screen, really on top (3 x 3 samples)
  05 the explain step lasts 2-5 s at real speed (a sample of games)
+ 06 review OX1: a function word gets no picture (its sentence, the word coloured); gold and blue rings never overlap (one
+    inside the other is fine); the closing line announces a new question (再来一题！ ..., never 再试一次！); 翻翻乐's fifth card
+    on the first island is a look-alike character, not a letter; 全家福 level 1 has no superhero; 缺了一笔 says 放不进去
 usage: python tests/test_options.py [01,02,03,04,05]"""
 import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,7 +20,7 @@ from playwright.sync_api import sync_playwright
 from harness import serve, new_page, enter, wait_phase, q, step, answer_question, wait_next_question, Log
 
 log = Log('options')
-PARTS = sys.argv[1].split(',') if len(sys.argv) > 1 else ['01', '02', '03', '04', '05']
+PARTS = sys.argv[1].split(',') if len(sys.argv) > 1 else ['01', '02', '03', '06', '04', '05']
 OPEN = "() => { Store.reset(); Store.s.all = true; ALL_ISL().forEach(id => { Store.w(id).unlocked = true; ISL[id].chars.forEach(c => { Store.s.met[c.c] = true; }); ISL[id].letters.forEach(l => { Store.s.met[l.l] = true; }); }); Store.save(); }"
 NOCHOICE = ('write', 'spell', 'frame')          # writing and the two build tasks
 
@@ -111,10 +114,22 @@ AUDIT = """() => {
   return { vw: innerWidth, vh: innerHeight, t: out, opts: opt, n: cards.length };
 }"""
 
+MEMFAM = r"""() => {
+  const out = { mem: [], fam: [] };
+  for (let lv = 1; lv <= 2; lv++) { const G = { world: 'peppa', W: ISL.peppa, rng: RNG(lv), bags: {}, needPass: [], asked: [], ws: { lastKey: '' } };
+    for (let i = 0; i < 200; i++) { const qq = QMemory.gen(G, { level: lv, rng: G.rng }); if (qq.opts.length !== 5 || qq.opts.some(k => !ITEM[k] || ITEM[k].kind !== 'zh') || qq.opts.some(k => (HOLDS[qq.answer] || '').includes(k))) out.mem.push(qq.opts.join('')); } }
+  const G = { world: 'widow3', W: ISL.widow3, rng: RNG(5), bags: {}, needPass: [], asked: [], ws: { lastKey: '' } };
+  const heroes = ['ultraman', 'zero', 'optimus', 'bumblebee', 'catboy', 'owlette', 'gekko', 'wukong', 'hulk', 'thor', 'panther', 'widow', 'hawkeye', 'ironman', 'spiderman', 'captain', 'miles', 'chase', 'marshall', 'rubble', 'kaiju1', 'kaiju2'];
+  for (let i = 0; i < 300; i++) { const qq = QFamily.gen(G, { level: 1, rng: G.rng }); if (qq.opts.length !== 5 || qq.opts.some(id => heroes.includes(id)) || qq.kinOut) out.fam.push(qq.opts.join()); }
+  return out;
+}"""
+
 SPY = r"""() => {
   window.__exBad = []; window.__exCheer = 0;
   Actor.prototype.cheer = (f => function () { const st = Session.st; if (st && st.explaining) window.__exCheer++; return f.apply(this, arguments); })(Actor.prototype.cheer);
-  Voice.say = (f => function (t, o) { const st = Session.st; if (st && (st.phase === 'explain' || st.phase === 'correcting') && t && (PRAISE.includes(t) || /错/.test(t))) window.__exBad.push(t); return f.call(this, t, o); })(Voice.say);
+  window.__again = []; window.__exSaid = {};
+  Voice.say = (f => function (t, o) { const st = Session.st; if (st && (st.phase === 'explain' || st.phase === 'correcting') && t && (PRAISE.includes(t) || /错/.test(t))) window.__exBad.push(t);
+    if (st && o && o.tag === 'again') window.__again.push([st.G.id, t]); if (st && o && o.tag === 'explain') (window.__exSaid[st.G.id] = window.__exSaid[st.G.id] || []).push(t); return f.call(this, t, o); })(Voice.say);
 }"""
 
 
@@ -130,6 +145,10 @@ def check_layout(a, label, problems, need=5):
         off = o['x'] < -2 or o['y'] < -2 or o['r'] > a['vw'] + 2 or o['b'] > a['vh'] + 2
         if min(o['w'], o['h']) < 88 or off or not o['top']:
             problems.append((label, 'option %d' % o['i'], o['w'], o['h'], 'off' if off else '', '' if o['top'] else 'under something'))
+
+
+def inside(P, Q):
+    return P['x'] >= Q['x'] - 1 and P['y'] >= Q['y'] - 1 and P['x'] + P['w'] <= Q['x'] + Q['w'] + 1 and P['y'] + P['h'] <= Q['y'] + Q['h'] + 1
 
 
 def wrong_once(page):
@@ -161,6 +180,7 @@ with sync_playwright() as p, serve() as base:
     if '03' in PARTS:
         page.evaluate(SPY)
         games = page.evaluate("ALL_ISL().flatMap(i => ISL[i].games.map(g => [i, g, GAMES[g].kind0]))")
+        ringbad = []
         if os.environ.get('OPT_GAMES'):
             games = [x for x in games if any(x[1].startswith(k) for k in os.environ['OPT_GAMES'].split(','))]
         bad, n = [], 0
@@ -188,9 +208,23 @@ with sync_playwright() as p, serve() as base:
                             bad.append((g, lv, 'the chosen one not ringed', rec['ex']))
                     if s1 != s0:
                         bad.append((g, lv, 'a star after a wrong answer'))
+                    rg = rec.get('rings') or []
+                    for a in range(len(rg)):
+                        for b in range(a + 1, len(rg)):
+                            A, B = rg[a][1], rg[b][1]
+                            ix = min(A['x'] + A['w'], B['x'] + B['w']) - max(A['x'], B['x']); iy = min(A['y'] + A['h'], B['y'] + B['h']) - max(A['y'], B['y'])
+                            if ix > 1 and iy > 1 and not inside(A, B) and not inside(B, A):
+                                ringbad.append((g, lv, rg[a][0] + rg[b][0], A, B))
                 except Exception as e:
                     bad.append((g, lv, 'ERR ' + str(e)[:120]))
                 page.evaluate("gesture('home')"); page.wait_for_timeout(60)
+        log.check(not ringbad, '03 OX1-03: gold and blue rings never overlap (one inside another is fine) %s' % ringbad[:6])
+        again = page.evaluate("window.__again")
+        nextq = page.evaluate("NEXTQ")
+        log.check(again and all((t in nextq) or (t == '再写一个！' and (g.endswith(':write') or g.endswith(':abc'))) for g, t in again), '03 OX1-04: after the explanation the closing line announces a new question %s; never 再试一次 %s' % (sorted(set(t for _, t in again)), [x for x in again if x[1] not in nextq][:4]))
+        if not os.environ.get('OPT_GAMES'):
+            exs = page.evaluate("window.__exSaid['huluwa:quiz'] || []")
+            log.check('放不进去' in exs, '03 OX1 缺了一笔: the chosen stroke laid on the character is explained, "放不进去" %s' % exs[:6])
         cheer, said = page.evaluate("[window.__exCheer, window.__exBad]")
         log.check(not bad, '03 every game x levels 1-5 (%d) answered wrong: the explain step, the right one in gold, the chosen one in blue, no star, a new question %s' % (n, bad[:10]))
         log.check(cheer == 0 and not said, '03 while explaining: nobody cheers (%d), no praise, never "错" %s' % (cheer, said[:5]))
@@ -216,6 +250,35 @@ with sync_playwright() as p, serve() as base:
         log.check(not miss, '03 every sentence said (the explain lines too) has a recording %s' % miss[:8])
         log.check(not page.errors, '03 no page errors %s' % page.errors[:3])
         page.errors.clear()
+
+    if '06' in PARTS:
+        # a function word chosen or asked: no picture, its sentence (or the ring alone) - the key round's cards
+        page.evaluate(OPEN)
+        bad = []
+        for isl, items in (('hulk3', ['不', '是', '在']), ('peppa2', ['的', '了', '这', '我'])):
+            g0 = page.evaluate("window.__qn || 0")
+            page.evaluate("([i, items]) => { Session.start(i, i + ':find', { key: true, keyItems: items }); }", [isl, items])
+            wait_phase(page, timeout=30000, gen=g0)
+            for k in items:
+                try:
+                    gen, cur = wrong_once(page)
+                    page.wait_for_function("(gen) => (window.__exLog || []).some(e => e.gen === gen)", arg=gen, timeout=30000)
+                    rec = page.evaluate("(gen) => (window.__exLog || []).filter(e => e.gen === gen).pop()", gen)
+                    fw = page.evaluate("(ks) => ks.map(k => !!(ITEM[k] && ITEM[k].fw))", [rec['answer'], rec['opts'][rec['tapped']]])
+                    if (fw[0] and 'pic-right' in rec['shown']) or (fw[1] and 'pic-chosen' in rec['shown']):
+                        bad.append((k, rec['opts'][rec['tapped']], rec['shown']))
+                    if fw[0] and 'sent-right' not in rec['shown'] and 'pic-right' not in rec['shown']:
+                        pass                                   # no room for the sentence: the ring alone says it
+                    page.wait_for_function("(g) => !window.__q || window.__q.gen !== g", arg=gen, timeout=30000)
+                except Exception as e:
+                    bad.append((isl, k, 'ERR ' + str(e)[:100])); break
+            page.evaluate("gesture('home')"); page.wait_for_timeout(200)
+        r = page.evaluate("() => ['我', '你', '他', '是', '的', '了', '不', '有', '在', '这'].filter(k => EX.picNode(k, 80))")
+        sent = page.evaluate("() => { const st = Session.newQ ? null : null; return typeof EX.sentOver === 'function'; }")
+        log.check(not bad and not r and sent, '06 OX1-02: a function word (asked or chosen) shows no picture - its sentence with the word coloured, or the ring alone %s %s' % (bad[:4], r))
+        r = page.evaluate(MEMFAM)
+        log.check(not r['mem'] and not r['fam'], '06 OX1-05: 翻翻乐 on the first island, levels 1-2: five characters (a look-alike, never a letter); 全家福 level 1: no superhero, the guests have no asked word %s' % r)
+        log.check(not page.errors, '06 no page errors %s' % page.errors[:3])
 
     if '04' in PARTS:
         page.context.close()

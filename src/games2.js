@@ -367,7 +367,7 @@ const QFuse = {
     const bb = EX.rect(st.blank);
     await EX.cards(st, ans, { pics: false, lines: ['对的是这个', ITEM[st.q.whole].line],
       move: async (st2, e) => { const cb = box(e); await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 360, 50); },
-      why: async () => { EX.ring(st, st.row, 'right', 6); } });
+      why: async () => { K.hop(st, st.row, 10); } });          /* the card's gold ring in the blank says it - no second ring round the sum (OX1-03) */
   },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('日', 36)); d.appendChild(Glyph.zh('月', 36)); return d; },
 };

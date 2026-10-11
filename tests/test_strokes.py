@@ -12,6 +12,8 @@ GF 0023-2020, each entry with its source. The app (the built index.html) is chec
     stroke written instead is never taken - for every letter and every character
  05 the ways the app used to teach the 17 letters that were changed (and the Chinese-school ways: a lifted a, a bar-first
     T ...) cannot finish the letter
+ 06 the letters' tolerance (OX1 review): a short line (the bars of I E F H A T t f J) 15 % of the frame off passes; across
+    its line or right to left it fails; a one-stroke letter stopped 20 % short is not finished
 usage: python tests/test_strokes.py"""
 import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -173,7 +175,7 @@ with sync_playwright() as p, serve() as base:
         if (Geo.len(m) > 0.06 * size && Geo.judge(m.slice().reverse(), m, size, o, op).ok) out.back.push(key + (i + 1));
         o.forEach((x, j) => { if (Geo.judge(x, m, size, o, op).ok) out.later.push(key + (i + 1) + '<-' + (i + j + 2)); });
       });
-      Object.keys(LETTERS).forEach(ch => run(ch, LETTERS[ch], 120, () => ({ end: true })));
+      Object.keys(LETTERS).forEach(ch => run(ch, LETTERS[ch], 120, () => ({ letter: true })));
       Object.keys(Hanzi.data).forEach(ch => { const S = Hanzi.strokes(ch); run(ch, S.map(s => s.med), 1024, i => ({ hook: /钩/.test(S[i].name) })); });
       return out;
     }""")
@@ -186,13 +188,33 @@ with sync_playwright() as p, serve() as base:
       const old = (eval(OLD))(), out = {};
       Object.entries(old).forEach(([ch, strokes]) => {
         const S = LETTERS[ch]; let k = 0, slips = 0;
-        for (const d of strokes) { if (k >= S.length) break; const res = Geo.judge(d, S[k], 120, S.slice(k + 1), { end: true }); if (res.ok) k++; else slips++; }
+        for (const d of strokes) { if (k >= S.length) break; const res = Geo.judge(d, S[k], 120, S.slice(k + 1), { letter: true }); if (res.ok) k++; else slips++; }
         out[ch] = k >= S.length && !slips ? 'FINISHED' : 'stops at stroke ' + (k + 1) + ', ' + slips + ' slip(s)';
       });
       return out;
     }""", OLD)
     fin = [c for c, v in r.items() if v == 'FINISHED']
     log.check(len(r) == 17 and not fin, '05 written the old way (lifting in a b d g h m n p q r u, T bar first, N in three, Y in three, G bar right, I / J without lines) none of the 17 letters is finished %s' % (fin or r))
+
+    # 06 the letters' tolerance (OX1): a short line (the bars of I E F H A T t f J) may sit 15 % of the frame off and still
+    #    passes, in any of 8 directions; written across its line or right to left it does not; a one-stroke letter that
+    #    stops 20 % short (g looks like q, n like r, a like o) is not finished
+    r = page.evaluate("""() => {
+      const J = (d, w, o) => Geo.judge(d, w, 120, o, { letter: true }), out = { off: [], across: [], rtl: [], short: [] };
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.707, 0.707], [-0.707, 0.707], [0.707, -0.707], [-0.707, -0.707]];
+      const cut = (p, f) => { const L = Geo.len(p) * f, o = [p[0]]; let acc = 0; for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); if (acc + d >= L) { const t = (L - acc) / d; o.push([p[i - 1][0] + (p[i][0] - p[i - 1][0]) * t, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * t]); break; } acc += d; o.push(p[i]); } return o; };
+      [['I', 1], ['I', 2], ['E', 1], ['E', 2], ['E', 3], ['F', 1], ['F', 2], ['H', 2], ['A', 2], ['T', 1], ['t', 1], ['f', 1], ['J', 1]].forEach(([ch, i]) => {
+        const S = LETTERS[ch], m = S[i], o = S.slice(i + 1), a = m[0], b = m[m.length - 1], c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], h = Geo.len(m) / 2;
+        dirs.forEach(([x, y]) => { if (!J(m.map(q => [q[0] + 18 * x, q[1] + 18 * y]), m, o).ok) out.off.push(ch + (i + 1) + '@' + x + ',' + y); });
+        if (J(LG.line(a[0], a[1], a[0], a[1] + 2 * h), m, o).ok || J(LG.line(c[0], c[1] - h, c[0], c[1] + h), m, o).ok) out.across.push(ch + (i + 1));
+        if (J(m.slice().reverse(), m, o).ok) out.rtl.push(ch + (i + 1));
+      });
+      'abdghmnpqu'.split('').forEach(ch => { const m = LETTERS[ch][0]; if (J(cut(m, 0.8), m, []).ok) out.short.push(ch); });
+      return out;
+    }""")
+    log.check(not r['off'], "06 a letter's short line 15 %% of the frame off (8 directions) still passes %s" % r['off'][:10])
+    log.check(not r['across'] and not r['rtl'], "06 a letter's short line written across it or right to left does not pass %s %s" % (r['across'], r['rtl']))
+    log.check(not r['short'], '06 a one-stroke letter (a b d g h m n p q u) stopped 20 %% short is not finished %s' % r['short'])
     page.context.close()
     br.close()
 sys.exit(0 if log.close() else 1)

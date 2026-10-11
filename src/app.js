@@ -13,6 +13,8 @@ const CHARS = {
 };
 /* an item's picture: an object (assets/obj) or, with '@', one of the client's own character pictures as it is (world 3's family words) */
 const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + o) + '.png';
+/* after a wrong answer and its explanation a NEW question comes: the closing line says so (OX1-04) - never "再试一次" */
+const NEXTQ = ['再来一题！', '下一题！', '再来一个！'];
 const PRAISE = ['真棒！', '对啦！', '你真厉害！', '好样的！', '太棒啦！', '一点不错！', '你答对啦！', '认得真准！'];
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十'];
 const CNQ = n => (n === 2 ? '两' : CN[n] || String(n));
@@ -370,9 +372,10 @@ const Session = {
       st.phase = 'explain'; st.explaining = true;
       const t0 = now();
       if (g.explain) await g.explain(st, ans); else await g.reveal(st);
-      { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0) }); if (L.length > 60) L.shift(); }     /* for the tests */
+      { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0),
+        shown: $$('[data-ex]', Stage.el).map(e => e.dataset.ex), rings: $$('.exring', Stage.el).map(r => [r.classList.contains('right') ? 'R' : 'C', box(r)]) }); if (L.length > 60) L.shift(); }     /* for the tests */
       if (!this.alive(my)) return 'dead';
-      if (!G.practice) Voice.say(g.again || AGAIN[(G.again = (G.again || 0) + 1) % AGAIN.length], { tag: 'again' });      /* writing: 再写一个！ (a new character comes, R2-06) */
+      if (!G.practice) Voice.say(g.again || NEXTQ[(G.again = (G.again || 0) + 1) % NEXTQ.length], { tag: 'again' });      /* a NEW question comes (OX1-04); writing: 再写一个！ (R2-06) */
       await st.scope.guard(Voice.afterSay(200));
       if (!this.alive(my)) return 'dead';
       this.ffOff();

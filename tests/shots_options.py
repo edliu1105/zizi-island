@@ -19,7 +19,7 @@ GAMES = [('peppa', 'peppa:find', 2), ('bluey', 'bluey:find', 1), ('huluwa', 'hul
          ('bluey2', 'bluey2:quiz', 2), ('pj', 'pj:quiz', 3), ('ultra2', 'ultra2:quiz', 2), ('huluwa2', 'huluwa2:quiz', 3), ('xiyou2', 'xiyou2:find', 3), ('robot2', 'robot2:find', 3),
          ('xiyou2', 'xiyou2:quiz', 2), ('robot2', 'robot2:quiz', 3), ('hulk3', 'hulk3:find', 2), ('hulk3', 'hulk3:en', 3), ('hulk3', 'hulk3:quiz', 1), ('thor3', 'thor3:find', 3),
          ('thor3', 'thor3:en', 1), ('thor3', 'thor3:quiz', 2), ('panther3', 'panther3:find', 4), ('panther3', 'panther3:en', 2), ('panther3', 'panther3:quiz', 1), ('widow3', 'widow3:find', 2),
-         ('widow3', 'widow3:en', 3), ('widow3', 'widow3:quiz', 1), ('hawk3', 'hawk3:find', 3), ('hawk3', 'hawk3:en', 2), ('hawk3', 'hawk3:quiz', 1), ('key', 'review', 2)]
+         ('widow3', 'widow3:en', 3), ('widow3', 'widow3:quiz', 1), ('hawk3', 'hawk3:find', 3), ('hawk3', 'hawk3:en', 2), ('hawk3', 'hawk3:quiz', 1), ('key', 'review', 2), ('key2', 'review_fw', 2)]
 ORIS = sys.argv[1].split(',') if len(sys.argv) > 1 else ['L', 'P']
 ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None
 
@@ -51,6 +51,8 @@ with sync_playwright() as p, serve() as base:
                 page.evaluate("window.__fast = 1")
                 if isl == 'key':
                     page.evaluate("() => { Session.start('hulk3', 'hulk3:find', { key: true, keyItems: ['人', 'b', '我'] }); }")
+                elif isl == 'key2':                     # a function word asked (its sentence, not a picture - OX1-02)
+                    page.evaluate("() => { Session.start('ultra', 'ultra:find', { key: true, keyItems: ['不', '是'] }); }")
                 else:
                     page.evaluate("([i, g, l]) => window.__go(i, g, l, { seed: 6 })", [isl, g, lv])
                 wait_phase(page, timeout=30000)

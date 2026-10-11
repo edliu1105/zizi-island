@@ -2252,10 +2252,10 @@ const Geo = {
   /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size) */
   judge(drawn, want, S, others, opt) {
     /* a hook (竖钩, 横折钩 ...) may be left off: the stroke without it is judged too - one rule for every hook (R3-03) */
-    const end = !!(opt && opt.end);
+    const letter = !!(opt && opt.letter);                /* a letter's stroke (四线三格): see the tolerance and the end below */
     if (opt && opt.hook) {
-      const r = this.judge(drawn, want, S, others, { end }), u = this.unhook(want);
-      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { end }).ok ? { ok: true } : r);
+      const r = this.judge(drawn, want, S, others, { letter }), u = this.unhook(want);
+      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { letter }).ok ? { ok: true } : r);
     }
     const L = this.len(want), Ld = this.len(drawn), short = L < 0.16 * S;
     const d0 = drawn[0], d1 = drawn[drawn.length - 1], w0 = want[0], w1 = want[want.length - 1];
@@ -2274,12 +2274,16 @@ const Geo = {
       if (near && dirOk && Ld < 0.45 * S && !closer) return { ok: true };
       return { ok: false, why: closer ? 'order' : near && !dirOk ? 'back' : 'start' };
     }
-    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame */
-    const tol = Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
+    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame. A letter's
+       short line (the bars of I E F H A t f) gets the long strokes' 17 % too - a 4-year-old's bar may sit a little high or
+       low (OX1: 15 % of the frame off failed them) - and instead has to go the way of the line (within 35 deg): a stroke
+       across a bar is not that bar, a bar written right to left still is not (the way check) */
+    const tol = letter ? 0.17 * S : Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
     /* a letter's stroke is written to its end, with the start's tolerance: one Zaner-Bloser stroke may go back over itself
        (a: circle back, push up, pull down) and stopping before that last part is not the letter (a circle is not an a) */
-    const endOk = !end || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
-    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && this.bendOk(drawn, want)) return { ok: true };
+    const endOk = !letter || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
+    const lineOk = !letter || this.lineWay(drawn, want);
+    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && lineOk && this.bendOk(drawn, want)) return { ok: true };
     if (mRev < tol && dsRev < 0.22 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
     if (m < tol && ds < 0.22 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
     if (closer || this.which(drawn, others, S)) return { ok: false, why: 'order' };
@@ -2295,6 +2299,14 @@ const Geo = {
     let pos = 0, neg = 0;
     p.forEach(q => { const d = ((q[0] - a[0]) * cy - (q[1] - a[1]) * cx) / ch; if (d > pos) pos = d; if (-d > neg) neg = -d; });
     return { pos: pos / L, neg: neg / L, closed: ch < 0.3 * L };
+  },
+  /* a straight stroke is written along its line: start-to-end within 35 deg of it (strokes that turn: bendOk) */
+  lineWay(drawn, want) {
+    const w = this.bulge(this.resample(want, 32));
+    if (w.closed || Math.max(w.pos, w.neg) >= 0.12) return true;
+    const a = drawn[0], b = drawn[drawn.length - 1], c = want[0], d = want[want.length - 1];
+    const dot = (b[0] - a[0]) * (d[0] - c[0]) + (b[1] - a[1]) * (d[1] - c[1]), n = Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(d[0] - c[0], d[1] - c[1]);
+    return n > 0 && dot / n > Math.cos(35 * Math.PI / 180);
   },
   bendOk(drawn, want) {
     const w = this.bulge(this.resample(want, 32)), d = this.bulge(this.resample(drawn, 32));
@@ -2480,7 +2492,7 @@ class Writer {
     const drawn = pts.map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
     if (!this.trail) { this.trail = drawn; this.trailEl = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); }
     const sk = this.strokes[this.k];
-    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), end: this.kind === 'en' });
+    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en' });
     if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(res.ok ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
     this.trail = null;
     if (res.ok) {
@@ -2517,6 +2529,8 @@ const CHARS = {
 };
 /* an item's picture: an object (assets/obj) or, with '@', one of the client's own character pictures as it is (world 3's family words) */
 const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + o) + '.png';
+/* after a wrong answer and its explanation a NEW question comes: the closing line says so (OX1-04) - never "再试一次" */
+const NEXTQ = ['再来一题！', '下一题！', '再来一个！'];
 const PRAISE = ['真棒！', '对啦！', '你真厉害！', '好样的！', '太棒啦！', '一点不错！', '你答对啦！', '认得真准！'];
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十'];
 const CNQ = n => (n === 2 ? '两' : CN[n] || String(n));
@@ -2874,9 +2888,10 @@ const Session = {
       st.phase = 'explain'; st.explaining = true;
       const t0 = now();
       if (g.explain) await g.explain(st, ans); else await g.reveal(st);
-      { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0) }); if (L.length > 60) L.shift(); }     /* for the tests */
+      { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0),
+        shown: $$('[data-ex]', Stage.el).map(e => e.dataset.ex), rings: $$('.exring', Stage.el).map(r => [r.classList.contains('right') ? 'R' : 'C', box(r)]) }); if (L.length > 60) L.shift(); }     /* for the tests */
       if (!this.alive(my)) return 'dead';
-      if (!G.practice) Voice.say(g.again || AGAIN[(G.again = (G.again || 0) + 1) % AGAIN.length], { tag: 'again' });      /* writing: 再写一个！ (a new character comes, R2-06) */
+      if (!G.practice) Voice.say(g.again || NEXTQ[(G.again = (G.again || 0) + 1) % NEXTQ.length], { tag: 'again' });      /* a NEW question comes (OX1-04); writing: 再写一个！ (R2-06) */
       await st.scope.guard(Voice.afterSay(200));
       if (!this.alive(my)) return 'dead';
       this.ffOff();
@@ -3834,29 +3849,59 @@ const EX = {
     return { x: a.x, y: a.y, w: r.width / s, h: r.height / s };
   },
   /* a ring round an element: 'right' gold (solid, glowing), 'chosen' a calm blue dashed one - never red */
+  /* the options around an element (whatever this game calls them) and the question's task card */
+  near(st, e) { return [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.taskEl ? [st.taskEl] : []).filter(o => o && o !== e && o.isConnected); },
+  /* the gap between two stage boxes (negative when they overlap) */
+  gap(a, b) {
+    const dx = Math.max(b.x - (a.x + a.w), a.x - (b.x + b.w)), dy = Math.max(b.y - (a.y + a.h), a.y - (b.y + b.h));
+    return dx >= 0 && dy >= 0 ? Math.hypot(dx, dy) : Math.max(dx, dy);
+  },
+  /* a ring round an element: 'right' gold (solid, glowing), 'chosen' a calm blue dashed one - never red. Its outset is at most
+     half the gap to the nearest other option (OX1-03: rings of neighbours never overlap); with no room it is drawn inside the
+     element's edge. The blue ring lies above the gold one, so it is always seen */
   ring(st, e, role, pad) {
     if (!e || st.scope.dead) return null;
-    const b = this.rect(e), p = pad == null ? 12 : pad, r = el('div', 'exring ' + role, Stage.el);
-    Object.assign(r.style, { position: 'absolute', zIndex: 60, pointerEvents: 'none', borderRadius: '28px', boxSizing: 'border-box',
-      border: role === 'right' ? '8px solid ' + EX_GOLD : '6px dashed ' + EX_BLUE,
-      boxShadow: role === 'right' ? '0 0 0 4px #fff, 0 0 26px 8px rgba(255,190,40,.85)' : '0 0 0 3px rgba(255,255,255,.85)' });
-    place(r, b.x - p, b.y - p, b.w + 2 * p, b.h + 2 * p);
+    const b = this.rect(e), want = pad == null ? 12 : pad, side = { l: want, r: want, t: want, b: want };
+    /* every neighbour limits the side that faces it to half the gap (minus 2): two rings always stop short of their midline.
+       Side by side: the facing sides; diagonal: the axis with the larger gap is enough; boxes that overlap (scene pictures
+       with see-through corners): the axis that overlaps least, drawn inside the edge there */
+    this.near(st, e).forEach(o => {
+      const q = this.rect(o), dx = Math.max(q.x - (b.x + b.w), b.x - (q.x + q.w)), dy = Math.max(q.y - (b.y + b.h), b.y - (q.y + q.h));
+      const axis = dx >= 0 && dy >= 0 ? (dx >= dy ? 'x' : 'y') : dx >= 0 ? 'x' : dy >= 0 ? 'y' : (dx >= dy ? 'x' : 'y');
+      const lim = Math.floor((axis === 'x' ? dx : dy) / 2) - 2;
+      if (axis === 'x') { if (q.x + q.w / 2 > b.x + b.w / 2) side.r = Math.min(side.r, lim); else side.l = Math.min(side.l, lim); }
+      else if (q.y + q.h / 2 > b.y + b.h / 2) side.b = Math.min(side.b, lim); else side.t = Math.min(side.t, lim);
+    });
+    for (const k in side) if (side[k] < 2) side[k] = Math.min(side[k], -5);          /* no room: inside the edge */
+    const tight = Math.min(side.l, side.r, side.t, side.b) < 8, r = el('div', 'exring ' + role, Stage.el);
+    Object.assign(r.style, { position: 'absolute', zIndex: role === 'right' ? 60 : 62, pointerEvents: 'none', borderRadius: '28px', boxSizing: 'border-box',
+      border: role === 'right' ? (tight ? '6px' : '8px') + ' solid ' + EX_GOLD : '6px dashed ' + EX_BLUE,
+      boxShadow: role === 'right' ? (tight ? '0 0 0 2px #fff, 0 0 10px 2px rgba(255,190,40,.8)' : '0 0 0 4px #fff, 0 0 26px 8px rgba(255,190,40,.85)') : '0 0 0 3px rgba(255,255,255,.95)' });
+    place(r, b.x - side.l, b.y - side.t, Math.max(24, b.w + side.l + side.r), Math.max(24, b.h + side.t + side.b));
     st.els.push(r);
     const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex[role].push(this.idOf(st, e));
     st.scope.anim(r, [{ transform: 'scale(1.25)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, easing: EASE.pop });
     if (role === 'right') Sfx.sparkle();
     return r;
   },
-  /* the picture of an item (a character's thing, a function word's scene, a letter's word, an English word), or null */
+  /* a gold outline on the element itself (several right ones side by side, e.g. the rocks of 砸石头: no rings to overlap) */
+  outline(st, e) {
+    if (!e || st.scope.dead) return;
+    e.style.filter = 'drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 8px rgba(255,190,40,.9))';
+    const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex.right.push(this.idOf(st, e));
+  },
+  /* the picture of an item (a character's thing, a letter's word, an English word), or null. A function word has NO picture: its
+     sentence's scene would be taken for its meaning (不 -> a sheep, OX1-02); sentOver shows its sentence instead */
   picNode(k, size) {
     const it = ITEM[k];
     if (it && it.obj) return Glyph.obj(it.obj);
-    if (it && it.fw && FW_SENTS[k]) return Scene.node(FW_SENTS[k][0][1], size);
+    if (it && it.fw) return null;
     const w = (typeof WORDS3 !== 'undefined' && WORDS3.find(x => x[0] === k)) || null, o = w ? w[1] : (typeof CVC_OBJ !== 'undefined' && CVC_OBJ[k]);
     return o ? Glyph.obj(o) : null;
   },
   /* that picture on a little white card over (or under) an element */
   picOver(st, e, k, role, size) {
+    if (typeof k === 'string' && ITEM[k] && ITEM[k].fw) return this.sentOver(st, e, k, role);
     size = size || 104;
     const nd = typeof k === 'string' ? this.picNode(k, size * 0.86) : k; if (!nd || !e) return null;
     const b = this.rect(e), d = ZX.thing(st, size, size, 61, 'objpop');
@@ -3870,6 +3915,22 @@ const EX = {
     const above = up.y > 96 && !(st.cards || []).concat(st.rights || [], st.lefts || [], st.taskEl ? [st.taskEl] : []).some(c => c !== e && c.isConnected && hit(this.rect(c)));
     if (!above) { size = Math.round(size * 0.8); place(d, clamp(b.x + b.w - size * 0.6, 8, Stage.W - size - 8), Math.max(8, b.y - size * 0.3), size, size); }
     else place(d, clamp(b.x + b.w / 2 - size / 2, 8, Stage.W - size - 8), b.y - size - 18, size, size);
+    K.pop(st, d);
+    return d;
+  },
+  /* a function word in its first sentence, the word itself coloured (blue: the chosen one, gold: the right one), over or under
+     the element where it touches no other option - or nothing at all (the ring alone says it) */
+  sentOver(st, e, k, role) {
+    const t = FW_SENTS[k] && FW_SENTS[k][0][0]; if (!t || !e) return null;
+    const h = 44, row = Sent.node(t, h, -1, true), col = role === 'right' ? '#B07800' : EX_BLUE;
+    $$('[data-ch]', row).forEach(c => { const me = c.dataset.ch === k; delete c.dataset.ch; c.style.cursor = ''; if (me) { c.innerHTML = ''; c.appendChild(Glyph.zh(k, h * 0.92, col)); Object.assign(c.style, { background: role === 'right' ? '#FFF3C4' : '#E4EEFA', borderRadius: '10px' }); } });
+    Object.assign(row.style, { padding: '4px 12px', borderRadius: '16px', boxShadow: '0 0 0 4px ' + (role === 'right' ? EX_GOLD : EX_BLUE) + ', 0 6px 0 rgba(43,33,24,.2)' });
+    const d = ZX.thing(st, 10, 10, 61, 'item'); d.style.width = d.style.height = 'auto'; d.style.pointerEvents = 'none'; d.dataset.ex = 'sent-' + role; d.appendChild(row);
+    const sc = Stage.s || 1, rr = row.getBoundingClientRect(), w = rr.width / sc, hh = rr.height / sc, b = this.rect(e), others = this.near(st, e).map(o => this.rect(o));
+    const spots = [b.y - hh - 14, b.y + b.h + 14].map(y => ({ x: clamp(b.x + b.w / 2 - w / 2, 6, Stage.W - w - 6), y, w, h: hh }));
+    const at = spots.find(q => q.y >= 96 && q.y + q.h <= Stage.H - 4 && others.every(o => this.gap(q, o) > 2));
+    if (!at) { d.remove(); return null; }
+    place(d, at.x, at.y); d.style.width = d.style.height = 'auto';
     K.pop(st, d);
     return d;
   },
@@ -4303,8 +4364,11 @@ const QMemory = {
     const lv = o.level, n = lv <= 4 ? 5 : 6;                 /* five cards (client 2026-10-10); six at level 5 as before */
     const pool = poolOf(G, 'zh', lv >= 4).concat(lv >= 3 ? poolOf(G, 'up', false) : []);
     const answer = needPick(G, poolOf(G, 'zh', false));
-    /* the first island has four characters: the island's letters (known) make up the five at levels 1-2 */
-    const more = G.rng.shuffle(poolOf(G, 'up', false).filter(k => !pool.includes(k))), others = G.rng.shuffle(pool.filter(k => k !== answer)).concat(more).slice(0, n - 1);
+    /* the first island has four characters: a look-alike of the answer (or of another card) makes up the five at levels 1-2, as in
+       认字 - never one that holds the answer, never a letter among characters (OX1-05) */
+    const holds = HOLDS[answer] || '', lk = k => (LOOK[k] || '').split('').filter(x => ITEM[x] && ITEM[x].kind === 'zh' && !pool.includes(x) && !holds.includes(x));
+    const more = lk(answer).concat(G.rng.shuffle(pool.flatMap(lk)), G.rng.shuffle(poolOf(G, 'up', false).filter(k => !pool.includes(k)))).filter((k, i, a) => a.indexOf(k) === i);
+    const others = G.rng.shuffle(pool.filter(k => k !== answer)).concat(more).slice(0, n - 1);
     return { k: [answer, others.join('')], answer, opts: putAt(G, others, answer), show: lv <= 2 ? 3800 : lv <= 4 ? 3200 : 2600 };
   },
   async present(st) {
@@ -4469,7 +4533,8 @@ const QMissing = {
         const look = [e.style.background, e.style.boxShadow, e.style.borderColor];
         e.style.zIndex = 62; e.style.background = 'transparent'; e.style.boxShadow = 'none'; e.style.borderColor = 'transparent';
         await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 40, bb.w / cb.w);
-        await EX.wait(st, 650);                                  /* it sits where it belongs in its own character - not in the gap */
+        Voice.say('放不进去', { tag: 'explain' });              /* it sits where it belongs in its own character - not in the gap */
+        await EX.wait(st, 650);
         await K.flyTo(st, e, cb.x, cb.y, 320, 30, 1);
         [e.style.background, e.style.boxShadow, e.style.borderColor] = look; e.style.zIndex = '';
       },
@@ -5051,7 +5116,7 @@ const QFuse = {
     const bb = EX.rect(st.blank);
     await EX.cards(st, ans, { pics: false, lines: ['对的是这个', ITEM[st.q.whole].line],
       move: async (st2, e) => { const cb = box(e); await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 360, 50); },
-      why: async () => { EX.ring(st, st.row, 'right', 6); } });
+      why: async () => { K.hop(st, st.row, 10); } });          /* the card's gold ring in the blank says it - no second ring round the sum (OX1-03) */
   },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('日', 36)); d.appendChild(Glyph.zh('月', 36)); return d; },
 };
@@ -5900,7 +5965,7 @@ const PlaySmash = {
     const eC = st.cards[st.tapped], left = st.vals.map((v, i) => (v === st.q.answer && !st.smashed.includes(i) ? i : -1)).filter(i => i >= 0);
     if (eC) { EX.ring(st, eC, 'chosen'); EX.picOver(st, eC, ans, 'chosen'); }
     await EX.wait(st, 650);
-    left.forEach(i => { EX.ring(st, st.cards[i], 'right', 8); K.hop(st, st.cards[i], 18); });
+    left.forEach((i, j) => { if (j === 0) EX.ring(st, st.cards[i], 'right', 8); else EX.outline(st, st.cards[i]); K.hop(st, st.cards[i], 18); });      /* several right rocks: one ring, the others a gold outline - no rings over each other (OX1-03) */
     if (left.length) EX.picOver(st, st.cards[left[0]], st.q.answer, 'right');
     await EX.say(st, ['对的是这个', ITEM[st.q.answer].line]);
     await EX.wait(st, 300);
@@ -6686,9 +6751,11 @@ const FAMS = {
   bluey: { who: ['bandit', 'chilli', 'bluey', 'bingo'], kin: { bandit: '爸爸', chilli: '妈妈', bluey: '姐姐', bingo: '妹妹' } },
 };
 const KIN_OF = id => { for (const f in FAMS) if (FAMS[f].kin[id]) return FAMS[f].kin[id]; return ''; };
-/* five people in the photo at every level (client 2026-10-10): at level 1 the family's photo is made up with friends who are
-   nobody's 爸爸 / 妈妈 / ... here (heroes); from level 2 with people from the other families (never the asked word) */
-const FAM_GUESTS = ['ultraman', 'wukong', 'catboy', 'chase', 'optimus'];
+/* five people in the photo at every level (client 2026-10-10): at level 1 the family's photo is made up with people whose own
+   word is none of the five asked here - Bingo (妹妹), the gourd brothers' 爷爷 - and, where one more is needed (the gourd family),
+   师父, a grown-up who is nobody's 哥哥 or 弟弟 (all the client's own pictures; never a superhero, OX1-05); from level 2 with
+   people from the other families (never the asked word) */
+const FAM_GUESTS = ['bingo', 'grandpa', 'tangseng'], KIN_ASKED = ['爸爸', '妈妈', '哥哥', '姐姐', '弟弟'];
 const FAM_Q = [
   { fam: 'pig', text: '爸爸', ans: 'daddy_pig' }, { fam: 'pig', text: '妈妈', ans: 'mummy_pig' }, { fam: 'pig', text: '姐姐', ans: 'peppa' }, { fam: 'pig', text: '弟弟', ans: 'george' },
   { fam: 'gourd', text: '哥哥', ans: 'gourd1' }, { fam: 'gourd', text: '弟弟', ans: 'gourd7' },
@@ -6713,10 +6780,10 @@ const QFamily = Object.assign({}, ReadHint, {
       const safe = G.rng.shuffle(others.filter(id => KIN_OF(id) !== last2 && KIN_OF(id) !== first2));
       if (traps.length) { add.push(G.rng.pick(traps)); isTrap = 1; }
       safe.forEach(id => { if (add.length < need && !add.includes(id)) add.push(id); });
-    } else G.rng.shuffle(FAM_GUESTS).slice(0, need).forEach(id => add.push(id));
+    } else FAM_GUESTS.filter(id => !fam.who.includes(id)).slice(0, need).forEach(id => add.push(id));
     const who = G.rng.shuffle(fam.who.concat(add)), i0 = who.indexOf(x.ans), at = PICK(G, 'pos5', [0, 1, 2, 3, 4]);
     who.splice(i0, 1); who.splice(at, 0, x.ans);                    /* the answer's place from a position bag */
-    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: add.length, kinOut: add.filter(id => KIN_OF(id)).length, trap: isTrap };
+    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: add.length, kinOut: add.filter(id => KIN_ASKED.includes(KIN_OF(id))).length, trap: isTrap };
   },
   itemOf(st) { return W3X.own(st, st.q.item); },
   async present(st) {

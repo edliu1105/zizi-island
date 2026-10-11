@@ -146,29 +146,59 @@ const EX = {
     return { x: a.x, y: a.y, w: r.width / s, h: r.height / s };
   },
   /* a ring round an element: 'right' gold (solid, glowing), 'chosen' a calm blue dashed one - never red */
+  /* the options around an element (whatever this game calls them) and the question's task card */
+  near(st, e) { return [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.taskEl ? [st.taskEl] : []).filter(o => o && o !== e && o.isConnected); },
+  /* the gap between two stage boxes (negative when they overlap) */
+  gap(a, b) {
+    const dx = Math.max(b.x - (a.x + a.w), a.x - (b.x + b.w)), dy = Math.max(b.y - (a.y + a.h), a.y - (b.y + b.h));
+    return dx >= 0 && dy >= 0 ? Math.hypot(dx, dy) : Math.max(dx, dy);
+  },
+  /* a ring round an element: 'right' gold (solid, glowing), 'chosen' a calm blue dashed one - never red. Its outset is at most
+     half the gap to the nearest other option (OX1-03: rings of neighbours never overlap); with no room it is drawn inside the
+     element's edge. The blue ring lies above the gold one, so it is always seen */
   ring(st, e, role, pad) {
     if (!e || st.scope.dead) return null;
-    const b = this.rect(e), p = pad == null ? 12 : pad, r = el('div', 'exring ' + role, Stage.el);
-    Object.assign(r.style, { position: 'absolute', zIndex: 60, pointerEvents: 'none', borderRadius: '28px', boxSizing: 'border-box',
-      border: role === 'right' ? '8px solid ' + EX_GOLD : '6px dashed ' + EX_BLUE,
-      boxShadow: role === 'right' ? '0 0 0 4px #fff, 0 0 26px 8px rgba(255,190,40,.85)' : '0 0 0 3px rgba(255,255,255,.85)' });
-    place(r, b.x - p, b.y - p, b.w + 2 * p, b.h + 2 * p);
+    const b = this.rect(e), want = pad == null ? 12 : pad, side = { l: want, r: want, t: want, b: want };
+    /* every neighbour limits the side that faces it to half the gap (minus 2): two rings always stop short of their midline.
+       Side by side: the facing sides; diagonal: the axis with the larger gap is enough; boxes that overlap (scene pictures
+       with see-through corners): the axis that overlaps least, drawn inside the edge there */
+    this.near(st, e).forEach(o => {
+      const q = this.rect(o), dx = Math.max(q.x - (b.x + b.w), b.x - (q.x + q.w)), dy = Math.max(q.y - (b.y + b.h), b.y - (q.y + q.h));
+      const axis = dx >= 0 && dy >= 0 ? (dx >= dy ? 'x' : 'y') : dx >= 0 ? 'x' : dy >= 0 ? 'y' : (dx >= dy ? 'x' : 'y');
+      const lim = Math.floor((axis === 'x' ? dx : dy) / 2) - 2;
+      if (axis === 'x') { if (q.x + q.w / 2 > b.x + b.w / 2) side.r = Math.min(side.r, lim); else side.l = Math.min(side.l, lim); }
+      else if (q.y + q.h / 2 > b.y + b.h / 2) side.b = Math.min(side.b, lim); else side.t = Math.min(side.t, lim);
+    });
+    for (const k in side) if (side[k] < 2) side[k] = Math.min(side[k], -5);          /* no room: inside the edge */
+    const tight = Math.min(side.l, side.r, side.t, side.b) < 8, r = el('div', 'exring ' + role, Stage.el);
+    Object.assign(r.style, { position: 'absolute', zIndex: role === 'right' ? 60 : 62, pointerEvents: 'none', borderRadius: '28px', boxSizing: 'border-box',
+      border: role === 'right' ? (tight ? '6px' : '8px') + ' solid ' + EX_GOLD : '6px dashed ' + EX_BLUE,
+      boxShadow: role === 'right' ? (tight ? '0 0 0 2px #fff, 0 0 10px 2px rgba(255,190,40,.8)' : '0 0 0 4px #fff, 0 0 26px 8px rgba(255,190,40,.85)') : '0 0 0 3px rgba(255,255,255,.95)' });
+    place(r, b.x - side.l, b.y - side.t, Math.max(24, b.w + side.l + side.r), Math.max(24, b.h + side.t + side.b));
     st.els.push(r);
     const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex[role].push(this.idOf(st, e));
     st.scope.anim(r, [{ transform: 'scale(1.25)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, easing: EASE.pop });
     if (role === 'right') Sfx.sparkle();
     return r;
   },
-  /* the picture of an item (a character's thing, a function word's scene, a letter's word, an English word), or null */
+  /* a gold outline on the element itself (several right ones side by side, e.g. the rocks of 砸石头: no rings to overlap) */
+  outline(st, e) {
+    if (!e || st.scope.dead) return;
+    e.style.filter = 'drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 8px rgba(255,190,40,.9))';
+    const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex.right.push(this.idOf(st, e));
+  },
+  /* the picture of an item (a character's thing, a letter's word, an English word), or null. A function word has NO picture: its
+     sentence's scene would be taken for its meaning (不 -> a sheep, OX1-02); sentOver shows its sentence instead */
   picNode(k, size) {
     const it = ITEM[k];
     if (it && it.obj) return Glyph.obj(it.obj);
-    if (it && it.fw && FW_SENTS[k]) return Scene.node(FW_SENTS[k][0][1], size);
+    if (it && it.fw) return null;
     const w = (typeof WORDS3 !== 'undefined' && WORDS3.find(x => x[0] === k)) || null, o = w ? w[1] : (typeof CVC_OBJ !== 'undefined' && CVC_OBJ[k]);
     return o ? Glyph.obj(o) : null;
   },
   /* that picture on a little white card over (or under) an element */
   picOver(st, e, k, role, size) {
+    if (typeof k === 'string' && ITEM[k] && ITEM[k].fw) return this.sentOver(st, e, k, role);
     size = size || 104;
     const nd = typeof k === 'string' ? this.picNode(k, size * 0.86) : k; if (!nd || !e) return null;
     const b = this.rect(e), d = ZX.thing(st, size, size, 61, 'objpop');
@@ -182,6 +212,22 @@ const EX = {
     const above = up.y > 96 && !(st.cards || []).concat(st.rights || [], st.lefts || [], st.taskEl ? [st.taskEl] : []).some(c => c !== e && c.isConnected && hit(this.rect(c)));
     if (!above) { size = Math.round(size * 0.8); place(d, clamp(b.x + b.w - size * 0.6, 8, Stage.W - size - 8), Math.max(8, b.y - size * 0.3), size, size); }
     else place(d, clamp(b.x + b.w / 2 - size / 2, 8, Stage.W - size - 8), b.y - size - 18, size, size);
+    K.pop(st, d);
+    return d;
+  },
+  /* a function word in its first sentence, the word itself coloured (blue: the chosen one, gold: the right one), over or under
+     the element where it touches no other option - or nothing at all (the ring alone says it) */
+  sentOver(st, e, k, role) {
+    const t = FW_SENTS[k] && FW_SENTS[k][0][0]; if (!t || !e) return null;
+    const h = 44, row = Sent.node(t, h, -1, true), col = role === 'right' ? '#B07800' : EX_BLUE;
+    $$('[data-ch]', row).forEach(c => { const me = c.dataset.ch === k; delete c.dataset.ch; c.style.cursor = ''; if (me) { c.innerHTML = ''; c.appendChild(Glyph.zh(k, h * 0.92, col)); Object.assign(c.style, { background: role === 'right' ? '#FFF3C4' : '#E4EEFA', borderRadius: '10px' }); } });
+    Object.assign(row.style, { padding: '4px 12px', borderRadius: '16px', boxShadow: '0 0 0 4px ' + (role === 'right' ? EX_GOLD : EX_BLUE) + ', 0 6px 0 rgba(43,33,24,.2)' });
+    const d = ZX.thing(st, 10, 10, 61, 'item'); d.style.width = d.style.height = 'auto'; d.style.pointerEvents = 'none'; d.dataset.ex = 'sent-' + role; d.appendChild(row);
+    const sc = Stage.s || 1, rr = row.getBoundingClientRect(), w = rr.width / sc, hh = rr.height / sc, b = this.rect(e), others = this.near(st, e).map(o => this.rect(o));
+    const spots = [b.y - hh - 14, b.y + b.h + 14].map(y => ({ x: clamp(b.x + b.w / 2 - w / 2, 6, Stage.W - w - 6), y, w, h: hh }));
+    const at = spots.find(q => q.y >= 96 && q.y + q.h <= Stage.H - 4 && others.every(o => this.gap(q, o) > 2));
+    if (!at) { d.remove(); return null; }
+    place(d, at.x, at.y); d.style.width = d.style.height = 'auto';
     K.pop(st, d);
     return d;
   },
@@ -615,8 +661,11 @@ const QMemory = {
     const lv = o.level, n = lv <= 4 ? 5 : 6;                 /* five cards (client 2026-10-10); six at level 5 as before */
     const pool = poolOf(G, 'zh', lv >= 4).concat(lv >= 3 ? poolOf(G, 'up', false) : []);
     const answer = needPick(G, poolOf(G, 'zh', false));
-    /* the first island has four characters: the island's letters (known) make up the five at levels 1-2 */
-    const more = G.rng.shuffle(poolOf(G, 'up', false).filter(k => !pool.includes(k))), others = G.rng.shuffle(pool.filter(k => k !== answer)).concat(more).slice(0, n - 1);
+    /* the first island has four characters: a look-alike of the answer (or of another card) makes up the five at levels 1-2, as in
+       认字 - never one that holds the answer, never a letter among characters (OX1-05) */
+    const holds = HOLDS[answer] || '', lk = k => (LOOK[k] || '').split('').filter(x => ITEM[x] && ITEM[x].kind === 'zh' && !pool.includes(x) && !holds.includes(x));
+    const more = lk(answer).concat(G.rng.shuffle(pool.flatMap(lk)), G.rng.shuffle(poolOf(G, 'up', false).filter(k => !pool.includes(k)))).filter((k, i, a) => a.indexOf(k) === i);
+    const others = G.rng.shuffle(pool.filter(k => k !== answer)).concat(more).slice(0, n - 1);
     return { k: [answer, others.join('')], answer, opts: putAt(G, others, answer), show: lv <= 2 ? 3800 : lv <= 4 ? 3200 : 2600 };
   },
   async present(st) {
@@ -781,7 +830,8 @@ const QMissing = {
         const look = [e.style.background, e.style.boxShadow, e.style.borderColor];
         e.style.zIndex = 62; e.style.background = 'transparent'; e.style.boxShadow = 'none'; e.style.borderColor = 'transparent';
         await K.flyTo(st, e, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 40, bb.w / cb.w);
-        await EX.wait(st, 650);                                  /* it sits where it belongs in its own character - not in the gap */
+        Voice.say('放不进去', { tag: 'explain' });              /* it sits where it belongs in its own character - not in the gap */
+        await EX.wait(st, 650);
         await K.flyTo(st, e, cb.x, cb.y, 320, 30, 1);
         [e.style.background, e.style.boxShadow, e.style.borderColor] = look; e.style.zIndex = '';
       },

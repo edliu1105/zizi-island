@@ -127,7 +127,7 @@ const PlaySmash = {
     const eC = st.cards[st.tapped], left = st.vals.map((v, i) => (v === st.q.answer && !st.smashed.includes(i) ? i : -1)).filter(i => i >= 0);
     if (eC) { EX.ring(st, eC, 'chosen'); EX.picOver(st, eC, ans, 'chosen'); }
     await EX.wait(st, 650);
-    left.forEach(i => { EX.ring(st, st.cards[i], 'right', 8); K.hop(st, st.cards[i], 18); });
+    left.forEach((i, j) => { if (j === 0) EX.ring(st, st.cards[i], 'right', 8); else EX.outline(st, st.cards[i]); K.hop(st, st.cards[i], 18); });      /* several right rocks: one ring, the others a gold outline - no rings over each other (OX1-03) */
     if (left.length) EX.picOver(st, st.cards[left[0]], st.q.answer, 'right');
     await EX.say(st, ['对的是这个', ITEM[st.q.answer].line]);
     await EX.wait(st, 300);
@@ -913,9 +913,11 @@ const FAMS = {
   bluey: { who: ['bandit', 'chilli', 'bluey', 'bingo'], kin: { bandit: '爸爸', chilli: '妈妈', bluey: '姐姐', bingo: '妹妹' } },
 };
 const KIN_OF = id => { for (const f in FAMS) if (FAMS[f].kin[id]) return FAMS[f].kin[id]; return ''; };
-/* five people in the photo at every level (client 2026-10-10): at level 1 the family's photo is made up with friends who are
-   nobody's 爸爸 / 妈妈 / ... here (heroes); from level 2 with people from the other families (never the asked word) */
-const FAM_GUESTS = ['ultraman', 'wukong', 'catboy', 'chase', 'optimus'];
+/* five people in the photo at every level (client 2026-10-10): at level 1 the family's photo is made up with people whose own
+   word is none of the five asked here - Bingo (妹妹), the gourd brothers' 爷爷 - and, where one more is needed (the gourd family),
+   师父, a grown-up who is nobody's 哥哥 or 弟弟 (all the client's own pictures; never a superhero, OX1-05); from level 2 with
+   people from the other families (never the asked word) */
+const FAM_GUESTS = ['bingo', 'grandpa', 'tangseng'], KIN_ASKED = ['爸爸', '妈妈', '哥哥', '姐姐', '弟弟'];
 const FAM_Q = [
   { fam: 'pig', text: '爸爸', ans: 'daddy_pig' }, { fam: 'pig', text: '妈妈', ans: 'mummy_pig' }, { fam: 'pig', text: '姐姐', ans: 'peppa' }, { fam: 'pig', text: '弟弟', ans: 'george' },
   { fam: 'gourd', text: '哥哥', ans: 'gourd1' }, { fam: 'gourd', text: '弟弟', ans: 'gourd7' },
@@ -940,10 +942,10 @@ const QFamily = Object.assign({}, ReadHint, {
       const safe = G.rng.shuffle(others.filter(id => KIN_OF(id) !== last2 && KIN_OF(id) !== first2));
       if (traps.length) { add.push(G.rng.pick(traps)); isTrap = 1; }
       safe.forEach(id => { if (add.length < need && !add.includes(id)) add.push(id); });
-    } else G.rng.shuffle(FAM_GUESTS).slice(0, need).forEach(id => add.push(id));
+    } else FAM_GUESTS.filter(id => !fam.who.includes(id)).slice(0, need).forEach(id => add.push(id));
     const who = G.rng.shuffle(fam.who.concat(add)), i0 = who.indexOf(x.ans), at = PICK(G, 'pos5', [0, 1, 2, 3, 4]);
     who.splice(i0, 1); who.splice(at, 0, x.ans);                    /* the answer's place from a position bag */
-    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: add.length, kinOut: add.filter(id => KIN_OF(id)).length, trap: isTrap };
+    return { k: [x.text, x.fam, who.join()], text: x.text, fam: x.fam, pivot: x.pivot || null, answer: x.ans, item: kc, opts: who, rel, extra: add.length, kinOut: add.filter(id => KIN_ASKED.includes(KIN_OF(id))).length, trap: isTrap };
   },
   itemOf(st) { return W3X.own(st, st.q.item); },
   async present(st) {

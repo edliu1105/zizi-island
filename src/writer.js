@@ -57,10 +57,10 @@ const Geo = {
   /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size) */
   judge(drawn, want, S, others, opt) {
     /* a hook (竖钩, 横折钩 ...) may be left off: the stroke without it is judged too - one rule for every hook (R3-03) */
-    const end = !!(opt && opt.end);
+    const letter = !!(opt && opt.letter);                /* a letter's stroke (四线三格): see the tolerance and the end below */
     if (opt && opt.hook) {
-      const r = this.judge(drawn, want, S, others, { end }), u = this.unhook(want);
-      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { end }).ok ? { ok: true } : r);
+      const r = this.judge(drawn, want, S, others, { letter }), u = this.unhook(want);
+      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { letter }).ok ? { ok: true } : r);
     }
     const L = this.len(want), Ld = this.len(drawn), short = L < 0.16 * S;
     const d0 = drawn[0], d1 = drawn[drawn.length - 1], w0 = want[0], w1 = want[want.length - 1];
@@ -79,12 +79,16 @@ const Geo = {
       if (near && dirOk && Ld < 0.45 * S && !closer) return { ok: true };
       return { ok: false, why: closer ? 'order' : near && !dirOk ? 'back' : 'start' };
     }
-    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame */
-    const tol = Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
+    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame. A letter's
+       short line (the bars of I E F H A t f) gets the long strokes' 17 % too - a 4-year-old's bar may sit a little high or
+       low (OX1: 15 % of the frame off failed them) - and instead has to go the way of the line (within 35 deg): a stroke
+       across a bar is not that bar, a bar written right to left still is not (the way check) */
+    const tol = letter ? 0.17 * S : Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
     /* a letter's stroke is written to its end, with the start's tolerance: one Zaner-Bloser stroke may go back over itself
        (a: circle back, push up, pull down) and stopping before that last part is not the letter (a circle is not an a) */
-    const endOk = !end || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
-    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && this.bendOk(drawn, want)) return { ok: true };
+    const endOk = !letter || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
+    const lineOk = !letter || this.lineWay(drawn, want);
+    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && lineOk && this.bendOk(drawn, want)) return { ok: true };
     if (mRev < tol && dsRev < 0.22 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
     if (m < tol && ds < 0.22 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
     if (closer || this.which(drawn, others, S)) return { ok: false, why: 'order' };
@@ -100,6 +104,14 @@ const Geo = {
     let pos = 0, neg = 0;
     p.forEach(q => { const d = ((q[0] - a[0]) * cy - (q[1] - a[1]) * cx) / ch; if (d > pos) pos = d; if (-d > neg) neg = -d; });
     return { pos: pos / L, neg: neg / L, closed: ch < 0.3 * L };
+  },
+  /* a straight stroke is written along its line: start-to-end within 35 deg of it (strokes that turn: bendOk) */
+  lineWay(drawn, want) {
+    const w = this.bulge(this.resample(want, 32));
+    if (w.closed || Math.max(w.pos, w.neg) >= 0.12) return true;
+    const a = drawn[0], b = drawn[drawn.length - 1], c = want[0], d = want[want.length - 1];
+    const dot = (b[0] - a[0]) * (d[0] - c[0]) + (b[1] - a[1]) * (d[1] - c[1]), n = Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(d[0] - c[0], d[1] - c[1]);
+    return n > 0 && dot / n > Math.cos(35 * Math.PI / 180);
   },
   bendOk(drawn, want) {
     const w = this.bulge(this.resample(want, 32)), d = this.bulge(this.resample(drawn, 32));
@@ -285,7 +297,7 @@ class Writer {
     const drawn = pts.map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
     if (!this.trail) { this.trail = drawn; this.trailEl = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); }
     const sk = this.strokes[this.k];
-    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), end: this.kind === 'en' });
+    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en' });
     if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(res.ok ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
     this.trail = null;
     if (res.ok) {
