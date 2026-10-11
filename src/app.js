@@ -14,7 +14,7 @@ const CHARS = {
 /* an item's picture: an object (assets/obj) or, with '@', one of the client's own character pictures as it is (world 3's family words) */
 const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + o) + '.png';
 /* after a wrong answer and its explanation a NEW question comes: the closing line says so (OX1-04) - never "再试一次" */
-const NEXTQ = ['再来一题！', '下一题！', '再来一个！'];
+const NEXTQ = ['再来一题！', '下一题！'];      /* not 再来一个！: that opens the missed-item card, which can come right after (OX2-01) */
 const PRAISE = ['真棒！', '对啦！', '你真厉害！', '好样的！', '太棒啦！', '一点不错！', '你答对啦！', '认得真准！'];
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十'];
 const CNQ = n => (n === 2 ? '两' : CN[n] || String(n));

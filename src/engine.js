@@ -1302,7 +1302,6 @@ const Loader = {
    One thing at a time: a cue first, its hint only after it and only if the child has not acted meanwhile.
    Before the first hint (the child is thinking) a friend now and then glances at the child - never the host.
    Every one of them marks the question as assisted (it can never count as mastery evidence). */
-const AGAIN = ['再想一想！', '再试一次！', '你可以的，再来！'];
 const CHEER = ['慢慢想，不着急', '你能行的！', '再看一看！', '我们等你哦！'];
 const Hints = {
   arm(st) { this.reset(st); st.hintTimer = st.scope.interval(() => this.tick(st), 100); },
