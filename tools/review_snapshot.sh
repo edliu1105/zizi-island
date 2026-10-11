@@ -5,7 +5,8 @@ set -u
 cd "$(dirname "$0")/.."
 RN="$1"; SNAP="review/$RN"
 rm -rf "$SNAP"; mkdir -p "$SNAP"
-cp -r index.html sw.js manifest.webmanifest README.md assets docs tests tools "$SNAP/" 2>/dev/null
+# exactly what is published (HEAD): no local leftovers (scratch pages, unpublished tests) in the reviewer's copy
+git archive HEAD | tar -x -C "$SNAP"
 rm -rf "$SNAP/tests/logs"; mkdir -p "$SNAP/tests/logs"
 cp "docs/REVIEW-$RN-TASK.md" "$SNAP/REVIEW_TASK.md"
 echo "snapshot $SNAP $(md5sum index.html | cut -c1-10)"
