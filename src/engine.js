@@ -618,6 +618,7 @@ const Voice = {
      simply stops there (same contract as Scope) */
   say(text, opt) {
     opt = opt || {};
+    if (opt.tag === 'explain' && typeof Session !== 'undefined' && Session.st && Session.st.step) Session.st.stepDirty = true;      /* a line of the explanation is a beat */
     const owner = opt.owner !== undefined ? opt.owner : speechOwner();
     if (Bank.has(text)) Bank.load(text);                  /* decoded while the queue still talks */
     return new Promise(res0 => {

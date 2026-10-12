@@ -14,6 +14,7 @@ EXTRA = ['庆典开始啦！', '惊喜来啦！', '星光海到啦！', '汉字'
 # the explain step after a wrong answer (docs/OPTIONS-EXPLAIN-SPEC.md): its own short lines (said from arrays / variables)
 EXTRA += ['对的是这个', '对的是这张', '看，是这样', '它照镜子啦', '它躺下啦', '它翻跟头啦', '哪张图是它开头？']      # 哪个写对了: a nested ternary the scan misses
 EXTRA += ['这是师父']                                                        # 全家福's guest at level 1 who has no kin word (src/w3.js FAM_GUESTS)
+EXTRA += ['再看这一笔']                                                      # writing, step by step: the stroke to look at (PT1-P4)
 EXTRA += ['放不进去']                                                        # 缺了一笔: the chosen stroke does not go into the gap (OX1)
 
 

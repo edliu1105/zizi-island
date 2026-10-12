@@ -69,7 +69,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, teach: null, v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -110,6 +110,7 @@ const Store = {
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
     if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
     if (Array.isArray(o.lastG) && ISL[o.lastG[0]] && ISL[o.lastG[0]].games.includes(o.lastG[1])) d.lastG = [o.lastG[0], o.lastG[1]];
+    if (o.teach && typeof o.teach === 'object' && ISL[o.teach.isl] && ISL[o.teach.isl].games.includes(o.teach.game) && [1, 2].includes(o.teach.drop)) d.teach = { isl: o.teach.isl, game: o.teach.game, drop: o.teach.drop };
     if (Array.isArray(o.checks)) d.checks = o.checks.filter(x => x && typeof x === 'object' && typeof x.day === 'number').slice(-60);
     /* once, for a save from before v2: what was written becomes "seen" (never "known"); islands whose four games were
        already done keep their flag (the pass condition is not asked of them) */
@@ -199,50 +200,77 @@ const Step = {
     const gm = $('#game'), b = el('button', 'btn stepbtn', gm), s = el('button', 'btn stepskip', gm);
     b.setAttribute('aria-label', '下一步'); b.dataset.gid = 'stepnext';
     b.innerHTML = '<svg viewBox="0 0 40 40"><path d="M13 8 L32 20 L13 32 Z" fill="#fff" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg><span>下一步</span>';
-    s.textContent = '跳过'; s.setAttribute('aria-label', '跳过讲解'); s.dataset.gid = 'stepskip';
+    s.innerHTML = '<i></i><span>按住跳过</span>'; s.setAttribute('aria-label', '按住 1 秒跳过讲解'); s.dataset.gid = 'stepskip';
     b.style.visibility = 'hidden';
     const go = () => { const r = st.stepRes; st.stepRes = null; b.style.visibility = 'hidden'; if (r) r(); };
     tapify(b, () => { if (st.stepRes) { st.stepN++; go(); } });
-    tapify(s, () => { if (st.stepSkip) return; st.stepSkip = true; st.ff = true; Voice.hush('ff', 'summary'); st.scope.fastForward(); go(); b.remove(); s.remove(); });
+    /* 跳过 is for the parent: it needs a 1 s press (a bar fills), a child's quick tap does nothing (PT1-P5) */
+    const skip = () => { if (st.stepSkip) return; st.stepSkip = true; st.ff = true; Voice.hush('ff', 'summary'); st.scope.fastForward(); go(); b.remove(); s.remove(); };
+    let pid = null, tm = 0, fill = null;
+    const stop = () => { pid = null; clearTimeout(tm); if (fill) { fill.cancel(); fill = null; } };
+    s.style.touchAction = 'none';
+    s.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (pid !== null) return; pid = e.pointerId; try { s.setPointerCapture(pid); } catch (er) {}
+      fill = $('i', s).animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 1000, fill: 'forwards' }); tm = setTimeout(() => { stop(); skip(); }, 1000); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => s.addEventListener(n, e => { if (e.pointerId === pid) stop(); }));
+    s.addEventListener('click', e => e.stopPropagation());
     st.stepEls = [b, s];
-    st.scope.add(() => { b.remove(); s.remove(); });
+    st.scope.add(() => { stop(); b.remove(); s.remove(); });
     this.place(st);
   },
-  /* a corner of the screen where the button covers no option, character or explanation mark */
+  /* where the two buttons go (PT1-P1, P5): from the real rects of the options, the rings and pictures of the explanation, the
+     characters and the chrome, at every beat and after every turn of the screen. ▶ 下一步 and 跳过 are placed as a pair (跳过
+     above, below or beside it); the spot that covers least wins - options, rings and chrome count ten times a character -
+     and a corner near the bottom right is preferred. Always inside the screen */
   place(st) {
     const [b, s] = st.stepEls || []; if (!b || !b.isConnected) return;
-    const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, bw = 120, bh = 120 + 58, m = 18;
-    const obs = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
-      $$('.exring,[data-ex]', Stage.el), Object.values(st.G.actors || {}).map(a => a.root).filter(Boolean), [$('#home'), $('#avatar'), $('#tray')])
-      .filter(e => e && e.isConnected).map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
-    const spots = [[W - bw - m, H - bh - m], [m, H - bh - m], [W - bw - m, (H - bh) / 2], [m, (H - bh) / 2], [(W - bw) / 2, H - bh - m], [W - bw - m, 130]];
-    const over = (x, y) => obs.reduce((a, r) => a + Math.max(0, Math.min(x + bw, r.right - gr.left) - Math.max(x, r.left - gr.left)) * Math.max(0, Math.min(y + bh, r.bottom - gr.top) - Math.max(y, r.top - gr.top)), 0);
-    let best = spots[0], bo = Infinity;
-    spots.forEach(p => { const o = over(p[0], p[1]); if (o < bo - 1) { bo = o; best = p; } });
-    Object.assign(s.style, { left: (best[0] + (bw - 84) / 2) + 'px', top: best[1] + 'px' });
-    Object.assign(b.style, { left: best[0] + 'px', top: (best[1] + 58) + 'px' });
+    const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, B = 120, SW = 112, SH = 48, m = 12, gap = 14;
+    const R = e => { const r = e.getBoundingClientRect(); return { x: r.left - gr.left, y: r.top - gr.top, r: r.right - gr.left, b: r.bottom - gr.top }; };
+    const hard = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.things || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
+      st.board ? [st.board] : [], st.big ? [st.big] : [], $$('.exring,[data-ex],.objpop', Stage.el), [$('#home'), $('#avatar'), $('#tray'), $('#teachb')]);
+    const soft = Object.values(st.G.actors || {}).map(a => a.root);
+    const box2 = l => l.filter(e => e && e.isConnected && e !== b && e !== s).map(R).filter(r => r.r - r.x > 0 && r.b - r.y > 0);
+    const H1 = box2(hard), S1 = box2(soft), pad = 8;
+    const ov = (x, y, w, h, L) => L.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.r + pad) - Math.max(x, r.x - pad)) * Math.max(0, Math.min(y + h, r.b + pad) - Math.max(y, r.y - pad)), 0);
+    const lays = [[0, -(SH + gap)], [0, B + gap], [-(SW + gap), (B - SH) / 2], [B + gap, (B - SH) / 2]];       /* 跳过 relative to ▶'s top-left (centred) */
+    let best = null;
+    const steps = (a, z) => { const r = []; for (let v = a; v < z; v += 20) r.push(v); r.push(Math.max(a, z)); return r; };      /* every 20 px and the far edge itself */
+    for (const y of steps(m, H - B - m)) for (const x of steps(m, W - B - m)) {
+      lays.forEach(([dx, dy]) => {
+        const sx = x + (dx === 0 ? (B - SW) / 2 : dx), sy = y + dy;
+        if (sx < m || sy < m || sx + SW > W - m || sy + SH > H - m) return;
+        const cost = ov(x, y, B, B, H1) * 10 + ov(sx, sy, SW, SH, H1) * 10 + ov(x, y, B, B, S1) + ov(sx, sy, SW, SH, S1) * 0.5
+          + ((W - x - B) + (H - y - B)) * 0.5;                     /* near the bottom right corner */
+        if (!best || cost < best.cost) best = { cost, x, y, sx, sy };
+      });
+    }
+    if (!best) best = { x: W - B - m, y: H - B - m, sx: W - B - m + (B - SW) / 2, sy: Math.max(m, H - B - m - SH - gap) };
+    Object.assign(b.style, { left: Math.round(best.x) + 'px', top: Math.round(best.y) + 'px' });
+    Object.assign(s.style, { left: Math.round(best.sx) + 'px', top: Math.round(best.sy) + 'px' });
   },
-  /* the end of a beat: when something new was shown or said since the last tap, wait for the tap */
+  /* the end of a beat: when something new was shown or said since the last tap (a ring, a picture, a line of the explanation,
+     a demonstration that marked itself), wait for the tap; an empty beat is skipped (PT1-P4) */
   async pause(st, force) {
     if (!st.step || st.ff || st.stepSkip || st.scope.dead) return;
     await st.scope.guard(Voice.afterSay(80));
     if (st.ff || st.stepSkip || st.scope.dead) return;
-    if (!force && !st.stepDirty && now() - st.stepAt < 250) return;
-    const b = st.stepEls[0];
+    if (!force && !st.stepDirty) return;
+    const b = st.stepEls[0], t0 = Clock.t();
     this.place(st);
     b.style.visibility = '';
-    st.scope.anim(b, [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity });
+    if (!b._pulse) b._pulse = st.scope.anim(b, [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity });
     st.stepWaiting = true;
     await st.scope.guard(new Promise(r => { st.stepRes = r; }));
+    st.G.exWait = (st.G.exWait || 0) + (Clock.t() - t0);      /* the session's 3 minutes do not count this wait (PT1-P3) */
     st.stepWaiting = false; st.stepDirty = false; st.stepAt = now();
   },
 };
 /* 教一教 (client 2026-10-11): the parent lowers the last game played by one or two levels (never below L1) to teach it. While
    on: questions of the lowered level, and nothing counts - no star, ✓, unlock, flag, memory box or learned() evidence, no
    miss recorded, the game's own level untouched (it comes from its stars); nothing is taken away either. It ends when the
-   child leaves that game (or the parent turns it off). Not saved: a reload ends it too */
+   child leaves that game (or the parent turns it off). Saved (PT1-P7): an iPad reload keeps the preset */
 const Teach = {
-  on: null,
+  get on() { const t = Store.s && Store.s.teach; return t && ISL[t.isl] && ISL[t.isl].games.includes(t.game) && [1, 2].includes(t.drop) ? t : null; },
+  set on(v) { if (!Store.s) return; Store.s.teach = v ? { isl: v.isl, game: v.game, drop: v.drop } : null; Store.save(); },
   last() { const l = Store.s && Store.s.lastG; return l && ISL[l[0]] && ISL[l[0]].games.includes(l[1]) ? l : null; },
   badge(G) {
     let b = $('#teachb');
@@ -283,7 +311,7 @@ const Session = {
     await this.intro(G);
     if (G.dead) return;
     for (G.round = 0; G.round < G.rounds && !G.dead; G.round++) {
-      if (G.round >= 3 && Clock.t() - G.t0 > 180000 && !fast() && !G.key) break;
+      if (G.round >= 3 && Clock.t() - G.t0 - (G.exWait || 0) > 180000 && !fast() && !G.key) break;      /* a parent's step-by-step explanation does not count (PT1-P3) */
       const r = await this.round(G);
       if (r === 'stop' || G.full) break;
     }
@@ -309,7 +337,7 @@ const Session = {
       if (this.G !== G || G.dead) return;
       G.game.layout(G);
       const st = this.st;
-      if (st && st.G === G && !st.scope.dead) { K.relayoutChrome(st); if (G.game.relayoutQ) G.game.relayoutQ(st); }
+      if (st && st.G === G && !st.scope.dead) { K.relayoutChrome(st); if (G.game.relayoutQ) G.game.relayoutQ(st); if (st.step) Step.place(st); }      /* PT1-P1 */
     };
     G.game.build(G);
     G.game.layout(G);
@@ -333,7 +361,7 @@ const Session = {
     opt = opt || {};
     const g = G.game, ws = G.ws, level = G.level;
     const q = this.genQ(G, level);
-    ws.lastKey = g.key(q);
+    if (G.teach) G.lastKeyT = g.key(q); else ws.lastKey = g.key(q);
     (G.asked || (G.asked = [])).push(q.item || (ITEM[q.answer] ? q.answer : null));      /* what this session asked, in order (W3R1-02) */
     const st = {
       gen: ++this.qn, id: 'q' + this.qn, G, game: g, q, kind: g.kind0, level, phase: 'setup', hinted: false, guided: false, demo: false, retest: !!opt.retest,
@@ -353,7 +381,7 @@ const Session = {
       q = g.gen(G, { level, rng: G.rng });
       if (!optsSound(q) && i < 59) continue;          /* the generator's own check: one right answer, no option twice (spec rule 1) */
       const k = g.key(q);
-      if (k === ws.lastKey && i < 59) continue;
+      if (k === (G.teach ? G.lastKeyT || ws.lastKey : ws.lastKey) && i < 59) continue;
       if (seen.has(k)) { if (!again) again = q; continue; }
       seen.add(k); return q;
     }
@@ -439,7 +467,7 @@ const Session = {
       const t0 = now();
       if (st.exMode !== 'off') {
         if (st.exMode === 'step') Step.mount(st);
-        if (g.explain) await g.explain(st, ans); else await g.reveal(st);
+        if (g.explain) await g.explain(st, ans); else { await g.reveal(st); st.stepDirty = true; }
         if (st.step) { await Step.pause(st); if (st.stepEls) st.stepEls.forEach(e => e.remove()); }      /* the last tap ends it */
       }
       { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0),

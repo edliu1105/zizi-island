@@ -174,7 +174,9 @@ html.nosound #avatar .ear{background:#FFE08A;width:46px;height:46px;right:-18px;
 #ff.on{display:block}
 .stepbtn{position:absolute;z-index:70;width:120px;height:120px;border-radius:50%;background:#5CC46E;box-shadow:var(--stk);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font:800 20px system-ui,sans-serif;text-shadow:0 2px 0 rgba(43,33,24,.45)}
 .stepbtn svg{width:52px;height:52px;margin-left:6px}
-.stepskip{position:absolute;z-index:70;width:84px;height:44px;border-radius:22px;background:rgba(255,248,236,.92);box-shadow:var(--stk-sm);font:700 17px system-ui,sans-serif;color:#2B2118}
+.stepskip{position:absolute;z-index:70;width:112px;height:48px;border-radius:24px;background:rgba(255,248,236,.92);box-shadow:var(--stk-sm);font:700 16px system-ui,sans-serif;color:#2B2118;overflow:hidden}
+.stepskip i{position:absolute;inset:0;background:#FFC93C;transform:scaleX(0);transform-origin:left}
+.stepskip span{position:relative}
 #teachb{position:absolute;z-index:41;right:calc(14px + var(--sr));top:calc(92px + var(--st));width:56px;height:56px;border-radius:50%;background:#7A5AF8;color:#fff;display:flex;align-items:center;justify-content:center;font:800 30px system-ui,sans-serif;box-shadow:var(--stk-sm);pointer-events:none}
 #parent .pbtn.sel{background:#FFE08A;box-shadow:0 0 0 3px #2B2118}
 #parent .pbtn[disabled]{opacity:.4}
@@ -989,6 +991,7 @@ const Voice = {
      simply stops there (same contract as Scope) */
   say(text, opt) {
     opt = opt || {};
+    if (opt.tag === 'explain' && typeof Session !== 'undefined' && Session.st && Session.st.step) Session.st.stepDirty = true;      /* a line of the explanation is a beat */
     const owner = opt.owner !== undefined ? opt.owner : speechOwner();
     if (Bank.has(text)) Bank.load(text);                  /* decoded while the queue still talks */
     return new Promise(res0 => {
@@ -2590,7 +2593,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, teach: null, v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -2631,6 +2634,7 @@ const Store = {
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
     if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
     if (Array.isArray(o.lastG) && ISL[o.lastG[0]] && ISL[o.lastG[0]].games.includes(o.lastG[1])) d.lastG = [o.lastG[0], o.lastG[1]];
+    if (o.teach && typeof o.teach === 'object' && ISL[o.teach.isl] && ISL[o.teach.isl].games.includes(o.teach.game) && [1, 2].includes(o.teach.drop)) d.teach = { isl: o.teach.isl, game: o.teach.game, drop: o.teach.drop };
     if (Array.isArray(o.checks)) d.checks = o.checks.filter(x => x && typeof x === 'object' && typeof x.day === 'number').slice(-60);
     /* once, for a save from before v2: what was written becomes "seen" (never "known"); islands whose four games were
        already done keep their flag (the pass condition is not asked of them) */
@@ -2720,50 +2724,77 @@ const Step = {
     const gm = $('#game'), b = el('button', 'btn stepbtn', gm), s = el('button', 'btn stepskip', gm);
     b.setAttribute('aria-label', '下一步'); b.dataset.gid = 'stepnext';
     b.innerHTML = '<svg viewBox="0 0 40 40"><path d="M13 8 L32 20 L13 32 Z" fill="#fff" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg><span>下一步</span>';
-    s.textContent = '跳过'; s.setAttribute('aria-label', '跳过讲解'); s.dataset.gid = 'stepskip';
+    s.innerHTML = '<i></i><span>按住跳过</span>'; s.setAttribute('aria-label', '按住 1 秒跳过讲解'); s.dataset.gid = 'stepskip';
     b.style.visibility = 'hidden';
     const go = () => { const r = st.stepRes; st.stepRes = null; b.style.visibility = 'hidden'; if (r) r(); };
     tapify(b, () => { if (st.stepRes) { st.stepN++; go(); } });
-    tapify(s, () => { if (st.stepSkip) return; st.stepSkip = true; st.ff = true; Voice.hush('ff', 'summary'); st.scope.fastForward(); go(); b.remove(); s.remove(); });
+    /* 跳过 is for the parent: it needs a 1 s press (a bar fills), a child's quick tap does nothing (PT1-P5) */
+    const skip = () => { if (st.stepSkip) return; st.stepSkip = true; st.ff = true; Voice.hush('ff', 'summary'); st.scope.fastForward(); go(); b.remove(); s.remove(); };
+    let pid = null, tm = 0, fill = null;
+    const stop = () => { pid = null; clearTimeout(tm); if (fill) { fill.cancel(); fill = null; } };
+    s.style.touchAction = 'none';
+    s.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (pid !== null) return; pid = e.pointerId; try { s.setPointerCapture(pid); } catch (er) {}
+      fill = $('i', s).animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 1000, fill: 'forwards' }); tm = setTimeout(() => { stop(); skip(); }, 1000); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => s.addEventListener(n, e => { if (e.pointerId === pid) stop(); }));
+    s.addEventListener('click', e => e.stopPropagation());
     st.stepEls = [b, s];
-    st.scope.add(() => { b.remove(); s.remove(); });
+    st.scope.add(() => { stop(); b.remove(); s.remove(); });
     this.place(st);
   },
-  /* a corner of the screen where the button covers no option, character or explanation mark */
+  /* where the two buttons go (PT1-P1, P5): from the real rects of the options, the rings and pictures of the explanation, the
+     characters and the chrome, at every beat and after every turn of the screen. ▶ 下一步 and 跳过 are placed as a pair (跳过
+     above, below or beside it); the spot that covers least wins - options, rings and chrome count ten times a character -
+     and a corner near the bottom right is preferred. Always inside the screen */
   place(st) {
     const [b, s] = st.stepEls || []; if (!b || !b.isConnected) return;
-    const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, bw = 120, bh = 120 + 58, m = 18;
-    const obs = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
-      $$('.exring,[data-ex]', Stage.el), Object.values(st.G.actors || {}).map(a => a.root).filter(Boolean), [$('#home'), $('#avatar'), $('#tray')])
-      .filter(e => e && e.isConnected).map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
-    const spots = [[W - bw - m, H - bh - m], [m, H - bh - m], [W - bw - m, (H - bh) / 2], [m, (H - bh) / 2], [(W - bw) / 2, H - bh - m], [W - bw - m, 130]];
-    const over = (x, y) => obs.reduce((a, r) => a + Math.max(0, Math.min(x + bw, r.right - gr.left) - Math.max(x, r.left - gr.left)) * Math.max(0, Math.min(y + bh, r.bottom - gr.top) - Math.max(y, r.top - gr.top)), 0);
-    let best = spots[0], bo = Infinity;
-    spots.forEach(p => { const o = over(p[0], p[1]); if (o < bo - 1) { bo = o; best = p; } });
-    Object.assign(s.style, { left: (best[0] + (bw - 84) / 2) + 'px', top: best[1] + 'px' });
-    Object.assign(b.style, { left: best[0] + 'px', top: (best[1] + 58) + 'px' });
+    const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, B = 120, SW = 112, SH = 48, m = 12, gap = 14;
+    const R = e => { const r = e.getBoundingClientRect(); return { x: r.left - gr.left, y: r.top - gr.top, r: r.right - gr.left, b: r.bottom - gr.top }; };
+    const hard = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.things || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
+      st.board ? [st.board] : [], st.big ? [st.big] : [], $$('.exring,[data-ex],.objpop', Stage.el), [$('#home'), $('#avatar'), $('#tray'), $('#teachb')]);
+    const soft = Object.values(st.G.actors || {}).map(a => a.root);
+    const box2 = l => l.filter(e => e && e.isConnected && e !== b && e !== s).map(R).filter(r => r.r - r.x > 0 && r.b - r.y > 0);
+    const H1 = box2(hard), S1 = box2(soft), pad = 8;
+    const ov = (x, y, w, h, L) => L.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.r + pad) - Math.max(x, r.x - pad)) * Math.max(0, Math.min(y + h, r.b + pad) - Math.max(y, r.y - pad)), 0);
+    const lays = [[0, -(SH + gap)], [0, B + gap], [-(SW + gap), (B - SH) / 2], [B + gap, (B - SH) / 2]];       /* 跳过 relative to ▶'s top-left (centred) */
+    let best = null;
+    const steps = (a, z) => { const r = []; for (let v = a; v < z; v += 20) r.push(v); r.push(Math.max(a, z)); return r; };      /* every 20 px and the far edge itself */
+    for (const y of steps(m, H - B - m)) for (const x of steps(m, W - B - m)) {
+      lays.forEach(([dx, dy]) => {
+        const sx = x + (dx === 0 ? (B - SW) / 2 : dx), sy = y + dy;
+        if (sx < m || sy < m || sx + SW > W - m || sy + SH > H - m) return;
+        const cost = ov(x, y, B, B, H1) * 10 + ov(sx, sy, SW, SH, H1) * 10 + ov(x, y, B, B, S1) + ov(sx, sy, SW, SH, S1) * 0.5
+          + ((W - x - B) + (H - y - B)) * 0.5;                     /* near the bottom right corner */
+        if (!best || cost < best.cost) best = { cost, x, y, sx, sy };
+      });
+    }
+    if (!best) best = { x: W - B - m, y: H - B - m, sx: W - B - m + (B - SW) / 2, sy: Math.max(m, H - B - m - SH - gap) };
+    Object.assign(b.style, { left: Math.round(best.x) + 'px', top: Math.round(best.y) + 'px' });
+    Object.assign(s.style, { left: Math.round(best.sx) + 'px', top: Math.round(best.sy) + 'px' });
   },
-  /* the end of a beat: when something new was shown or said since the last tap, wait for the tap */
+  /* the end of a beat: when something new was shown or said since the last tap (a ring, a picture, a line of the explanation,
+     a demonstration that marked itself), wait for the tap; an empty beat is skipped (PT1-P4) */
   async pause(st, force) {
     if (!st.step || st.ff || st.stepSkip || st.scope.dead) return;
     await st.scope.guard(Voice.afterSay(80));
     if (st.ff || st.stepSkip || st.scope.dead) return;
-    if (!force && !st.stepDirty && now() - st.stepAt < 250) return;
-    const b = st.stepEls[0];
+    if (!force && !st.stepDirty) return;
+    const b = st.stepEls[0], t0 = Clock.t();
     this.place(st);
     b.style.visibility = '';
-    st.scope.anim(b, [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity });
+    if (!b._pulse) b._pulse = st.scope.anim(b, [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity });
     st.stepWaiting = true;
     await st.scope.guard(new Promise(r => { st.stepRes = r; }));
+    st.G.exWait = (st.G.exWait || 0) + (Clock.t() - t0);      /* the session's 3 minutes do not count this wait (PT1-P3) */
     st.stepWaiting = false; st.stepDirty = false; st.stepAt = now();
   },
 };
 /* 教一教 (client 2026-10-11): the parent lowers the last game played by one or two levels (never below L1) to teach it. While
    on: questions of the lowered level, and nothing counts - no star, ✓, unlock, flag, memory box or learned() evidence, no
    miss recorded, the game's own level untouched (it comes from its stars); nothing is taken away either. It ends when the
-   child leaves that game (or the parent turns it off). Not saved: a reload ends it too */
+   child leaves that game (or the parent turns it off). Saved (PT1-P7): an iPad reload keeps the preset */
 const Teach = {
-  on: null,
+  get on() { const t = Store.s && Store.s.teach; return t && ISL[t.isl] && ISL[t.isl].games.includes(t.game) && [1, 2].includes(t.drop) ? t : null; },
+  set on(v) { if (!Store.s) return; Store.s.teach = v ? { isl: v.isl, game: v.game, drop: v.drop } : null; Store.save(); },
   last() { const l = Store.s && Store.s.lastG; return l && ISL[l[0]] && ISL[l[0]].games.includes(l[1]) ? l : null; },
   badge(G) {
     let b = $('#teachb');
@@ -2804,7 +2835,7 @@ const Session = {
     await this.intro(G);
     if (G.dead) return;
     for (G.round = 0; G.round < G.rounds && !G.dead; G.round++) {
-      if (G.round >= 3 && Clock.t() - G.t0 > 180000 && !fast() && !G.key) break;
+      if (G.round >= 3 && Clock.t() - G.t0 - (G.exWait || 0) > 180000 && !fast() && !G.key) break;      /* a parent's step-by-step explanation does not count (PT1-P3) */
       const r = await this.round(G);
       if (r === 'stop' || G.full) break;
     }
@@ -2830,7 +2861,7 @@ const Session = {
       if (this.G !== G || G.dead) return;
       G.game.layout(G);
       const st = this.st;
-      if (st && st.G === G && !st.scope.dead) { K.relayoutChrome(st); if (G.game.relayoutQ) G.game.relayoutQ(st); }
+      if (st && st.G === G && !st.scope.dead) { K.relayoutChrome(st); if (G.game.relayoutQ) G.game.relayoutQ(st); if (st.step) Step.place(st); }      /* PT1-P1 */
     };
     G.game.build(G);
     G.game.layout(G);
@@ -2854,7 +2885,7 @@ const Session = {
     opt = opt || {};
     const g = G.game, ws = G.ws, level = G.level;
     const q = this.genQ(G, level);
-    ws.lastKey = g.key(q);
+    if (G.teach) G.lastKeyT = g.key(q); else ws.lastKey = g.key(q);
     (G.asked || (G.asked = [])).push(q.item || (ITEM[q.answer] ? q.answer : null));      /* what this session asked, in order (W3R1-02) */
     const st = {
       gen: ++this.qn, id: 'q' + this.qn, G, game: g, q, kind: g.kind0, level, phase: 'setup', hinted: false, guided: false, demo: false, retest: !!opt.retest,
@@ -2874,7 +2905,7 @@ const Session = {
       q = g.gen(G, { level, rng: G.rng });
       if (!optsSound(q) && i < 59) continue;          /* the generator's own check: one right answer, no option twice (spec rule 1) */
       const k = g.key(q);
-      if (k === ws.lastKey && i < 59) continue;
+      if (k === (G.teach ? G.lastKeyT || ws.lastKey : ws.lastKey) && i < 59) continue;
       if (seen.has(k)) { if (!again) again = q; continue; }
       seen.add(k); return q;
     }
@@ -2960,7 +2991,7 @@ const Session = {
       const t0 = now();
       if (st.exMode !== 'off') {
         if (st.exMode === 'step') Step.mount(st);
-        if (g.explain) await g.explain(st, ans); else await g.reveal(st);
+        if (g.explain) await g.explain(st, ans); else { await g.reveal(st); st.stepDirty = true; }
         if (st.step) { await Step.pause(st); if (st.stepEls) st.stepEls.forEach(e => e.remove()); }      /* the last tap ends it */
       }
       { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0),
@@ -4031,7 +4062,8 @@ const EX = {
     K.pop(st, d);
     return d;
   },
-  wait(st, ms) { if (st.step) return Step.pause(st); return st.ff ? Promise.resolve() : st.scope.wait(ms); },
+  async wait(st, ms) { if (!st.ff) await st.scope.wait(ms); if (st.step) await Step.pause(st); },      /* PT1-P2: the time first, then the beat ends */
+  tick(st, ms) { return st.ff ? Promise.resolve() : st.scope.wait(ms); },      /* inside one demonstration (a counting run): never a stop */
   /* one or two short lines (each recorded, <= 8 characters), then the step waits for them */
   async say(st, lines) {
     lines = [].concat(lines).filter(Boolean).slice(0, 2);
@@ -4431,7 +4463,18 @@ const WriteBase = {
     if (st.alivePic) st.scope.anim(st.alivePic, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });      /* the paper in view again */
     EX.ring(st, st.w.el, 'right', 4);
     const ks = (st.slipAt || []).slice(0, 2);
-    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); st.stepDirty = true; if (st.step) await Step.pause(st); } }
+    if (st.step && ks.length) {               /* step by step (PT1-P4): 1 the paper and which stroke, 2 the brush writes it, for each */
+      for (const k of ks) {
+        if (st.ff || st.scope.dead) break;
+        const sk = st.w.strokes[k], p0 = sk && st.w.toStage(sk.med[0]), dot = p0 ? ZX.thing(st, 44, 44, 61, 'item') : null;      /* where that stroke starts */
+        if (dot) { Object.assign(dot.style, { borderRadius: '50%', background: EX_GOLD, boxShadow: '0 0 0 4px #fff, 0 0 14px 4px rgba(255,190,40,.8)', pointerEvents: 'none' }); dot.dataset.ex = 'stroke'; place(dot, p0.x - 22, p0.y - 22, 44, 44); K.pop(st, dot); }
+        await EX.say(st, ['再看一看！']); await EX.wait(st, 200);
+        if (dot) dot.remove();
+        Voice.say('看，是这样', { tag: 'explain' }); await st.w.demo(st, k, false, EX_GOLD); st.stepDirty = true; await EX.wait(st, 200);
+      }
+      return;
+    }
+    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); } }
     await st.scope.guard(Voice.afterSay(200));
   },
   next(st, strat) { if (!st.w || st.w.done) return null; const pts = st.w.expected(strat === 'wrong'); return pts ? { g: 'stroke', p: { id: 'paper', pts } } : null; },
@@ -4540,7 +4583,7 @@ const QOrder = {
   async explain(st, ans) {
     await EX.cards(st, ans, { pics: false, lines: [ITEM[st.q.answer].say],
       move: async (st2, card) => { const b = st.blocks[st.q.gap], bb = box(b), cb = box(card); await K.flyTo(st, card, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 50, bb.w / cb.w); b.style.opacity = 1; },
-      why: async () => { for (let i = 0; i < st.blocks.length && !st.ff; i++) { K.hop(st, st.blocks[i], 16); await EX.wait(st, 110); } } });
+      why: async () => { for (let i = 0; i < st.blocks.length && !st.ff; i++) { K.hop(st, st.blocks[i], 16); await EX.tick(st, 110); } st.stepDirty = true; } });
   },
   async reveal(st) {
     const q = st.q, card = st.cards[st.opts.indexOf(q.answer)], b = st.blocks[q.gap];
@@ -4802,7 +4845,7 @@ const QMirror = {
         const g = e && e.querySelector('svg'); if (!g) return;
         await EX.wait(st, 350);
         await st.scope.anim(g, [{ transform: Mirror.css[ans] || 'none' }, { transform: 'none' }], { duration: 650, easing: EASE.glide });      /* turned the right way it is the same glyph */
-        g.style.transform = 'none'; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';
+        g.style.transform = 'none'; st.stepDirty = true; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';      /* turned back: its own beat */
       } });
   },
   iconNode() { const d = el('div'); d.style.display = 'flex'; const a = Glyph.en('R', 44), b = Glyph.en('R', 44); b.style.transform = 'scaleX(-1)'; d.appendChild(a); d.appendChild(b); return d; },
@@ -5855,16 +5898,17 @@ const ParentV3 = {
     const row = el('div', '', sh), modes = [['off', '关'], ['auto', '自动'], ['step', '一步一步']];
     const draw = () => { row.innerHTML = ''; modes.forEach(([m, t]) => { const b = el('button', 'pbtn' + (exMode() === m ? ' sel' : ''), row, { text: t }); b.dataset.ex = m; b.addEventListener('click', () => { S.settings.ex = m; Store.save(); draw(); }); }); };
     draw();
-    el('div', 'mut', sh, { text: '关：只说一句孩子点的是什么，就出下一题。自动（默认）：圈出对的那个、讲一句为什么，几秒后自己结束。一步一步：每讲一步就停下，等您点大大的绿色“下一步”再往下讲，方便您陪孩子边看边说；没有时间限制，点屏幕不会跳过；右边小小的“跳过”是给家长的。' });
+    el('div', 'mut', sh, { text: '关：只说一句孩子点的是什么，就出下一题。自动（默认）：圈出对的那个、讲一句为什么，几秒后自己结束。一步一步：每讲一步就停下，等您点大大的绿色“下一步”再往下讲，方便您陪孩子边看边说；没有时间限制，点屏幕不会跳过；“下一步”旁边小小的“按住跳过”是给家长的，要按住 1 秒才跳过。' });
     if (typeof Teach === 'undefined') return;
     el('h3', '', sh, { text: '教一教（暂时降低难度）' });
     const tw = el('div', '', sh);
     const draw2 = () => {
       tw.innerHTML = '';
-      const last = Teach.last(), on = Teach.on;
+      const on = Teach.on, last = on ? [on.isl, on.game] : Teach.last();      /* a preset (kept through a reload) comes first (PT1-P7) */
       if (!last) { el('div', 'mut', tw, { text: '先让孩子玩一个小游戏，再回来这里选。' }); return; }
       const [i, g] = last, lv = Prog.level(i, g);
-      el('div', '', tw, { text: '最近玩的：' + ISL[i].name + ' · ' + GAMES[g].title + '（现在第 ' + lv + ' 级）' + (on ? '　— 教一教已打开：第 ' + Math.max(1, lv - on.drop) + ' 级' : '') });
+      const TX = { pre: ['最近玩的：', '已设好：'], drop: ['', '降一级', '降两级'] };      /* (no ternary of literals: the voice scan would take them for lines) */
+      el('div', '', tw, { text: TX.pre[on && String(Teach.last()) !== String(last) ? 1 : 0] + ISL[i].name + ' · ' + GAMES[g].title + '（现在第 ' + lv + ' 级）' + (on ? '　— 教一教已打开：' + TX.drop[on.drop] + '，第 ' + Math.max(1, lv - on.drop) + ' 级。孩子下次进这个游戏时生效' : '') });
       [[1, '降一级来教'], [2, '降两级来教']].forEach(([d, t]) => {
         const b = el('button', 'pbtn' + (on && on.drop === d ? ' sel' : ''), tw, { text: t + (lv - d >= 1 ? '（第 ' + (lv - d) + ' 级）' : '') }); b.dataset.teach = d;
         if (lv - d < 1) b.disabled = true;
@@ -5875,7 +5919,7 @@ const ParentV3 = {
       if (lv <= 1) el('div', 'mut', tw, { text: '这个游戏已经是第 1 级，不能再降。' });
     };
     draw2();
-    el('div', 'mut', sh, { text: '打开后，孩子下一次玩这个游戏时出低一级（或两级）的题，星星旁边有个紫色的“教”字。教的时候不得星、不打 ✓、不开新游戏、不插旗、不升复习箱，答错也不记错；已有的进度一点不变，这个游戏原来的难度也不变。孩子离开这个游戏（回地图）就自动关掉。' });
+    el('div', 'mut', sh, { text: '打开后，孩子下一次玩这个游戏时出低一级（或两级）的题，星星旁边有个紫色的“教”字。教的时候不得星、不打 ✓、不开新游戏、不插旗、不升复习箱，答错也不记错；已有的进度一点不变，这个游戏原来的难度也不变。设好后关掉 app 也还在；孩子玩过这个游戏、回到地图，就自动关掉。' });
   },
 };
 
@@ -6696,7 +6740,8 @@ const QCount = {
     await EX.cards(st, ans, { rightPic: false, lines: ['对的是这个', ITEM[st.q.answer].line],
       why: async () => {
         EX.ring(st, st.board, 'right', 6);
-        for (let i = 0; i < st.things.length; i++) { if (st.ff || st.scope.dead) break; Sfx.count(i + 1); st.scope.anim(st.things[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.35) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 260 }); await EX.wait(st, 200); }
+        for (let i = 0; i < st.things.length; i++) { if (st.ff || st.scope.dead) break; Sfx.count(i + 1); st.scope.anim(st.things[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.35) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 260 }); await EX.tick(st, 200); }
+        await EX.tick(st, 200); st.stepDirty = true;      /* the whole count is one beat (PT1-P2) */
       } });
   },
   /* the 2nd hint: the question again and the board lit (no counting aloud - that would be the answer) */
@@ -6769,7 +6814,8 @@ const QFrame = Object.assign({}, ReadHint, {
     for (let i = 0; st.on.filter(Boolean).length < n && i < 10; i++) if (!st.on[i]) { st.on[i] = true; st.lamps[i].innerHTML = W3X.bulb(true, st.q.style); }
     if (st.readEl) EX.ring(st, st.readEl, 'right', 6);
     const lit = st.lamps.filter((_, i) => st.on[i]);
-    for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.wait(st, 160); }
+    for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.tick(st, 160); }
+    st.stepDirty = true;      /* the whole count is one beat (PT1-P2) */
     await EX.say(st, [ITEM[st.q.answer].line]);
     await EX.wait(st, 250);
     void ans;

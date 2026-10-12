@@ -740,7 +740,8 @@ const QCount = {
     await EX.cards(st, ans, { rightPic: false, lines: ['对的是这个', ITEM[st.q.answer].line],
       why: async () => {
         EX.ring(st, st.board, 'right', 6);
-        for (let i = 0; i < st.things.length; i++) { if (st.ff || st.scope.dead) break; Sfx.count(i + 1); st.scope.anim(st.things[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.35) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 260 }); await EX.wait(st, 200); }
+        for (let i = 0; i < st.things.length; i++) { if (st.ff || st.scope.dead) break; Sfx.count(i + 1); st.scope.anim(st.things[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.35) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 260 }); await EX.tick(st, 200); }
+        await EX.tick(st, 200); st.stepDirty = true;      /* the whole count is one beat (PT1-P2) */
       } });
   },
   /* the 2nd hint: the question again and the board lit (no counting aloud - that would be the answer) */
@@ -813,7 +814,8 @@ const QFrame = Object.assign({}, ReadHint, {
     for (let i = 0; st.on.filter(Boolean).length < n && i < 10; i++) if (!st.on[i]) { st.on[i] = true; st.lamps[i].innerHTML = W3X.bulb(true, st.q.style); }
     if (st.readEl) EX.ring(st, st.readEl, 'right', 6);
     const lit = st.lamps.filter((_, i) => st.on[i]);
-    for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.wait(st, 160); }
+    for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.tick(st, 160); }
+    st.stepDirty = true;      /* the whole count is one beat (PT1-P2) */
     await EX.say(st, [ITEM[st.q.answer].line]);
     await EX.wait(st, 250);
     void ans;

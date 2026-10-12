@@ -249,7 +249,8 @@ const EX = {
     K.pop(st, d);
     return d;
   },
-  wait(st, ms) { if (st.step) return Step.pause(st); return st.ff ? Promise.resolve() : st.scope.wait(ms); },
+  async wait(st, ms) { if (!st.ff) await st.scope.wait(ms); if (st.step) await Step.pause(st); },      /* PT1-P2: the time first, then the beat ends */
+  tick(st, ms) { return st.ff ? Promise.resolve() : st.scope.wait(ms); },      /* inside one demonstration (a counting run): never a stop */
   /* one or two short lines (each recorded, <= 8 characters), then the step waits for them */
   async say(st, lines) {
     lines = [].concat(lines).filter(Boolean).slice(0, 2);
@@ -649,7 +650,18 @@ const WriteBase = {
     if (st.alivePic) st.scope.anim(st.alivePic, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });      /* the paper in view again */
     EX.ring(st, st.w.el, 'right', 4);
     const ks = (st.slipAt || []).slice(0, 2);
-    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); st.stepDirty = true; if (st.step) await Step.pause(st); } }
+    if (st.step && ks.length) {               /* step by step (PT1-P4): 1 the paper and which stroke, 2 the brush writes it, for each */
+      for (const k of ks) {
+        if (st.ff || st.scope.dead) break;
+        const sk = st.w.strokes[k], p0 = sk && st.w.toStage(sk.med[0]), dot = p0 ? ZX.thing(st, 44, 44, 61, 'item') : null;      /* where that stroke starts */
+        if (dot) { Object.assign(dot.style, { borderRadius: '50%', background: EX_GOLD, boxShadow: '0 0 0 4px #fff, 0 0 14px 4px rgba(255,190,40,.8)', pointerEvents: 'none' }); dot.dataset.ex = 'stroke'; place(dot, p0.x - 22, p0.y - 22, 44, 44); K.pop(st, dot); }
+        await EX.say(st, ['再看一看！']); await EX.wait(st, 200);
+        if (dot) dot.remove();
+        Voice.say('看，是这样', { tag: 'explain' }); await st.w.demo(st, k, false, EX_GOLD); st.stepDirty = true; await EX.wait(st, 200);
+      }
+      return;
+    }
+    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); } }
     await st.scope.guard(Voice.afterSay(200));
   },
   next(st, strat) { if (!st.w || st.w.done) return null; const pts = st.w.expected(strat === 'wrong'); return pts ? { g: 'stroke', p: { id: 'paper', pts } } : null; },
@@ -758,7 +770,7 @@ const QOrder = {
   async explain(st, ans) {
     await EX.cards(st, ans, { pics: false, lines: [ITEM[st.q.answer].say],
       move: async (st2, card) => { const b = st.blocks[st.q.gap], bb = box(b), cb = box(card); await K.flyTo(st, card, bb.x + (bb.w - cb.w) / 2, bb.y + (bb.h - cb.h) / 2, 380, 50, bb.w / cb.w); b.style.opacity = 1; },
-      why: async () => { for (let i = 0; i < st.blocks.length && !st.ff; i++) { K.hop(st, st.blocks[i], 16); await EX.wait(st, 110); } } });
+      why: async () => { for (let i = 0; i < st.blocks.length && !st.ff; i++) { K.hop(st, st.blocks[i], 16); await EX.tick(st, 110); } st.stepDirty = true; } });
   },
   async reveal(st) {
     const q = st.q, card = st.cards[st.opts.indexOf(q.answer)], b = st.blocks[q.gap];
@@ -1020,7 +1032,7 @@ const QMirror = {
         const g = e && e.querySelector('svg'); if (!g) return;
         await EX.wait(st, 350);
         await st.scope.anim(g, [{ transform: Mirror.css[ans] || 'none' }, { transform: 'none' }], { duration: 650, easing: EASE.glide });      /* turned the right way it is the same glyph */
-        g.style.transform = 'none'; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';
+        g.style.transform = 'none'; st.stepDirty = true; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';      /* turned back: its own beat */
       } });
   },
   iconNode() { const d = el('div'); d.style.display = 'flex'; const a = Glyph.en('R', 44), b = Glyph.en('R', 44); b.style.transform = 'scaleX(-1)'; d.appendChild(a); d.appendChild(b); return d; },
