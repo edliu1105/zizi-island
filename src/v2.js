@@ -280,7 +280,7 @@ const CASTS2 = { s1: ['ironman', 'spiderman'], s2: ['captain', 'miles'] };
    asks a wrong item again 2 questions later in another form */
 const Review = {
   plan(G) {
-    if (G.practice || G.key || (G.game && G.game.ownReview)) return { pos: [] };      /* world 3's writing plans its own old friend */
+    if (G.practice || G.key || G.teach || (G.game && G.game.ownReview)) return { pos: [] };      /* world 3's writing plans its own old friend */
     const due = Mem.due().length;
     let n = due === 0 ? 0 : due <= 3 ? 1 : 2;
     if (Mem.brake() && due) n = Math.min(3, due);
@@ -294,7 +294,7 @@ const Review = {
   },
   /* the question for this round, or null (an island question) */
   slot(G) {
-    if (G.practice) return null;
+    if (G.practice || G.teach) return null;
     if (G.key) { const k = (G.keyItems || [])[G.round]; return k ? { k, form: 'card' } : null; }
     const g = G.game, used = G.rvUsed || (G.rvUsed = []);
     if (G.wfMode === 2) { const form = G.round % 2 ? 'trace' : 'card', its = G.W.chars.map(c => c.c).filter(c => form === 'card' || !NOWRITE.includes(c)), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form, wf: true }; }
@@ -345,14 +345,14 @@ const Review = {
    three more there -> this game's remaining stars come from reading tasks about the same characters. This island only. */
 const WriteFallback = {
   start(G) {
-    if (G.practice || G.game.kind0 !== 'write' || G.game.lang !== 'zh') return;
+    if (G.practice || G.teach || G.game.kind0 !== 'write' || G.game.lang !== 'zh') return;
     const wf = G.ws.wf || (G.ws.wf = { s: 0, m: 0 });
     if (Store.s.settings.wgate) { G.wfMode = 2; return; }
     G.wfMode = wf.m;
     if (wf.m >= 1) G.level = 1;
   },
   after(G, st, res) {
-    if (G.practice || G.game.kind0 !== 'write' || G.game.lang !== 'zh' || st.review && !st.wf) return;
+    if (G.practice || G.teach || G.game.kind0 !== 'write' || G.game.lang !== 'zh' || st.review && !st.wf) return;
     const wf = G.ws.wf || (G.ws.wf = { s: 0, m: 0 });
     if (st.wf) return;
     if (res === 'ok' && !helped(st)) { wf.s = 0; Store.s.stat.clean++; }

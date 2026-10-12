@@ -69,7 +69,7 @@ const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
 function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
-    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
+    mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, v2: 1 }; }
 const Store = {
   s: null,
   load() {
@@ -109,6 +109,7 @@ const Store = {
     if (Array.isArray(o.flagDays)) d.flagDays = o.flagDays.filter(x => typeof x === 'number').slice(-200);
     d.lastDay = num(o.lastDay, 0, 0, 1e7);
     if (Array.isArray(o.missNext)) d.missNext = o.missNext.filter(k => typeof k === 'string' && ITEM[k]).slice(0, 3);
+    if (Array.isArray(o.lastG) && ISL[o.lastG[0]] && ISL[o.lastG[0]].games.includes(o.lastG[1])) d.lastG = [o.lastG[0], o.lastG[1]];
     if (Array.isArray(o.checks)) d.checks = o.checks.filter(x => x && typeof x === 'object' && typeof x.day === 'number').slice(-60);
     /* once, for a save from before v2: what was written becomes "seen" (never "known"); islands whose four games were
        already done keep their flag (the pass condition is not asked of them) */
@@ -236,6 +237,19 @@ const Step = {
     st.stepWaiting = false; st.stepDirty = false; st.stepAt = now();
   },
 };
+/* 教一教 (client 2026-10-11): the parent lowers the last game played by one or two levels (never below L1) to teach it. While
+   on: questions of the lowered level, and nothing counts - no star, ✓, unlock, flag, memory box or learned() evidence, no
+   miss recorded, the game's own level untouched (it comes from its stars); nothing is taken away either. It ends when the
+   child leaves that game (or the parent turns it off). Not saved: a reload ends it too */
+const Teach = {
+  on: null,
+  last() { const l = Store.s && Store.s.lastG; return l && ISL[l[0]] && ISL[l[0]].games.includes(l[1]) ? l : null; },
+  badge(G) {
+    let b = $('#teachb');
+    if (!G || !G.teach) { if (b) b.remove(); return; }
+    if (!b) { b = el('div', '', $('#game')); b.id = 'teachb'; b.textContent = '教'; b.setAttribute('aria-label', '教一教'); }
+  },
+};
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -244,17 +258,18 @@ const Session = {
     opt = opt || {};
     if (this.G) this.teardown(this.G);
     const W = ISL[islandId], ws = Store.w(islandId), game = GAMES[gameId];
+    const T1 = Teach.on, teach = !opt.practice && !opt.key && T1 && T1.isl === islandId && T1.game === gameId ? T1.drop : 0;
     try { await Hanzi.load(); } catch (e) { /* offline without it: the writing games say so */ }
     const seed = opt.seed || (Number((location.search.match(/seed=(\d+)/) || [])[1]) || 0) || ((Date.now() ^ (ws.sessions * 2654435761)) >>> 0);
     const G = this.G = {
       world: islandId, W, ws, id: gameId, game, scope: new Scope(APP), rng: RNG(seed), seed, practice: !!opt.practice, item: opt.item || null,
-      level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Prog.level(islandId, gameId)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
-      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).slice(0, 2).map((k, i) => ({ k, at: 1 + 2 * i })),
+      teach, level: opt.level ? clamp(opt.level, 1, 5) : (opt.key ? 2 : Math.max(1, Prog.level(islandId, gameId) - teach)), actors: {}, els: {}, round: 0, rounds: opt.practice ? 1 : opt.key ? opt.keyItems.length : 5,
+      key: !!opt.key, keyItems: opt.keyItems || null, sid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), miss: opt.practice || opt.key || teach ? [] : (Store.s.missNext || []).filter(k => ITEM[k]).slice(0, 2).map((k, i) => ({ k, at: 1 + 2 * i })),
       t0: Clock.t(), stars: 0, streak: 0, bags: {}, dead: false, errors: 0,
     };
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
-    if (!G.practice && !G.key) { ws.visits++; ws.sessions++; Store.save(); }
-    G.needPass = G.practice || G.key ? [] : W.chars.map(c => c.c).filter(k => !Mem.passed(k));
+    if (!G.practice && !G.key) { Store.s.lastG = [islandId, gameId]; if (!G.teach) { ws.visits++; ws.sessions++; } Store.save(); }
+    G.needPass = G.practice || G.key || G.teach ? [] : W.chars.map(c => c.c).filter(k => !Mem.passed(k));
     G.rv = Review.plan(G);
     WriteFallback.start(G);
     { const gl = W.games, k = gl.indexOf(gameId); G.nx = k >= 0 ? gl[k + 1] || null : null; G.nxWas = G.nx ? Prog.gameOpen(islandId, G.nx) : true; }
@@ -288,6 +303,7 @@ const Session = {
     tray.style.display = G.practice || G.key ? 'none' : '';
     G.trayBase = Prog.gameDone(G.world, G.id) ? 0 : Math.min(4, Prog.stars(G.world, G.id));
     for (let i = 0; i < 5; i++) el('i', i < G.trayBase ? 'on' : '', tray);
+    Teach.badge(G);
     Stage.onRelayout = () => {
       Input.abort();
       if (this.G !== G || G.dead) return;
@@ -308,7 +324,7 @@ const Session = {
     const a = b.animate([{ transform: 'translate(-50%,-50%) scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.08) rotate(3deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%,-50%) scale(1) rotate(0)', opacity: 1, offset: 0.75 }, { transform: 'translate(-50%,-60%) scale(.7)', opacity: 0 }], { duration: T(800) + 1, easing: EASE.out, fill: 'forwards' });
     a.onfinish = () => b.remove();
     sc.add(() => b.remove());
-    const story = G.practice || G.key ? { line: null } : Story.intro(G);
+    const story = G.practice || G.key || G.teach ? { line: null } : Story.intro(G);
     Voice.say(G.key ? '找回老朋友！' : (story.line || g.intro), { tag: 'intro', owner: G });
     await sc.wait(700);
     if (story.play) await sc.guard(story.play());
@@ -357,10 +373,10 @@ const Session = {
       if (res === 'error') { if (++G.errors >= 3) return 'stop'; continue; }
       this.remember(G, st, res);
       if (res === 'wrong' && G.wfMode === 2 && !st.review) return 'ok';           /* the fallback's 2nd step starts at once (V2R3-02) */
-      if (!G.key && !G.ws.played.includes(G.id)) { G.ws.played.push(G.id); Store.save(); }
+      if (!G.key && !G.teach && !G.ws.played.includes(G.id)) { G.ws.played.push(G.id); Store.save(); }
       /* a star: the child's own first try - not after the 2nd hint, not in the key round, not when a character was tapped
          to be heard in 读一读 (A.12) */
-      if (res === 'ok') { if (!G.practice && !G.key && !st.noStar && !helped(st)) await this.reward(G, st); return 'ok'; }
+      if (res === 'ok') { if (!G.practice && !G.key && !G.teach && !st.noStar && !helped(st)) await this.reward(G, st); return 'ok'; }
       if (G.practice || G.key) return 'ok';
       /* a wrong answer earns nothing and the session goes straight on: the next question is the next round (it counts) */
       G.afterWrong = true;
@@ -370,7 +386,7 @@ const Session = {
   },
   /* the memory of the item asked about; the missed queue; the writing fallback */
   remember(G, st, res) {
-    if (G.practice) return;
+    if (G.practice || G.teach) return;      /* 教一教: no memory, no miss, no writing fallback */
     Mem.today().q++;
     const g = st.game, k = g.itemOf ? g.itemOf(st) : (ITEM[st.q.answer] ? st.q.answer : null);
     if (st.tracing) { if (res === 'ok') { Store.s.stat.traced = (Store.s.stat.traced || 0) + 1; Store.save(); } WriteFallback.after(G, st, res); return; }     /* tracing practice: only 'traced' (A.4) */
@@ -536,7 +552,7 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
-    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 2); Store.save(); }
+    if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key && !G.teach) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 2); Store.save(); }
     this.ffOn();
     const sc = G.scope;
     if (!G.practice) {
@@ -548,6 +564,7 @@ const Session = {
     if (G.dead || this.G !== G) return;
     this.ffOff();
     if (G.practice) { this.teardown(G); Book.open(G.item && G.item.tab, G.item && G.item.k); return; }
+    if (G.teach) { this.teardown(G); Screens.show('map'); Voice.enter('map'); MapView.useSet(G.W.w); MapView.update(); MapView.after(T(400)); return; }
     if (G.key) { Mem.today().keyEnd++; this.teardown(G); Screens.show('map'); Voice.enter('map'); MapView.update(); Keys.grant('key'); return; }
     const wid = G.world, stars = G.stars;
     let newGame = null;
@@ -567,6 +584,7 @@ const Session = {
   teardown(G) {
     G = G || this.G; if (!G) return;
     G.dead = true;
+    if (G.teach) { Teach.on = null; Teach.badge(null); }      /* leaving the game ends 教一教 */
     if (this.G !== G) { G.scope.dispose(); return; }
     Input.abort();
     if (this.st) { Hints.disarm(this.st); try { G.game.cleanup(this.st); } catch (e) {} }
@@ -589,7 +607,7 @@ const Session = {
     if (!this.G) return;
     const G = this.G, wid = G.world, opened = G.nx && !G.nxWas && Prog.gameOpen(wid, G.nx);
     if (G.practice) { this.teardown(G); Book.open(G.item && G.item.tab, G.item && G.item.k); return; }
-    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save();
+    Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key && !G.teach) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 3); Store.save();
     Prog.check(true);
     this.teardown(this.G);
     Screens.show('map');

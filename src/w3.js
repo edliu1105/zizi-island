@@ -1044,7 +1044,7 @@ const QDo = Object.assign({}, ReadHint, {
 const W3Write = {
   ownReview: true,
   gen(G, o) {
-    if (!G.practice && G.round === 2 && !G.ofDone) { const k = W3X.oldFriend(G); G.ofDone = true; if (k) return { k: [k, 'old'], answer: k, old: true }; }
+    if (!G.practice && !G.teach && G.round === 2 && !G.ofDone) { const k = W3X.oldFriend(G); G.ofDone = true; if (k) return { k: [k, 'old'], answer: k, old: true }; }
     return WriteBase.gen.call(this, G, o);
   },
 };

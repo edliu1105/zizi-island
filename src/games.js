@@ -629,8 +629,7 @@ const WriteBase = {
   },
   async finished(st) {
     const k = st.q.answer, c = st.w.center();
-    Store.learn(k, st.G.practice ? 'p' : 'w');
-    if (st.G.practice && !learned(k)) Store.learn(k, 'w');
+    if (!st.G.teach) { Store.learn(k, st.G.practice ? 'p' : 'w'); if (st.G.practice && !learned(k)) Store.learn(k, 'w'); }      /* 教一教: no learned() evidence */
     st.w.el.animate([{ filter: 'none' }, { filter: 'drop-shadow(0 0 22px #FFD93C)' }, { filter: 'none' }], { duration: T(900) + 1 });
     await st.scope.wait(350);
     Voice.hush('done');
