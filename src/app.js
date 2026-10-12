@@ -68,7 +68,7 @@ const Glyph = {
 const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
-function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false }, all: false,
+function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
     mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], v2: 1 }; }
 const Store = {
   s: null,
@@ -98,7 +98,7 @@ const Store = {
     d.flags = Array.isArray(o.flags) ? o.flags.filter(x => !!ISL[x]) : [];
     ['w1', 'w2', 'w3'].forEach(w => { const f = o.fin && o.fin[w]; d.fin[w] = f === 'due' || f === 'seen' ? f : ''; });
     d.gate2 = o.gate2 === true; d.w2seen = o.w2seen === true; d.gate3 = o.gate3 === true; d.w3seen = o.w3seen === true; d.mapSet = ['w2', 'w3'].includes(o.mapSet) ? o.mapSet : 'w1'; d.all = o.all === true;
-    if (o.settings && typeof o.settings === 'object') { d.settings.en = o.settings.en !== false; if ([0, 10, 15, 20, 30].includes(o.settings.mins)) d.settings.mins = o.settings.mins; d.settings.wgate = o.settings.wgate === true; }
+    if (o.settings && typeof o.settings === 'object') { d.settings.en = o.settings.en !== false; if ([0, 10, 15, 20, 30].includes(o.settings.mins)) d.settings.mins = o.settings.mins; d.settings.wgate = o.settings.wgate === true; if (['off', 'auto', 'step'].includes(o.settings.ex)) d.settings.ex = o.settings.ex; }
     /* v2 memory (docs/PLAN-v2.md): per item {b box, due, last, up, seen, pass, n, ok}; kept only for real items */
     if (o.mem && typeof o.mem === 'object') for (const k in o.mem) if (ITEM[k] && o.mem[k] && typeof o.mem[k] === 'object') { const m = o.mem[k]; d.mem[k] = { b: num(m.b, 0, 0, 7), due: num(m.due, 0, 0, 1e7), last: num(m.last, 0, 0, 1e7), up: num(m.up, -1, -1, 1e7), seen: num(m.seen, 0, 0, 1e7), pass: Array.isArray(m.pass) ? m.pass.filter(x => typeof x === 'string').slice(-4) : [], n: num(m.n, 0, 0, 1e6), ok: num(m.ok, 0, 0, 1e6) }; if (typeof m.evd === 'number') d.mem[k].evd = m.evd; }
     if (Array.isArray(o.ev)) d.ev = o.ev.filter(x => Array.isArray(x) && x.length === 3 && x.every(v => typeof v === 'number')).slice(-400);
@@ -187,6 +187,55 @@ function optsSound(q) {
   if (new Set(ks).size !== ks.length) return false;
   return q.answer == null || !ks.includes(key(q.answer)) || ks.filter(k => k === key(q.answer)).length === 1;
 }
+/* the explanation after a wrong answer is a parent setting (client 2026-10-11): 'off' (feedback line, closing line, a new
+   question), 'auto' (the default: it plays by itself, a tap skips it), 'step' (it stops after each beat - a spoken line, a ring,
+   a demonstration - and waits for the big 下一步 button, so the parent can talk the child through it; no time limit, the
+   skip-tap does not skip; a small 跳过 for the parent). Generic: the EX helpers' waits and lines are the beats */
+const exMode = () => { const m = Store.s && Store.s.settings.ex; return m === 'off' || m === 'step' ? m : 'auto'; };
+const Step = {
+  mount(st) {
+    st.step = true; st.stepAt = now(); st.stepDirty = false; st.stepN = 0;
+    const gm = $('#game'), b = el('button', 'btn stepbtn', gm), s = el('button', 'btn stepskip', gm);
+    b.setAttribute('aria-label', '下一步'); b.dataset.gid = 'stepnext';
+    b.innerHTML = '<svg viewBox="0 0 40 40"><path d="M13 8 L32 20 L13 32 Z" fill="#fff" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/></svg><span>下一步</span>';
+    s.textContent = '跳过'; s.setAttribute('aria-label', '跳过讲解'); s.dataset.gid = 'stepskip';
+    b.style.visibility = 'hidden';
+    const go = () => { const r = st.stepRes; st.stepRes = null; b.style.visibility = 'hidden'; if (r) r(); };
+    tapify(b, () => { if (st.stepRes) { st.stepN++; go(); } });
+    tapify(s, () => { if (st.stepSkip) return; st.stepSkip = true; st.ff = true; Voice.hush('ff', 'summary'); st.scope.fastForward(); go(); b.remove(); s.remove(); });
+    st.stepEls = [b, s];
+    st.scope.add(() => { b.remove(); s.remove(); });
+    this.place(st);
+  },
+  /* a corner of the screen where the button covers no option, character or explanation mark */
+  place(st) {
+    const [b, s] = st.stepEls || []; if (!b || !b.isConnected) return;
+    const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, bw = 120, bh = 120 + 58, m = 18;
+    const obs = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
+      $$('.exring,[data-ex]', Stage.el), Object.values(st.G.actors || {}).map(a => a.root).filter(Boolean), [$('#home'), $('#avatar'), $('#tray')])
+      .filter(e => e && e.isConnected).map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+    const spots = [[W - bw - m, H - bh - m], [m, H - bh - m], [W - bw - m, (H - bh) / 2], [m, (H - bh) / 2], [(W - bw) / 2, H - bh - m], [W - bw - m, 130]];
+    const over = (x, y) => obs.reduce((a, r) => a + Math.max(0, Math.min(x + bw, r.right - gr.left) - Math.max(x, r.left - gr.left)) * Math.max(0, Math.min(y + bh, r.bottom - gr.top) - Math.max(y, r.top - gr.top)), 0);
+    let best = spots[0], bo = Infinity;
+    spots.forEach(p => { const o = over(p[0], p[1]); if (o < bo - 1) { bo = o; best = p; } });
+    Object.assign(s.style, { left: (best[0] + (bw - 84) / 2) + 'px', top: best[1] + 'px' });
+    Object.assign(b.style, { left: best[0] + 'px', top: (best[1] + 58) + 'px' });
+  },
+  /* the end of a beat: when something new was shown or said since the last tap, wait for the tap */
+  async pause(st, force) {
+    if (!st.step || st.ff || st.stepSkip || st.scope.dead) return;
+    await st.scope.guard(Voice.afterSay(80));
+    if (st.ff || st.stepSkip || st.scope.dead) return;
+    if (!force && !st.stepDirty && now() - st.stepAt < 250) return;
+    const b = st.stepEls[0];
+    this.place(st);
+    b.style.visibility = '';
+    st.scope.anim(b, [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity });
+    st.stepWaiting = true;
+    await st.scope.guard(new Promise(r => { st.stepRes = r; }));
+    st.stepWaiting = false; st.stepDirty = false; st.stepAt = now();
+  },
+};
 const Session = {
   G: null, st: null, qn: 0,
   alive(st) { return !!st && this.st === st && !st.scope.dead && this.G === st.G && !st.G.dead; },
@@ -363,6 +412,7 @@ const Session = {
         return 'ok';
       }
       G.streak = 0;
+      st.exMode = exMode();
       st.phase = 'correcting';
       await g.feedback(st, ans);                 /* says what the picked one IS (never "you are wrong") */
       if (!this.alive(my)) return 'dead';
@@ -371,7 +421,11 @@ const Session = {
          skips it. The question that follows is a new one, so showing this answer helps nobody tap through */
       st.phase = 'explain'; st.explaining = true;
       const t0 = now();
-      if (g.explain) await g.explain(st, ans); else await g.reveal(st);
+      if (st.exMode !== 'off') {
+        if (st.exMode === 'step') Step.mount(st);
+        if (g.explain) await g.explain(st, ans); else await g.reveal(st);
+        if (st.step) { await Step.pause(st); if (st.stepEls) st.stepEls.forEach(e => e.remove()); }      /* the last tap ends it */
+      }
       { const L = window.__exLog || (window.__exLog = []); L.push({ game: G.id, kind: st.kind, level: st.level, answer: st.q.answer, opts: st.opts || null, tapped: st.tapped, ex: st.ex || null, gen: st.gen, ms: Math.round(now() - t0),
         shown: $$('[data-ex]', Stage.el).map(e => e.dataset.ex), rings: $$('.exring', Stage.el).map(r => [r.classList.contains('right') ? 'R' : 'C', box(r)]) }); if (L.length > 60) L.shift(); }     /* for the tests */
       if (!this.alive(my)) return 'dead';
@@ -459,6 +513,7 @@ const Session = {
     if (G.finishing) { if (!G.ffDone) { G.ffDone = true; Voice.hush('ff'); G.scope.fastForward(); } return; }
     const st = this.st;
     if (!st || st.scope.dead || st.ff || !['reveal', 'praise', 'correcting', 'explain'].includes(st.phase)) return;
+    if (st.exMode === 'step' && ['correcting', 'explain'].includes(st.phase)) return;      /* step by step: only 下一步 / 跳过 move it on */
     st.ff = true;
     Voice.hush('ff', 'summary');
     st.scope.fastForward();
@@ -1004,6 +1059,7 @@ const Parent = {
     el('h2', '', sh, { text: '家长面板 · 字字岛' });
     const x = el('button', 'pbtn x', sh, { text: '关闭' }); x.addEventListener('click', () => { this.close(); MapView.update(); });
     el('div', 'mut', sh, { text: '规则：每个小游戏集满 5 颗星（只有自己第一次就对才给星；写字要每一笔都对；第二级提示之后答对不给星）打 ✓；四个都 ✓、而且这个岛的每个字都在两局里自己答对过，插旗、开下一个岛。每个字按遗忘规律复习（1、3、7、14、30、60、120 天），复习题混在每一局里。字宝盒里的字随时可以练，练字不影响星星。' });
+    ParentV3.sections(sh);
     el('h3', '', sh, { text: '学会的字：' + ITEMS.filter(i => i.kind === 'zh' && learned(i.k)).length + ' / ' + ITEMS.filter(i => i.kind === 'zh').length + ' 个汉字，' + ITEMS.filter(i => i.kind !== 'zh' && learned(i.k)).length + ' / ' + ITEMS.filter(i => i.kind !== 'zh').length + ' 个字母' });
     Object.keys(ORDER).forEach(w => {
       el('h3', '', sh, { text: WORLDS_INFO[w].name + (Prog.worldOpen(w) ? '' : '（未开放）') + (WORLDS_INFO[w].partial ? '（其余岛屿制作中）' : '') });
@@ -1171,7 +1227,7 @@ function boot() {
     get() {
       const st = Session.st; if (!st) return null;
       const g = st.game, snap = g.snap ? g.snap(st) : {};
-      return Object.assign({ id: st.id, gen: st.gen, world: st.G.world, game: st.G.id, kind: st.kind, level: st.level, phase: st.phase, hinted: st.hinted, retest: st.retest, err: st.err, ops: st.ops, childOps: st.childOps, submitted: st.submitted, answer: st.q.answer, assists: st.assistT || [], clock: Math.round(Clock.t()), explaining: !!st.explaining, ex: st.ex || null, q:JSON.parse(JSON.stringify(st.q, (k, v) => (typeof v === 'function' || (v && v.nodeType)) ? undefined : v)) }, snap);
+      return Object.assign({ id: st.id, gen: st.gen, world: st.G.world, game: st.G.id, kind: st.kind, level: st.level, phase: st.phase, hinted: st.hinted, retest: st.retest, err: st.err, ops: st.ops, childOps: st.childOps, submitted: st.submitted, answer: st.q.answer, assists: st.assistT || [], clock: Math.round(Clock.t()), explaining: !!st.explaining, ex: st.ex || null, exMode: st.exMode || null, stepWaiting: !!st.stepWaiting, stepN: st.stepN || 0, teach: st.G.teach || 0, q:JSON.parse(JSON.stringify(st.q, (k, v) => (typeof v === 'function' || (v && v.nodeType)) ? undefined : v)) }, snap);
     },
   });
   window.__state = () => JSON.parse(JSON.stringify(Store.s));

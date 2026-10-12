@@ -158,6 +158,7 @@ const EX = {
      element's edge. The blue ring lies above the gold one, so it is always seen */
   ring(st, e, role, pad) {
     if (!e || st.scope.dead) return null;
+    st.stepDirty = true;
     const b = this.rect(e), want = pad == null ? 12 : pad, side = { l: want, r: want, t: want, b: want };
     /* every neighbour limits the side that faces it to half the gap (minus 2): two rings always stop short of their midline.
        Side by side: the facing sides; diagonal: the axis with the larger gap is enough; boxes that overlap (scene pictures
@@ -184,6 +185,7 @@ const EX = {
   /* a gold outline on the element itself (several right ones side by side, e.g. the rocks of 砸石头: no rings to overlap) */
   outline(st, e) {
     if (!e || st.scope.dead) return;
+    st.stepDirty = true;
     e.style.filter = 'drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 8px rgba(255,190,40,.9))';
     const ex = st.ex || (st.ex = { right: [], chosen: [] }); ex.right.push(this.idOf(st, e));
   },
@@ -201,6 +203,7 @@ const EX = {
     if (typeof k === 'string' && ITEM[k] && ITEM[k].fw) return this.sentOver(st, e, k, role);
     size = size || 104;
     const nd = typeof k === 'string' ? this.picNode(k, size * 0.86) : k; if (!nd || !e) return null;
+    st.stepDirty = true;
     const b = this.rect(e), d = ZX.thing(st, size, size, 61, 'objpop');
     Object.assign(d.style, { background: '#fff', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
       boxShadow: '0 0 0 4px ' + (role === 'right' ? EX_GOLD : EX_BLUE) + ', 0 6px 0 rgba(43,33,24,.2)' });
@@ -219,6 +222,7 @@ const EX = {
      the element where it touches no other option - or nothing at all (the ring alone says it) */
   sentOver(st, e, k, role) {
     const t = FW_SENTS[k] && FW_SENTS[k][0][0]; if (!t || !e) return null;
+    st.stepDirty = true;
     const h = 44, row = Sent.node(t, h, -1, true), col = role === 'right' ? '#B07800' : EX_BLUE;
     $$('[data-ch]', row).forEach(c => { const me = c.dataset.ch === k; delete c.dataset.ch; c.style.cursor = ''; if (me) { c.innerHTML = ''; c.appendChild(Glyph.zh(k, h * 0.92, col)); Object.assign(c.style, { background: role === 'right' ? '#FFF3C4' : '#E4EEFA', borderRadius: '10px' }); } });
     Object.assign(row.style, { padding: '4px 12px', borderRadius: '16px', boxShadow: '0 0 0 4px ' + (role === 'right' ? EX_GOLD : EX_BLUE) + ', 0 6px 0 rgba(43,33,24,.2)' });
@@ -233,7 +237,7 @@ const EX = {
   },
   /* a word written under an element with some letters coloured (the first letter, the rhyme ending, the letters that differ) */
   wordUnder(st, e, w, color, idx, h) {
-    h = h || 58;
+    h = h || 58; st.stepDirty = true;
     const cols = Array.isArray(color) ? color : w.split('').map((c, i) => (idx.includes(i) ? color : INK)), b = this.rect(e), g = Glyph.wordC(w, h, cols);
     if (Array.isArray(color)) color = EX_GOLD;
     const d = ZX.thing(st, 10, 10, 61, 'item'); d.style.width = d.style.height = 'auto';
@@ -245,9 +249,13 @@ const EX = {
     K.pop(st, d);
     return d;
   },
-  wait(st, ms) { return st.ff ? Promise.resolve() : st.scope.wait(ms); },
+  wait(st, ms) { if (st.step) return Step.pause(st); return st.ff ? Promise.resolve() : st.scope.wait(ms); },
   /* one or two short lines (each recorded, <= 8 characters), then the step waits for them */
-  async say(st, lines) { [].concat(lines).filter(Boolean).slice(0, 2).forEach(l => Voice.say(l, { tag: 'explain' })); await st.scope.guard(Voice.afterSay(250)); },
+  async say(st, lines) {
+    lines = [].concat(lines).filter(Boolean).slice(0, 2);
+    if (st.step && !st.ff) { for (let i = 0; i < lines.length; i++) { if (i) await Step.pause(st, true); if (st.ff) break; Voice.say(lines[i], { tag: 'explain' }); await st.scope.guard(Voice.afterSay(250)); st.stepDirty = true; } return; }      /* step by step: a tap after each line */
+    lines.forEach(l => Voice.say(l, { tag: 'explain' })); await st.scope.guard(Voice.afterSay(250));
+  },
   /* the common card question: the chosen card (blue ring, its picture), the right card (gold ring, its picture), its line */
   async cards(st, ans, o) {
     o = o || {};
@@ -642,7 +650,7 @@ const WriteBase = {
     if (st.alivePic) st.scope.anim(st.alivePic, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });      /* the paper in view again */
     EX.ring(st, st.w.el, 'right', 4);
     const ks = (st.slipAt || []).slice(0, 2);
-    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); } }
+    if (ks.length) { Voice.say('看，是这样', { tag: 'explain' }); for (const k of ks) { if (st.ff || st.scope.dead) break; await st.w.demo(st, k, false, EX_GOLD); st.stepDirty = true; if (st.step) await Step.pause(st); } }
     await st.scope.guard(Voice.afterSay(200));
   },
   next(st, strat) { if (!st.w || st.w.done) return null; const pts = st.w.expected(strat === 'wrong'); return pts ? { g: 'stroke', p: { id: 'paper', pts } } : null; },

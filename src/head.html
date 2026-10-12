@@ -172,6 +172,12 @@ html.nosound #avatar .ear{background:#FFE08A;width:46px;height:46px;right:-18px;
 #tray i.on::after{content:"";position:absolute;inset:-3px;background:url(assets/props/ui_star.png) center/contain no-repeat}
 #ff{position:absolute;inset:0;z-index:35;display:none}
 #ff.on{display:block}
+.stepbtn{position:absolute;z-index:70;width:120px;height:120px;border-radius:50%;background:#5CC46E;box-shadow:var(--stk);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font:800 20px system-ui,sans-serif;text-shadow:0 2px 0 rgba(43,33,24,.45)}
+.stepbtn svg{width:52px;height:52px;margin-left:6px}
+.stepskip{position:absolute;z-index:70;width:84px;height:44px;border-radius:22px;background:rgba(255,248,236,.92);box-shadow:var(--stk-sm);font:700 17px system-ui,sans-serif;color:#2B2118}
+#teachb{position:absolute;z-index:41;right:calc(14px + var(--sr));top:calc(92px + var(--st));width:56px;height:56px;border-radius:50%;background:#7A5AF8;color:#fff;display:flex;align-items:center;justify-content:center;font:800 30px system-ui,sans-serif;box-shadow:var(--stk-sm);pointer-events:none}
+#parent .pbtn.sel{background:#FFE08A;box-shadow:0 0 0 3px #2B2118}
+#parent .pbtn[disabled]{opacity:.4}
 #fx{position:absolute;inset:0;pointer-events:none;z-index:50;overflow:hidden}
 #fx > *{position:absolute}
 
