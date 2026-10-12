@@ -43,18 +43,29 @@ const ParentV3 = {
     const tw = el('div', '', sh);
     const draw2 = () => {
       tw.innerHTML = '';
-      const on = Teach.on, last = on ? [on.isl, on.game] : Teach.last();      /* a preset (kept through a reload) comes first (PT1-P7) */
+      const on = Teach.on, played = Teach.last(), TX = { pre: ['最近玩的：', '已设好：'], drop: ['', '降一级', '降两级'] };      /* (no ternary of literals: the voice scan would take them for lines) */
+      /* a preset on another game than the last one played (PT2-4): the preset with its own 关, then the last game's buttons */
+      if (on && played && String(played) !== String([on.isl, on.game])) {
+        const lvA = Prog.level(on.isl, on.game);
+        el('div', '', tw, { text: TX.pre[1] + ISL[on.isl].name + ' · ' + GAMES[on.game].title + '　— 教一教已打开：' + TX.drop[on.drop] + '，第 ' + Math.max(1, lvA - on.drop) + ' 级。孩子下次进这个游戏时生效' });
+        const offA = el('button', 'pbtn', tw, { text: '关' }); offA.dataset.teachoff = 1;
+        offA.addEventListener('click', () => { Teach.on = null; draw2(); });
+        el('div', 'mut', tw, { text: '也可以改成教最近玩的这个游戏（只能同时教一个）：' });
+      }
+      const last = on && !(played && String(played) !== String([on.isl, on.game])) ? [on.isl, on.game] : played;      /* a preset (kept through a reload) comes first (PT1-P7) */
       if (!last) { el('div', 'mut', tw, { text: '先让孩子玩一个小游戏，再回来这里选。' }); return; }
+      const mine = !!on && on.isl === last[0] && on.game === last[1];
       const [i, g] = last, lv = Prog.level(i, g);
-      const TX = { pre: ['最近玩的：', '已设好：'], drop: ['', '降一级', '降两级'] };      /* (no ternary of literals: the voice scan would take them for lines) */
-      el('div', '', tw, { text: TX.pre[on && String(Teach.last()) !== String(last) ? 1 : 0] + ISL[i].name + ' · ' + GAMES[g].title + '（现在第 ' + lv + ' 级）' + (on ? '　— 教一教已打开：' + TX.drop[on.drop] + '，第 ' + Math.max(1, lv - on.drop) + ' 级。孩子下次进这个游戏时生效' : '') });
+      el('div', '', tw, { text: TX.pre[mine && !played ? 1 : 0] + ISL[i].name + ' · ' + GAMES[g].title + '（现在第 ' + lv + ' 级）' + (mine ? '　— 教一教已打开：' + TX.drop[on.drop] + '，第 ' + Math.max(1, lv - on.drop) + ' 级。孩子下次进这个游戏时生效' : '') });
       [[1, '降一级来教'], [2, '降两级来教']].forEach(([d, t]) => {
-        const b = el('button', 'pbtn' + (on && on.drop === d ? ' sel' : ''), tw, { text: t + (lv - d >= 1 ? '（第 ' + (lv - d) + ' 级）' : '') }); b.dataset.teach = d;
+        const b = el('button', 'pbtn' + (mine && on.drop === d ? ' sel' : ''), tw, { text: t + (lv - d >= 1 ? '（第 ' + (lv - d) + ' 级）' : '') }); b.dataset.teach = d;
         if (lv - d < 1) b.disabled = true;
         b.addEventListener('click', () => { if (lv - d < 1) return; Teach.on = { isl: i, game: g, drop: d }; draw2(); });
       });
-      const off = el('button', 'pbtn' + (on ? '' : ' sel'), tw, { text: '关' }); off.dataset.teach = 0;
-      off.addEventListener('click', () => { Teach.on = null; draw2(); });
+      if (mine || !on) {      /* (a preset on another game has its own 关 above) */
+        const off = el('button', 'pbtn' + (mine ? '' : ' sel'), tw, { text: '关' }); off.dataset.teach = 0;
+        off.addEventListener('click', () => { Teach.on = null; draw2(); });
+      }
       if (lv <= 1) el('div', 'mut', tw, { text: '这个游戏已经是第 1 级，不能再降。' });
     };
     draw2();

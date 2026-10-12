@@ -1032,7 +1032,7 @@ const QMirror = {
         const g = e && e.querySelector('svg'); if (!g) return;
         await EX.wait(st, 350);
         await st.scope.anim(g, [{ transform: Mirror.css[ans] || 'none' }, { transform: 'none' }], { duration: 650, easing: EASE.glide });      /* turned the right way it is the same glyph */
-        g.style.transform = 'none'; st.stepDirty = true; await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';      /* turned back: its own beat */
+        g.style.transform = 'none'; st.stepDirty = true; if (st.step) Voice.say('看，是这样', { tag: 'explain' }); await EX.wait(st, 500); g.style.transform = Mirror.css[ans] || '';      /* turned back: its own beat */
       } });
   },
   iconNode() { const d = el('div'); d.style.display = 'flex'; const a = Glyph.en('R', 44), b = Glyph.en('R', 44); b.style.transform = 'scaleX(-1)'; d.appendChild(a); d.appendChild(b); return d; },

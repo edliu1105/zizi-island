@@ -226,24 +226,34 @@ const Step = {
     const gr = $('#game').getBoundingClientRect(), W = gr.width, H = gr.height, B = 120, SW = 112, SH = 48, m = 12, gap = 14;
     const R = e => { const r = e.getBoundingClientRect(); return { x: r.left - gr.left, y: r.top - gr.top, r: r.right - gr.left, b: r.bottom - gr.top }; };
     const hard = [].concat(st.cards || [], st.rights || [], st.lefts || [], st.tileEls || [], st.lamps || [], st.things || [], st.taskEl ? [st.taskEl] : [], st.w && st.w.el ? [st.w.el] : [],
-      st.board ? [st.board] : [], st.big ? [st.big] : [], $$('.exring,[data-ex],.objpop', Stage.el), [$('#home'), $('#avatar'), $('#tray'), $('#teachb')]);
+      st.board ? [st.board] : [], st.big ? [st.big] : [], st.doneEl ? [st.doneEl] : [], $$('.exring,[data-ex],.objpop', Stage.el), [$('#home'), $('#avatar'), $('#tray'), $('#teachb')]);
     const soft = Object.values(st.G.actors || {}).map(a => a.root);
+    $$('[data-gid]', Stage.el).forEach(e => { if (!soft.some(a => a === e || (a && a.contains(e)))) hard.push(e); });      /* every control of the game (the ✓ of 十格灯 ...), PT2-1 */
     const box2 = l => l.filter(e => e && e.isConnected && e !== b && e !== s).map(R).filter(r => r.r - r.x > 0 && r.b - r.y > 0);
     const H1 = box2(hard), S1 = box2(soft), pad = 8;
     const ov = (x, y, w, h, L) => L.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.r + pad) - Math.max(x, r.x - pad)) * Math.max(0, Math.min(y + h, r.b + pad) - Math.max(y, r.y - pad)), 0);
     const lays = [[0, -(SH + gap)], [0, B + gap], [-(SW + gap), (B - SH) / 2], [B + gap, (B - SH) / 2]];       /* 跳过 relative to ▶'s top-left (centred) */
     let best = null;
+    const pv = st.stepPos && st.stepPos.W === W && st.stepPos.H === H ? st.stepPos : null;      /* the previous beat's spot (PT2-3) */
     const steps = (a, z) => { const r = []; for (let v = a; v < z; v += 20) r.push(v); r.push(Math.max(a, z)); return r; };      /* every 20 px and the far edge itself */
     for (const y of steps(m, H - B - m)) for (const x of steps(m, W - B - m)) {
       lays.forEach(([dx, dy]) => {
         const sx = x + (dx === 0 ? (B - SW) / 2 : dx), sy = y + dy;
         if (sx < m || sy < m || sx + SW > W - m || sy + SH > H - m) return;
         const cost = ov(x, y, B, B, H1) * 10 + ov(sx, sy, SW, SH, H1) * 10 + ov(x, y, B, B, S1) + ov(sx, sy, SW, SH, S1) * 0.5
-          + ((W - x - B) + (H - y - B)) * 0.5;                     /* near the bottom right corner */
+          + (pv ? Math.hypot(x - pv.x, y - pv.y) * 1.5 : ((W - x - B) + (H - y - B)) * 0.5);      /* near the previous spot, else near the bottom right corner */
         if (!best || cost < best.cost) best = { cost, x, y, sx, sy };
       });
     }
     if (!best) best = { x: W - B - m, y: H - B - m, sx: W - B - m + (B - SW) / 2, sy: Math.max(m, H - B - m - SH - gap) };
+    /* hysteresis (PT2-3): the previous spot stays while it is still free of options, marks and chrome and covers a character
+       hardly more than the best one - the parent's finger need not hunt for it at every beat */
+    if (pv && pv.x >= 0 && pv.y >= 0 && pv.x + B <= W && pv.y + B <= H && pv.sx >= 0 && pv.sy >= 0 && pv.sx + SW <= W && pv.sy + SH <= H) {
+      const hardP = ov(pv.x, pv.y, B, B, H1) + ov(pv.sx, pv.sy, SW, SH, H1), softP = ov(pv.x, pv.y, B, B, S1) + ov(pv.sx, pv.sy, SW, SH, S1) * 0.5;
+      const softB = ov(best.x, best.y, B, B, S1) + ov(best.sx, best.sy, SW, SH, S1) * 0.5;
+      if (hardP === 0 && softP <= softB + 1500) best = pv;
+    }
+    st.stepPos = { x: best.x, y: best.y, sx: best.sx, sy: best.sy, W, H };
     Object.assign(b.style, { left: Math.round(best.x) + 'px', top: Math.round(best.y) + 'px' });
     Object.assign(s.style, { left: Math.round(best.sx) + 'px', top: Math.round(best.sy) + 'px' });
   },

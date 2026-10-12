@@ -811,7 +811,9 @@ const QFrame = Object.assign({}, ReadHint, {
     const n = st.q.n, on = st.on.map((v, i) => (v ? i : -1)).filter(i => i >= 0);
     on.slice(n).forEach(i => { EX.ring(st, st.lamps[i], 'chosen', 2); st.on[i] = false; st.lamps[i].innerHTML = W3X.bulb(false, st.q.style); });
     await EX.wait(st, 450);
-    for (let i = 0; st.on.filter(Boolean).length < n && i < 10; i++) if (!st.on[i]) { st.on[i] = true; st.lamps[i].innerHTML = W3X.bulb(true, st.q.style); }
+    let added = 0;
+    for (let i = 0; st.on.filter(Boolean).length < n && i < 10; i++) if (!st.on[i]) { st.on[i] = true; st.lamps[i].innerHTML = W3X.bulb(true, st.q.style); st.scope.anim(st.lamps[i], [{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 300 }); added++; }
+    if (added) { Voice.say('看，是这样', { tag: 'explain' }); await EX.wait(st, 400); }      /* too few: the missing lamps light up - a beat of its own, then the count (PT2-2) */
     if (st.readEl) EX.ring(st, st.readEl, 'right', 6);
     const lit = st.lamps.filter((_, i) => st.on[i]);
     for (let i = 0; i < lit.length; i++) { if (st.ff || st.scope.dead) break; st.scope.anim(lit[i], [{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 240 }); Sfx.count(i + 1); await EX.tick(st, 160); }
