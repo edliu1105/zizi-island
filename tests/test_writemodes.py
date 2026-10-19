@@ -204,6 +204,9 @@ with sync_playwright() as p, serve() as base:
       out.wf = run('日', 3, 1);
       delete Store.s.learned['目']; out.first = run('目', 1); Store.learn('目', 'w');
       delete Store.s.learned['手']; out.firstNo = run('手', 1);
+      /* 像不像's other card: written by him, never one he only reads (三 is read-only: passed in memory, never written) */
+      Store.learn('二', 'w'); delete Store.s.learned['三']; Mem.answer('三', 'ok', 'ro1'); Mem.answer('三', 'ok', 'ro2');
+      out.ro = { learned: learned('三'), look: (WM.options('二').look || []).map(e => e.a + e.b), look3: !!WM.options('三').look };
       return out; }""")
     def cyc(seq, opt):
         s = [x.split('+')[0] for x in seq]
@@ -211,6 +214,7 @@ with sync_playwright() as p, serve() as base:
     log.check(cyc(r['big'], r['opt']) and cyc(r['ming'], r['mopt']), '05 a learned character goes through every mode it has before one comes again, never the same twice in a row: 大 %s, 明 %s' % (r['big'], r['ming']))
     log.check(set(x for x in r['E'] + r['b']) <= {'trace', 'fill', 'relay', 'fade'} and len(set(r['E'])) >= 3, '05 letters only trace / fill / relay / fade: E %s, b %s' % (r['E'], r['b']))
     log.check(r['wf'] == ['trace'] * 3, '05 the tracing fallback always traces %s' % r['wf'])
+    log.check(r['ro']['learned'] and '二三' not in r['ro']['look'] and not r['ro']['look3'], "05 像不像 pairs only characters he has written: 三 (read, passed, never written) is no look-alike card for 二, nor asked as one %s" % r['ro'])
     log.check(r['first'] == ['trace+aha'] and r['firstNo'] == ['trace'], '05 the first time: trace - with the aha when a known character grows into it (日 -> 目), without when none does (手) %s %s' % (r['first'], r['firstNo']))
     page.context.close()
 

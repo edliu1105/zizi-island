@@ -38,11 +38,11 @@
     gen(G, o) {
       const lv = o.level, mine = poolOf(G, 'zh', false);
       const rows = W4D.sent8.filter(r => W4X.knowsAll(G, r[1]) && new Set(cjk(r[1])).size >= 5);
-      const cands = (X, t) => rows.filter(r => once(X, r[1]) && t(X, r, cjk(r[1]).length, lookIn(X, r[1])));
-      let X = null, list = [];
-      for (const t of TIERS[lv]) { const pool = mine.filter(k => cands(k, t).length); if (pool.length) { X = W4X.pick(G, pool); list = cands(X, t); break; } }
-      if (!X) { X = W4X.pick(G, mine); list = rows.filter(r => once(X, r[1])); }
-      const r = list.length ? bagFrom(G, 's8' + X, list) : null;
+      /* W4R2-01: the character first (every one of the island's, the ones still to pass first), then its sentences of the level's
+         best tier - two at least: a tier with one sentence takes the next tier's too, so no character is left with one fixed sentence */
+      const pool = mine.filter(k => rows.some(r => once(k, r[1]))), X = W4X.pick(G, pool.length ? pool : mine), list = [];
+      for (const t of TIERS[lv]) { rows.forEach(r => { if (once(X, r[1]) && !list.some(x => x[1] === r[1]) && t(X, r, cjk(r[1]).length, lookIn(X, r[1]))) list.push(r); });      /* (a sentence listed for two characters counts once) */ if (list.length >= 2) break; }
+      const r = list.length ? bagFrom(G, 's8' + lv + X, list) : null;
       return r ? this.make(G, X, r[1], r[0] === X ? r[2] : '', lv) : this.make(G, X, null, '', lv, W4X.opts(G, lv, X, 5));
     },
     /* the question for X in a sentence (or, a review with no sentence known, in its option row) */

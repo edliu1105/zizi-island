@@ -658,7 +658,7 @@ SKIN4.update({'avengers4': 'avengers', 'robot4': 'avengers'})
 FALLBACK4.update({'isl/avengers4': 'isl/s1', 'isl/robot4': 'isl/robot',
                   'avengers4': ('s1_find', 's1_write', 's2_abc', 's2_quiz'), 'robot4': ('robot_find', 'robot_write', 'robot2_abc', 'robot2_quiz')})
 # §12.3: look-alikes (only known ones are ever offered), the characters that hold the answer, pictures too close
-LOOK4.update({'王': '土三玉', '工': '土干', '厂': '广', '力': '九', '出': '山', '好': '女妈', '路': '跳', '变': '亦'})
+LOOK4.update({'王': '土三玉', '工': '土干', '厂': '广', '力': '九', '出': '山', '好': '女妈', '路': '跳', '变': '亦', '高': '口'})      # 高 -> 口 (W4R2-01; 口 never offers 高: HOLDS4)
 LOOK4['土'] += '工'                            # (土 -> 王 is a holder below: 王 = 土 + 横, never offered for 土)
 LOOK4_BACK.update({'三': '王', '九': '力', '山': '出'})
 HOLDS4['女'] += '好'; HOLDS4['口'] += '高路'; HOLDS4['土'] += '王'
@@ -681,10 +681,12 @@ SENT8 = [
     ('出', '小草出土了。', ''),
     ('高', '山好高！鸟飞上天。', ''), ('高', '高山上有雪。', '高山'), ('高', '天好高，山好大。', ''), ('高', '鸟飞上高山。', '高山'),
     ('高', '爷爷站高山上。', '高山'), ('高', '大马高，小马小。', ''), ('高', '王坐在高山上。', '高山'),
-    ('好', '天好大，山高。', ''), ('好', '好大力！王坐下。', ''), ('好', '女子去山上，好高！', ''), ('好', '田中牛马好多。', ''),
-    ('好', '妈妈说：你好！', '你好'), ('好', '女子说：你好，大王！', '你好'), ('好', '妹妹坐好，车开了。', '坐好'), ('好', '下雪了，好大的雪！', ''),
+    ('高', '牛头高，口大。', ''), ('高', '大马站门口，好高！', ''), ('高', '爷爷站门口，好高！', ''),      # W4R2-01: 高 with its look-alike 口
+    ('好', '天好大，山高。', ''), ('好', '好大力！王坐下。', ''), ('好', '妹妹去山上，好高！', ''), ('好', '田中牛马好多。', ''),
+    ('好', '妈妈说：你好！', '你好'), ('好', '妹妹说：你好，大王！', '你好'), ('好', '妹妹坐好，车开了。', '坐好'), ('好', '下雪了，好大的雪！', ''),
     ('力', '好大力！王坐下。', '大力'), ('力', '大牛好有力！', '有力'), ('力', '大力王坐车上山。', '大力'), ('力', '小马有力，去山上。', '有力'),
     ('力', '爷爷力大，开大门。', ''), ('力', '九头牛好有力！', '有力'), ('力', '力大的牛去田中。', ''), ('力', '大力王出门了。', '大力'),
+    ('力', '九头大牛，好大力！', '大力'),                                                       # W4R2-01: seven characters, 九 beside 力
 ]
 
 
@@ -692,8 +694,8 @@ SENT8 = [
 # it (`why` says why, checked one by one at the review); a little picture a sentence (level 1's strip, the explanation).
 # think: the link has to be thought out (level 3 / 5); 3 or 4 sentences (levels 1-3 / 4-5). Asked only when every character
 # is known; <= 8 characters a card. tools/check_w4x.py: the links make a chain (exactly one order), the characters, the lengths
-def opened(o): return [('door_open', .62, .52, .6), (o, .26, .62, .46)]            # X 开门: beside the open door
-def goes_out(o): return [('door_open', .24, .5, .5), (o, .72, .64, .44)]          # X 出门: out, walking away from it
+def opened(o): return [('door_open', .64, .52, .62), (o, .26, .62, .46), ('hand', .5, .5, .18)]      # X 开门: a hand on the door, half open (W4R2-02)
+def goes_out(o): return [('door_open', .16, .44, .34), ('road', .62, .76, .76), (o, .7, .54, .34)]      # X 出门: outside already, on the road away from the door (W4R2-02)
 def at_field(o): return [('field', .5, .64, .86), (o, .5, .46, .42)]
 def at_grass(o): return [('grass', .5, .72, .66), (o, .5, .42, .44)]
 def by_car(o): return [(o, .28, .6, .48), ('car', .72, .66, .42)]
@@ -759,7 +761,7 @@ BEATS8 = [(w, p, s) for w, p, s in [
     ('bug', 'insect', 'bug'), ('jet', 'jet', 'jet'), ('egg', 'egg', 'egg'), ('ball', 'ball', 'ball'), ('kite', 'kite', 'kite'), ('fish', 'fish', 'fish'),
     ('juice', 'juice', 'juice'),
     ('apple', 'apple', 'ap-ple'), ('rabbit', 'rabbit', 'rab-bit'), ('zebra', 'zebra', 'ze-bra'), ('lion', 'lion', 'li-on'), ('orange', 'orange', 'or-ange'),
-    ('window', 'window', 'win-dow'), ('jacket', 'jacket', 'jack-et'), ('insect', 'insect', 'in-sect'), ('yogurt', 'yogurt', 'yo-gurt'),
+    ('window', 'window', 'win-dow'), ('jacket', 'jacket', 'jack-et'), ('yogurt', 'yogurt', 'yo-gurt'),      # (insect left out: bug has its picture, W4R2-03)
     ('pumpkin', 'pumpkin', 'pump-kin'), ('turtle', 'turtle', 'tur-tle'), ('carrot', 'carrot', 'car-rot'), ('donut', 'donut', 'do-nut'),
     ('sandwich', 'sandwich', 'sand-wich'),
     ('banana', 'banana', 'ba-na-na'), ('elephant', 'elephant', 'el-e-phant'), ('umbrella', 'umbrella', 'um-brel-la'), ('unicorn', 'unicorn', 'u-ni-corn'),
@@ -789,7 +791,7 @@ ESENT9 = [
     ('Look at the jet.', [('look', .3, .62, .56), ('jet', .72, .3, .44)], ''), ('The fox is funny.', alone('fox'), ''), ('Where is my mug?', under('mug', 'bed'), ''),
     ('I can help you.', pair('stand', 'girl', .56, .56), ''), ('My cat can jump.', alone('cat'), ''), ('I see two cats.', many('cat', 2), ''),
     ('The cup is blue.', alone('cup'), ''),
-    ('It is a big box.', big('box'), 'run'), ('I can see a jet.', [('look', .28, .62, .56), ('jet', .72, .34, .5)], 'up'),
+    ('I see a big box.', big('box'), 'run'), ('I can see a jet.', [('look', .28, .62, .56), ('jet', .72, .34, .5)], 'up'),
     ('I can find the cat.', [('look', .3, .62, .56), ('cat', .75, .64, .36)], 'is'), ('We can make a map.', pair('stand', 'map', .56, .44), 'red'),
     ('Where is the red hat?', under('hat', 'bed'), 'can'), ('Look at the funny pig.', alone('pig'), 'is'), ('The funny dog can run.', alone('dog'), 'at'),
     ('The man can help me.', pair('man', 'sit', .6, .5), 'big'), ('The hen can run away.', alone('hen'), 'to'), ('Where is the funny cat?', under('cat', 'bed'), 'run'),
@@ -836,8 +838,10 @@ STROKE_FAMILIES = {
              ('木', '休'), ('了', '子'), ('下', '不'), ('左', '在'), ('土', '去'), ('云', '去'), ('勺', '鸟'), ('鸟', '鸡'), ('二', '开'),
              ('三', '王'), ('土', '王'), ('工', '王'), ('二', '工')],
     'part': [('明', '日', '月'), ('林', '木', '木'), ('从', '人', '人'), ('杯', '木', '不'), ('叶', '口', '十'), ('果', '日', '木'),
-             ('木', '十', '人'), ('天', '二', '人'), ('的', '白', '勺'), ('妈', '女', '马'), ('坐', '从', '土'), ('好', '女', '子')],
+             ('天', '二', '人'), ('的', '白', '勺'), ('妈', '女', '马'), ('坐', '从', '土'), ('好', '女', '子')],
 }
+# not a part: 木 = 十 + 人 is true stroke by stroke, but 人 is not a component of 木 (next to 日 + 月 = 明 a child would take
+# it for one; W4R2-06) - 十 -> 木 stays in grow
 
 LETTER_NAME = {c: c for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'}
 

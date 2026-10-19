@@ -8,7 +8,7 @@
      grow   加一笔   人 in ink slides into its place in 大, the new 横 lights up; then he writes the 横 at its turn in the order
                     (大: 横 first) and the brush writes 人's strokes at theirs - the order stays the standard's (GF 0023-2020)
      part   部件拼字  日 + 月 = 明: the brush writes the part he knows (at its turn), he writes the other part
-     look   像不像   日 and 目 side by side; he writes the one asked; then the difference lights up ("目比日多一横")
+     look   像不像   日 and 目 side by side (both written by him before); he writes the one asked; then the difference lights up
      fill   补缺笔   the character with a stroke missing (two from level 4): he writes it; from level 3 the gap is the only cue
      relay  接龙     "你一笔，我一笔！": he writes the 1st, 3rd, 5th ... stroke, the brush the others
      fade   描仿写   three rounds on one paper: trace (outline, dot, arrow) -> only the start dots -> from memory (the first dot)
@@ -24,6 +24,8 @@ Object.assign(WM, {
   hist() { try { const h = JSON.parse(localStorage.getItem('zzi.wm') || '{}'); return h && typeof h === 'object' ? h : {}; } catch (e) { return {}; } },
   note(k, m) { const h = this.hist(); h[k] = (Array.isArray(h[k]) ? h[k] : []).concat(m).slice(-7); try { localStorage.setItem('zzi.wm', JSON.stringify(h)); } catch (e) { /* private mode */ } },
   known(c) { return !!ITEM[c] && learned(c); },
+  /* written by his own hand (the write record) - 像不像's other card is one he has written, never a read-only one (W4R2-06) */
+  wrote(c) { return !!ITEM[c] && !!(Store.s.learned[c] && Store.s.learned[c].w > 0); },
   count(k) { return isEn(k) ? (LETTERS[k] || []).length : Hanzi.data && Hanzi.data[k] ? Hanzi.data[k].m.length : 0; },
   /* what can be done with k now: a family only with characters of the app that he has written */
   options(k) {
@@ -31,7 +33,7 @@ Object.assign(WM, {
     if (zh) {
       const g = this.F.grow.filter(e => e.b === k && this.known(e.a)); if (g.length) o.grow = g;
       const p = this.F.part.filter(e => e.b === k && ITEM[e.a] && ITEM[e.c] && (this.known(e.a) || this.known(e.c))); if (p.length) o.part = p;
-      const l = this.F.grow.filter(e => ITEM[e.a] && ITEM[e.b] && (e.b === k ? this.known(e.a) : e.a === k && this.known(e.b))); if (l.length) o.look = l;
+      const l = this.F.grow.filter(e => this.wrote(e.a) && this.wrote(e.b) && (e.a === k || e.b === k)); if (l.length) o.look = l;
     }
     if (n >= (zh ? 3 : 2)) o.fill = true;
     if (n >= 3) o.relay = true;
