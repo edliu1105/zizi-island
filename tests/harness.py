@@ -137,6 +137,11 @@ def enter(page):
         page.wait_for_function("typeof W3 === 'undefined' || W3.loaded === true", timeout=10000)
     except Exception:
         pass
+    try:            # 神笔海's games come in their own file (assets/js/w4.js, W4Lazy): the tests take it at once, whatever the save
+        page.evaluate("typeof W4Lazy === 'undefined' || !ORDER.w4.length || W4Lazy.load()")
+        page.wait_for_function("typeof W4Lazy === 'undefined' || !ORDER.w4.length || W4Lazy.loaded === true", timeout=15000)
+    except Exception:
+        pass
 
 
 def q(page):

@@ -196,7 +196,7 @@ with sync_playwright() as p, serve() as base:
       const oldRules = others.map(g => GAMES[g].rule).filter(Boolean);
       return { n: NEWG.length, rules, dupRule, shared, thin, oldRules };
     }""" % json.dumps(NEW))
-    log.check(r['n'] == 15 and not r['dupRule'] and not r['shared'] and not r['thin'] and not r['oldRules'], '04 15 new plays, 15 rules of their own %s; no play code shared with any other game %s %s' % (r['rules'], r['shared'][:6], r['dupRule'] + r['thin']))
+    log.check(r['n'] == 15 and not r['dupRule'] and not r['shared'] and not r['thin'] and not (set(r['oldRules']) & set(r['rules'])), '04 15 new plays, 15 rules of their own %s; no play code shared with any other game %s %s' % (r['rules'], r['shared'][:6], r['dupRule'] + r['thin']))
 
     # 05 the writing: the island's two + one old friend
     res = {}
@@ -240,7 +240,7 @@ with sync_playwright() as p, serve() as base:
     # 07 books and sentences
     r = page.evaluate("""() => {
       Store.reset(); const out = [], at = id => ALL_ISL().indexOf(id);
-      BOOKS.forEach(b => { const taught = ALL_ISL().slice(0, at(b.after) + 1).flatMap(id => ISL[id].chars.map(c => c.c));
+      BOOKS.filter(b => ISL[b.after].w !== 'w4').forEach(b => { const taught = ALL_ISL().slice(0, at(b.after) + 1).flatMap(id => ISL[id].chars.map(c => c.c));
         const txt = b.title + b.pages.map(p => p[0]).join(''), miss = Array.from(txt).filter(c => !/[。！？，]/.test(c) && !taught.includes(c));
         if (miss.length || b.pages.length !== 6 || b.pages.some(p => Array.from(p[0]).length > 8)) out.push(b.id + ':' + miss.join('')); });
       const G = { world: 'thor3', W: ISL.thor3, rng: RNG(2), bags: {} }, kn = knownZh(G);
@@ -449,7 +449,7 @@ with sync_playwright() as p, serve() as base:
       const seq = [];
       ['thor3', 'panther3', 'widow3', 'hawk3'].forEach((id, i, a) => { done(id); pass(id); Prog.check(false); seq.push(a[i + 1] ? Store.w(a[i + 1]).unlocked : Store.s.fin.w3); });
       out.seq = seq; out.order = ORDER.w3.join(','); out.partial = !!WORLDS_INFO.w3.partial; out.info = WORLDS_INFO.w3; out.dot = Supply.low();
-      Store.s.flags = ALL_ISL().filter(id => ['hawk3'].indexOf(id) < 0 && flagged(id)); Store.s.fin.w1 = 'seen'; Store.s.fin.w2 = 'seen'; Store.s.gate2 = Store.s.gate3 = Store.s.w2seen = Store.s.w3seen = true; Store.save();
+      Store.s.w4seen = true; Store.s.flags = ALL_ISL().filter(id => ['hawk3'].indexOf(id) < 0 && flagged(id)); Store.s.fin.w1 = 'seen'; Store.s.fin.w2 = 'seen'; Store.s.gate2 = Store.s.gate3 = Store.s.w2seen = Store.s.w3seen = true; Store.save();
       return out; }""")
     log.check(r['first'] == [True, False] and r['gamesOnly'] is False and r['passed'] and r['seq'] == [True, True, True, 'due'] and not r['partial'],
               '08 islands open one after another, only after the flag (4 ✓ + characters passed); the seventh -> the festival is due %s' % r)

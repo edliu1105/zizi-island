@@ -137,8 +137,8 @@ with sync_playwright() as p, serve() as base:
       document.querySelectorAll('body > div').forEach(d => { if (d.style.zIndex === '70') d.remove(); });
       return out;
     }""")
-    log.check(not r['avail'] and r['n'] == 1 and r['free'] == 2 and not r['avail2'] and r['flag'] == 3 and r['len'] == 36 and r['uniq'] == 36,
-              'V-08 the key: once a day (card 1 after the key round), nothing due -> at once (2), a flag turns one (3); 36 cards in one order %s' % r)
+    log.check(not r['avail'] and r['n'] == 1 and r['free'] == 2 and not r['avail2'] and r['flag'] == 3 and r['len'] == 51 and r['uniq'] == 51,
+              'V-08 the key: once a day (card 1 after the key round), nothing due -> at once (2), a flag turns one (3); 51 cards in one order (36 + 15 of 神笔海) %s' % r)
     # V-07 the sentence islands
     r = page.evaluate("""() => {
       const out = { fill: [], read: [], bad: [] };
@@ -173,7 +173,7 @@ with sync_playwright() as p, serve() as base:
     r = page.evaluate("""() => {
       Store.reset(); const a = Books.open().length; ISL.s1.games.forEach(g => { Store.w('s1').gstars[g] = 5; }); Store.w('s1').pok = true; const b = Books.open().map(x => x.id);
       const bad = [];
-      BOOKS.forEach(bk => { const idx = ALL_ISL().indexOf(bk.after), taught = ALL_ISL().slice(0, idx + 1).flatMap(id => ISL[id].chars.map(c => c.c));
+      BOOKS.filter(bk => ISL[bk.after].w !== 'w4').forEach(bk => { const idx = ALL_ISL().indexOf(bk.after),      /* 神笔海's books may be read together (tests/test_w4.py 10) */ taught = ALL_ISL().slice(0, idx + 1).flatMap(id => ISL[id].chars.map(c => c.c));
         bk.pages.forEach(([t]) => { const cs = Array.from(t).filter(c => !/[。！？，]/.test(c)); if (cs.length > 8 || !cs.every(c => taught.includes(c))) bad.push(bk.id + ':' + t); }); });
       return { a, b, bad };
     }""")
@@ -197,7 +197,7 @@ with sync_playwright() as p, serve() as base:
       return out;
     }""")
     log.check(r == [False, True, True, 'due', 'due', True], 'V-12 the third sea opens after the second (its first island too); all seven islands of it flagged -> its festival is due; the red dot %s' % r)
-    page.evaluate("() => { Store.s.fin.w2 = 'seen'; Store.s.fin.w1 = 'seen'; Store.s.gate2 = true; Store.s.flags = ALL_ISL().filter(flagged); Store.save(); MapView.useSet('w2'); MapView.update(); MapView.after(10); }")
+    page.evaluate("() => { Store.s.w4seen = true; Store.s.fin.w2 = 'seen'; Store.s.fin.w1 = 'seen'; Store.s.gate2 = true; Store.s.flags = ALL_ISL().filter(flagged); Store.save(); MapView.useSet('w2'); MapView.update(); MapView.after(10); }")
     page.wait_for_function("Store.s.gate3 && MapView.isl.gate.d.classList.contains('sky')", timeout=30000)
     log.check(True, 'V-12 after the second finale the gate turns gold')
     page.wait_for_timeout(800); page.evaluate("MapView.tapIsland('gate')")

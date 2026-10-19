@@ -32,6 +32,8 @@ run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py
 run w3new     tests/test_w3new.py
 run options   tests/test_options.py
+run w4        tests/test_w4.py
+run w4open    tests/test_w4open.py
 echo "end $(date +%H:%M:%S)" >> "$OUT"
 if [ -n "$BAD" ]; then echo "ALL: FAIL -$BAD" >> "$OUT"; else echo "ALL: PASS" >> "$OUT"; fi
 cat "$OUT"

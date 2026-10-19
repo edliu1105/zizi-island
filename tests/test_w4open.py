@@ -34,7 +34,7 @@ CORNERS = ['#chestbtn', '#storybtn', '#bookbtn', '#gear']
 def fresh(br, base, vw=1180, vh=820, save=None, route=None):
     pg = new_page(br, base, vw, vh)
     if route:
-        pg.route('**/assets/js/w4.js*', route)
+        pg.route('**/assets/js/w4*.js*', route)      # w4.js (or a snapshot's w4_<tag>.js)
     if save is not None:
         pg.evaluate(LOAD, save)
         pg.reload(); pg.wait_for_function('window.__ready === true', timeout=20000)
