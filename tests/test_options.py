@@ -2,13 +2,20 @@
 """Five options + the explain step after a wrong answer (client 2026-10-10, docs/OPTIONS-EXPLAIN-SPEC.md), every game, every level:
  01 the generators: every choice question of every game at levels 1-5 has five options or more (连一连: five characters on the
     right), no option twice, exactly ONE right one, and the right one's place balanced over the five places (a position bag);
-    the review card (every kind of item), 补句子 and 读一读 too; build tasks (拼单词, 十格灯) and writing are not choices
+    the review card (every kind of item), 补句子 and 读一读 too; build tasks (拼单词, 十格灯) and writing are not choices.
+    Two forms any game may use (神笔海, docs/OPTIONS-EXPLAIN-SPEC.md): a TWO-ASK question (q.answer === 'all', q.seq = the right
+    one of each ask) - with shared options q.opts: five or more, seq[0] once; with buttons of its own per ask (q.opts not an
+    array): q.asks = [{ opts, answer }, ...] when given (exactly one right in each), and the chance of getting every ask right by
+    random tapping (q.chance, else the product over the asks, two buttons each when q.asks is not given) <= 1/4. A BUILD question
+    (q.build: done step by step, e.g. the words of a sentence tapped in order): random success q.chance, else 1 / n! for the n
+    steps (q.words or q.seq), <= 0.2
  02 哪个写对了: the four wrong turns of every glyph look different from the right one and from each other (point by point)
  03 every game at every level answered wrong once (writing: one slipped stroke): the explain step runs, no page error, the
     right option is ringed in gold (the chosen one in blue), no star, no cheering, no praise and never "错" while it runs, then
     a NEW question comes; the daily key round's review cards (characters, letters, function words) too
  04 layout at 1180x820, 820x1180 and 1024x768: the five options of every choice game (levels 1, 3, 5), the review cards,
-    补句子 and 读一读 - every option >= 88 px, on screen, really on top (3 x 3 samples)
+    补句子 and 读一读 - every option >= 88 px, on screen, really on top (3 x 3 samples); a two-ask question with buttons of its own:
+    four targets or more; a build question: every target >= 88 px (not five of them)
  05 the explain step lasts 2-5 s at real speed (a sample of games)
  06 review OX1: a function word gets no picture (its sentence, the word coloured); gold and blue rings never overlap (one
     inside the other is fine); the closing line announces a new question (再来一题！ ..., never 再试一次！); 翻翻乐's fifth card
@@ -42,6 +49,25 @@ GEN = r"""() => {
         let qq; try { qq = game.gen(G, { level: lv, rng: G.rng }); } catch (e) { out.bad.push(id + ' L' + lv + ' gen error ' + e.message); break; }
         out.n++;
         G.asked.push(qq.item || (ITEM[qq.answer] ? qq.answer : null));
+        /* the two-ask form with buttons of its own per ask, and the build form (神笔海): no five shared options */
+        const two = qq.answer === 'all' && Array.isArray(qq.seq) && !Array.isArray(qq.opts) && !qq.build;
+        if (two || qq.build) {
+          const fact = n => (n <= 1 ? 1 : n * fact(n - 1));
+          let ch = typeof qq.chance === 'number' ? qq.chance : null;
+          if (two) {
+            if (qq.seq.length < 2) out.bad.push(id + ' L' + lv + ' a two-ask question with ' + qq.seq.length + ' ask');
+            if (Array.isArray(qq.asks)) {
+              qq.asks.forEach((a, j) => { const ks2 = (a.opts || []).map(x => String(x)); if (ks2.filter(x => x === String(a.answer)).length !== 1 || new Set(ks2).size !== ks2.length) out.bad.push(id + ' L' + lv + ' ask ' + j + ': not exactly one right ' + ks2.join(',')); });
+              if (ch == null) ch = qq.asks.reduce((m, a) => m / Math.max(1, (a.opts || []).length), 1);
+            } else if (ch == null) ch = Math.pow(0.5, qq.seq.length);
+            if (!(ch <= 0.25 + 1e-9)) out.bad.push(id + ' L' + lv + ' two-ask: random taps right ' + ch.toFixed(3) + ' > 1/4');
+          } else {
+            const n = (Array.isArray(qq.words) ? qq.words : Array.isArray(qq.seq) ? qq.seq : []).length;
+            if (ch == null) ch = n ? 1 / fact(n) : 1;
+            if (!(ch <= 0.2 + 1e-9)) out.bad.push(id + ' L' + lv + ' build: random taps right ' + ch.toFixed(3) + ' > 0.2 (' + n + ' steps)');
+          }
+          continue;
+        }
         const o = optsOf(game, qq), r = right(game, qq), key = x => Array.isArray(x) ? x.join(':') : String(x), ks = o.map(key);
         if (o.length < 5) out.bad.push(id + ' L' + lv + ' only ' + o.length + ' options ' + ks.join(','));
         if (new Set(ks).size !== ks.length && game.kind0 !== 'find' || (game.kind0 === 'find' && new Set(qq.opts).size !== qq.opts.length)) out.bad.push(id + ' L' + lv + ' an option twice ' + ks.join(','));
@@ -109,9 +135,10 @@ AUDIT = """() => {
   });
   /* the options themselves (drop targets such as pots / robots are not tap targets): on screen, >= 88, their middle on top */
   const st = Session.st, cards = (st && (st.cards || st.rights)) || [], opt = [];
-  cards.forEach((c, i) => { const r = c.getBoundingClientRect(); if (r.width < 2) return; const pe = c.style.pointerEvents; if (!c.dataset.gid) c.style.pointerEvents = 'auto';      /* a drop zone (pot, robot) is no tap target: test its stacking */
+  cards.forEach((c, i) => { const r = c.getBoundingClientRect(); if (r.width < 2 || getComputedStyle(c).visibility === 'hidden') return;      /* an option not shown now (a mole down in its hole) */ const pe = c.style.pointerEvents; if (!c.dataset.gid) c.style.pointerEvents = 'auto';      /* a drop zone (pot, robot) is no tap target: test its stacking */
     const h = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); c.style.pointerEvents = pe; opt.push({ i, w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom), top: !!h && (h === c || c.contains(h) || (st.can && st.can.contains(h)) || (st.cube && st.cube.contains(h)) || (st.veil && st.veil === h)) }); });
-  return { vw: innerWidth, vh: innerHeight, t: out, opts: opt, n: cards.length };
+  const q = st && st.q, form = q && q.build ? 'build' : q && q.answer === 'all' && Array.isArray(q.seq) && !Array.isArray(q.opts) ? 'two' : '';
+  return { vw: innerWidth, vh: innerHeight, t: out, opts: opt, n: cards.length || (form ? out.length : 0), form };
 }"""
 
 MEMFAM = r"""() => {
@@ -298,7 +325,7 @@ with sync_playwright() as p, serve() as base:
                         problems.append((g, lv, 'no question')); continue
                     page.wait_for_timeout(420)
                     a = page.evaluate(AUDIT)
-                    check_layout(a, '%s L%d' % (g, lv), problems)
+                    check_layout(a, '%s L%d' % (g, lv), problems, need={'build': 1, 'two': 4}.get(a.get('form'), 5))
                     page.evaluate("gesture('home')"); page.wait_for_timeout(60)
             # the review cards of the key round on four kinds of island stage
             for isl in ('ultra', 'hulk3', 'panther3', 'thor3', 's1', 'robot2'):

@@ -182,7 +182,7 @@
      Levels: 1 on and in only, two things - the sentence's noun shows its little picture; 2 under too, two things, no picture
      (read the noun); 3 by too, three things; 4 the mat as well, five things, eight places; 5 two sentences, two things to place
      (both right). A random drag is right 1 time in 6 at level 1 (two things x three places), 1 in 8, 1 in 18, 1 in 40, at level
-     5 about 1 in 800. Its 2nd hint shows the noun's picture under it (real help: no star; at level 1 it is there already). */
+     5 about 1 in 640. Its 2nd hint shows the noun's picture under it (real help: no star; at level 1 it is there already). */
   const SPOTS = { 1: ['on:bed', 'in:box', 'on:box'], 2: ['on:bed', 'in:box', 'on:box', 'under:bed'], 3: ['on:bed', 'in:box', 'on:box', 'under:bed', 'by:bed', 'by:box'] };
   SPOTS[4] = SPOTS[5] = SPOTS[3].concat(['on:mat', 'by:mat']);
   const NTHINGS = [0, 2, 2, 3, 5, 5];
