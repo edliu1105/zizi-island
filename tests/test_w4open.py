@@ -14,6 +14,13 @@
  08 the first-screen budget (index.html <= 640,000 B, gzip <= 180,000 B); w4.js in the offline list; an island of 神笔海 opened
     before w4.js has come waits for it (its buttons spin) and then plays
  09 Store.validate runs before w4.js: the stars of 神笔海's games are kept
+ ⑧ ⑨ (docs/W4-DESIGN.md §12.9; parts 11-14 on a snapshot with all nine islands, built here with --stub):
+ 10 the first seven live, ⑧ ⑨ not: the temple fair stays, ⑧ ⑨ are clouds with Spider-Man's / Optimus's shadow
+ 11 the nine places (MAPPOS4) at eight sizes: tap areas >= 155 px and >= 24 px apart, on screen, clear of the corner buttons
+ 12 an old save with ⑦ flagged: ⑧ opens with its cloud show; the brush on another sea glows and says "神笔海有新岛！" once; nothing lost
+ 13 the encore "大家都到齐啦！" once for a child who saw the finale; the photo with all 32 friends, rows of <= 11
+ 14 Store.validate keeps w4x / fin.w4x
+ 15 tools/check_w4x.py (the data of ⑧ ⑨, SENSE4's guessers) passes
 usage: python tests/test_w4open.py"""
 import os, sys, json, glob, gzip, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -146,9 +153,9 @@ with sync_playwright() as p, serve() as base:
     pg.evaluate("() => { Store.s.w4seen = true; Store.save(); }"); to_map(pg); pg.wait_for_timeout(300)
     r = pg.evaluate("""() => { MapView.useSet('w4'); MapView.update(); window.__s = []; const f = Voice.sayNow; Voice.sayNow = function (t, o) { window.__s.push(t); return f.call(this, t, o); };
       const soon = Object.keys(MapView.isl).filter(k => /^soon/.test(k)); if (soon.length) MapView.tapIsland(soon[0]);
-      return { live: ORDER.w4.slice(), soon: soon.length, said: window.__s.slice(), locked: soon.every(k => MapView.isl[k].d.classList.contains('locked')), data: Object.keys(ISL).filter(k => ISL[k].w === 'w4'), partial: !!WORLDS_INFO.w4.partial, panel: !!MapView.panel }; }""")
-    want_soon = 7 - len(r['live'])
-    log.check(r['soon'] == want_soon and (not want_soon or ('新岛还在建哦！' in r['said'] and r['locked'] and not r['panel'])) and r['data'] == r['live'] and r['partial'] == (want_soon > 0),
+      return { live: ORDER.w4.slice(), soon: soon.length, said: window.__s.slice(), locked: soon.every(k => MapView.isl[k].d.classList.contains('locked')), data: Object.keys(ISL).filter(k => ISL[k].w === 'w4'), partial: !!WORLDS_INFO.w4.partial, panel: !!MapView.panel, total: WORLDS_INFO.w4.total, fest: !!MapView.isl.fest }; }""")
+    want_soon = r['total'] - len(r['live'])          # ⑧ ⑨ (§12.9): partial only while one of the first SEVEN is not live
+    log.check(r['soon'] == want_soon and (not want_soon or ('新岛还在建哦！' in r['said'] and r['locked'] and not r['panel'])) and r['data'] == r['live'] and r['partial'] == (len(r['live']) < 7) and r['fest'] == (not r['partial']),
               '04 %d live, %d clouds that say "新岛还在建哦！" and never open; only live islands in the data %s' % (len(r['live']), r['soon'], r))
     pg.context.close()
 
@@ -169,15 +176,17 @@ with sync_playwright() as p, serve() as base:
     # 06 the parent panel
     pg = fresh(br, base, save=SAVES['w1done'])
     pg.evaluate("() => { Store.s.w4seen = true; Store.save(); }"); to_map(pg); pg.wait_for_timeout(300)
-    r = pg.evaluate("""() => { Parent.open(); const sh = document.querySelector('#parent .sheet'), h = Array.from(sh.querySelectorAll('h3')).map(e => e.textContent);
+    pg.evaluate("() => Parent.open()")               # its 神笔海 section comes with the lazy file (W4R1N-06)
+    pg.wait_for_function("!!document.querySelector('#parent .sheet [data-w4go]')", timeout=20000)
+    r = pg.evaluate("""() => { const sh = document.querySelector('#parent .sheet'), h = Array.from(sh.querySelectorAll('h3')).map(e => e.textContent);
       const rows = Array.from(sh.querySelectorAll('table')).find(t => /统编一上/.test(t.textContent)); const go = sh.querySelector('[data-w4go]');
-      return { h: h.filter(x => /神笔海/.test(x)), rows: rows ? rows.querySelectorAll('tr').length - 1 : 0, go: !!go && !go.disabled, lessons: LESSONS4.length }; }""")
+      return { h: h.filter(x => /神笔海/.test(x)), rows: rows ? rows.querySelectorAll('tr').length - 1 : 0, go: !!go && !go.disabled, lessons: W4D.lessons.length, first: typeof LESSONS4 === 'undefined' }; }""")
     pg.evaluate("() => document.querySelector('#parent .sheet [data-w4go]').click()")
     try:
         pg.wait_for_function("MapView.set === 'w4' && !MapView.sailing && !document.querySelector('#parent').classList.contains('on')", timeout=15000); flew = True
     except Exception:
         flew = False
-    log.check(len(r['h']) >= 2 and r['rows'] == r['lessons'] and r['go'] and flew, '06 the parent panel: 神笔海\'s section and lesson table (%d rows), "现在就去神笔海" flies there %s %s' % (r['rows'], r, flew))
+    log.check(len(r['h']) >= 2 and r['rows'] == r['lessons'] and r['go'] and flew and r['first'], '06 the parent panel: 神笔海\'s section and lesson table (%d rows), "现在就去神笔海" flies there %s %s' % (r['rows'], r, flew))
     pg.context.close()
     pg = fresh(br, base); to_map(pg)
     r = pg.evaluate("() => { const a = Prog.worldOpen('w4'); Parent.open(); const b = Array.from(document.querySelectorAll('#parent .pbtn')).find(x => x.textContent === '全部解锁'); b.click(); Parent.close(); Prog.check(false); return [a, Prog.worldOpen('w4'), ORDER.w4.every(id => Store.w(id).unlocked)]; }")
@@ -228,5 +237,138 @@ with sync_playwright() as p, serve() as base:
     r = pg.evaluate("(id) => ({ loaded: W4Lazy.loaded, gs: Store.s.worlds[id].gstars, played: Store.s.worlds[id].played })", first)
     log.check(not r['loaded'] and r['gs'].get(first + ':find') == 3 and r['gs'].get(first + ':write') == 5 and r['played'] == [first + ':find'], '09 Store.validate before w4.js (even when it cannot come): 神笔海\'s stars are kept %s' % r)
     pg.context.close()
+
+    # ================================================================ ⑧ 复仇者 and ⑨ 变形金刚 (docs/W4-DESIGN.md §12.9)
+    # 10 before ⑧ ⑨ are live: the temple fair stays (partial looks at the first seven only); ⑧ ⑨ are clouds with their hosts' shadows
+    pg = fresh(br, base, save=SAVES['w1done'])
+    pg.evaluate("() => { Store.s.w4seen = true; Store.save(); }"); to_map(pg); pg.wait_for_timeout(300)
+    r = pg.evaluate("""() => { MapView.useSet('w4'); MapView.update(); const soon = Object.keys(MapView.isl).filter(k => /^soon/.test(k));
+      return { live: ORDER.w4.length, total: WORLDS_INFO.w4.total, partial: !!WORLDS_INFO.w4.partial, fest: !!MapView.isl.fest, soon: soon.length,
+        hosts: soon.map(k => MapView.isl[k].hero.getAttribute('src').split('/').pop().replace('.png', '')), shadow: soon.every(k => MapView.isl[k].hero.style.filter.indexOf('brightness(0)') >= 0) }; }""")
+    if 7 <= r['live'] < r['total']:
+        log.check(not r['partial'] and r['fest'] and r['soon'] == r['total'] - r['live'] and r['shadow'] and set(r['hosts']) <= {'spiderman', 'optimus'},
+                  '10 the first seven live, ⑧ ⑨ not yet: the temple fair island stays, ⑧ ⑨ are clouds with Spider-Man / Optimus as shadows %s' % r)
+    else:
+        log.check(r['partial'] == (r['live'] < 7), '10 partial only while one of the first seven is not live %s' % r)
+    pg.context.close()
+
+    # a snapshot with ⑧ ⑨ in the data (their play files need not exist: --stub) for the map, the old saves and the finale
+    FIRST7 = ['ultra4', 'peppa4', 'pj4', 'xiyou4', 'huluwa4', 'paw4', 'bluey4']
+    b89 = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'build.py'), '--live=' + ','.join(FIRST7 + ['avengers4', 'robot4']), '--stub=avengers4,robot4', '--tag=t89'],
+                         cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', env=dict(os.environ, PYTHONIOENCODING='utf-8'))
+    page0 = os.environ.get('KM_PAGE')
+    os.environ['KM_PAGE'] = 'index_t89.html'
+    try:
+        pg = fresh(br, base)
+        n9 = pg.evaluate("ORDER.w4.length"); pg.context.close()
+        log.check(b89.returncode == 0 and n9 == 9, '10 a snapshot with all nine islands of 神笔海 (⑧ ⑨ stubbed) builds %s %s' % (n9, (b89.stdout + b89.stderr)[-300:]))
+
+        # 11 the nine places (MAPPOS4, islands at 0.85) at eight sizes
+        probs = []
+        for vw, vh in ((1180, 820), (1024, 768), (1194, 834), (1366, 1024), (820, 1180), (768, 1024), (834, 1194), (1024, 1366)):
+            pg = fresh(br, base, vw, vh, save=SAVES['w3'])
+            pg.evaluate("() => { Store.s.w4seen = true; Store.s.all = true; ORDER.w4.forEach(id => { Store.w(id).unlocked = true; }); Store.save(); }")
+            to_map(pg); pg.wait_for_timeout(300)
+            a = pg.evaluate("""(corners) => { MapView.closePanel(true); MapView.useSet('w4'); MapView.update();
+              const R = e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; };
+              const gap = (A, B) => Math.max(B.x - A.r, A.x - B.r, B.y - A.b, A.y - B.b);
+              const ids = Object.keys(MapView.isl), isl = ids.filter(k => k !== 'fest' && k !== 'gate'), hit = {}; ids.forEach(k => { hit[k] = R(MapView.isl[k].hit); });
+              const out = [];
+              isl.forEach(k => { if (Math.min(hit[k].w, hit[k].h) < 155) out.push([k, 'tap', Math.round(hit[k].w)]); });
+              ['fest', 'gate'].forEach(k => { if (hit[k] && Math.min(hit[k].w, hit[k].h) < 88) out.push([k, 'tap', Math.round(hit[k].w)]); });
+              ids.forEach((k, i) => ids.slice(i + 1).forEach(j => { const g = gap(hit[k], hit[j]); if (g < 24) out.push([k, j, Math.round(g)]); }));
+              ids.forEach(k => { const h = hit[k]; if (h.x < 0 || h.y < 0 || h.r > innerWidth || h.b > innerHeight) out.push([k, 'off screen']); });
+              corners.map(s => document.querySelector(s)).filter(e => e && e.offsetParent !== null).forEach(e => { const c = R(e); ids.forEach(k => { if (gap(hit[k], c) < 0) out.push([k, 'corner button']); }); });
+              isl.forEach(k => { const I = MapView.isl[k]; [I.lan, I.big, I.hero].filter(e => e && e.isConnected && e.offsetParent !== null).forEach(e => { const c = R(e); if (!c.w) return;
+                ids.filter(j => j !== k).forEach(j => { if (gap(c, hit[j]) < 0) out.push([k, 'its lantern / host over', j]); }); }); });
+              return { n: isl.length, out }; }""", CORNERS)
+            if a['n'] != 9 or a['out']:
+                probs.append((vw, vh, a['n'], a['out'][:4]))
+            pg.context.close()
+        log.check(not probs, '11 the nine places of 神笔海 at eight sizes: every island tap area >= 155 px, temple fair / gate >= 88, all >= 24 px apart, on screen, clear of the corner buttons, lanterns and hosts clear of the others %s' % probs[:6])
+
+        # 12 an old save with ⑦'s flag (from before ⑧ ⑨): ⑧ opens with its cloud show, the brush says "神笔海有新岛！" once, nothing lost
+        pg = fresh(br, base, save=SAVES['w3'])
+        pg.evaluate("""(seven) => { const o = JSON.parse(localStorage.getItem('zzi.v1')), full = id => ({ unlocked: true, gstars: Object.fromEntries(ISL[id].games.map(g => [g, 5])), played: ISL[id].games.slice(), visits: 3, sessions: 3, stars: 20, story: 0, pok: true });
+          seven.forEach(id => { o.worlds[id] = full(id); }); delete o.worlds.avengers4; delete o.worlds.robot4; delete o.w4x; o.fin = Object.assign({}, o.fin, { w4: 'seen' }); delete o.fin.w4x;
+          o.flags = Array.from(new Set((o.flags || []).concat(seven))); o.w4 = true; o.w4seen = true; o.w4from = 'w3'; o.mapSet = 'w3'; localStorage.setItem('zzi.v1', JSON.stringify(o)); }""", FIRST7)
+        pg.reload(); pg.wait_for_function('window.__ready === true', timeout=20000)
+        before = pg.evaluate("(seven) => JSON.stringify(seven.map(id => [Store.w(id).gstars, Store.w(id).stars, Store.s.flags.includes(id)]))", FIRST7)
+        r1 = pg.evaluate("() => ({ w4x: Store.s.w4x, a: Store.w('avengers4').unlocked, j: !!Store.w('avengers4').justOpened, r: Store.w('robot4').unlocked, fin: Store.s.fin.w4 })")
+        pg.evaluate("() => { window.__said = []; const f = Voice.say; Voice.say = function (t, o) { window.__said.push(t); return f.call(this, t, o); }; }")
+        to_map(pg)
+        try:
+            pg.wait_for_function("Store.s.w4x === 2", timeout=25000); told = True
+        except Exception:
+            told = False
+        r2 = pg.evaluate("() => ({ set: MapView.set, ring: !!MapView.isl.brush && MapView.isl.brush.glow.style.boxShadow.length > 0, said: window.__said.filter(t => t === '神笔海有新岛！').length })")
+        pg.evaluate("() => MapView.after(10)"); pg.wait_for_timeout(2500)
+        again = pg.evaluate("() => window.__said.filter(t => t === '神笔海有新岛！').length")
+        pg.evaluate("() => MapView.sail('w4')")
+        try:
+            pg.wait_for_function("MapView.set === 'w4' && !MapView.sailing && !Store.w('avengers4').justOpened", timeout=25000); show = True
+        except Exception:
+            show = False
+        r3 = pg.evaluate("(seven) => ({ said: window.__said.includes('新小岛开啦！'), same: JSON.stringify(seven.map(id => [Store.w(id).gstars, Store.w(id).stars, Store.s.flags.includes(id)])), fin: Store.s.fin.w4, fest: !!MapView.isl.fest && !MapView.isl.fest.d.classList.contains('locked'), robot: Store.w('robot4').unlocked })", FIRST7)
+        log.check(r1 == {'w4x': 1, 'a': True, 'j': True, 'r': False, 'fin': 'seen'}, '12 an old save with ⑦ flagged: once at start-up ⑧ opens (with its cloud show still to come), ⑨ not yet %s' % r1)
+        log.check(told and r2['set'] == 'w3' and r2['ring'] and r2['said'] == 1 and again == 1, '12 on 彩虹海 the brush wears its gold ring and says "神笔海有新岛！" once (not again) %s %s' % (r2, again))
+        log.check(show and r3['said'] and r3['same'] == before and r3['fin'] == 'seen' and r3['fest'] and not r3['robot'], '12 on 神笔海 the cloud of ⑧ flies away ("新小岛开啦！"); every star, flag and the finale seen are as they were, the temple fair still open %s' % r3)
+        log.check(not pg.errors, '12 no page errors %s' % pg.errors[:3])
+        pg.context.close()
+
+        # 13 the encore: a child who saw the finale before gets it once more when ⑧ ⑨ have their flags; one who did not, once
+        for seen in (True, False):
+            pg = fresh(br, base, save=SAVES['w3'])
+            pg.evaluate("""(seen) => { const o = JSON.parse(localStorage.getItem('zzi.v1'));
+              ORDER.w4.forEach(id => { o.worlds[id] = { unlocked: true, gstars: Object.fromEntries(ISL[id].games.map(g => [g, 5])), played: ISL[id].games.slice(), visits: 3, sessions: 3, stars: 20, story: 0, pok: true }; });
+              o.flags = Array.from(new Set((o.flags || []).concat(ORDER.w4))); o.w4 = true; o.w4seen = true; o.w4x = 2; o.mapSet = 'w4'; o.fin = Object.assign({}, o.fin, { w4: seen ? 'seen' : '' }); delete o.fin.w4x;
+              localStorage.setItem('zzi.v1', JSON.stringify(o)); }""", seen)
+            pg.reload(); pg.wait_for_function('window.__ready === true', timeout=20000)
+            r0 = pg.evaluate("() => [Store.s.fin.w4, Store.s.fin.w4x]")
+            pg.evaluate("() => { window.__said = []; const f = Voice.say; Voice.say = function (t, o) { window.__said.push(t); return f.call(this, t, o); }; }")
+            to_map(pg)
+            try:
+                pg.wait_for_function("Screens.cur === 'finale'", timeout=30000); fin = True
+            except Exception:
+                fin = False
+            pg.wait_for_timeout(800)
+            r = pg.evaluate("""() => { const im = Array.from(document.querySelectorAll('#finale .crowd img')), rows = {};
+              im.forEach(e => { const t = e.style.top; rows[t] = (rows[t] || 0) + 1; });
+              return { n: im.length, want: new Set(ORDER.w4.flatMap(id => ISL[id].crew)).size, rows: Object.values(rows), fin: [Store.s.fin.w4, Store.s.fin.w4x], said: window.__said.filter(t => t === '大家都到齐啦！' || t === '庆典开始啦！'),
+                friends: ['spiderman', 'hulk', 'optimus', 'bumblebee'].every(c => im.some(e => e.getAttribute('src').indexOf('/' + c + '.png') >= 0)) }; }""")
+            pg.evaluate("() => { Finale.stop(); Screens.show('map'); MapView.update(); MapView.after(10); }"); pg.wait_for_timeout(3000)
+            twice = pg.evaluate("() => Screens.cur === 'finale'")
+            if seen:
+                log.check(r0 == ['seen', 'due'] and fin and r['said'] == ['大家都到齐啦！'] and r['fin'] == ['seen', 'seen'] and not twice,
+                          '13 finale seen before ⑧ ⑨: their flags -> "大家都到齐啦！" and the finale once more, then never again %s %s' % (r0, r))
+            else:
+                log.check(r0 == ['due', 'seen'] and fin and '庆典开始啦！' in r['said'] and '大家都到齐啦！' not in r['said'] and r['fin'] == ['seen', 'seen'] and not twice,
+                          '13 finale never seen: all nine flags -> the finale once (no encore) %s %s' % (r0, r))
+            log.check(r['n'] == r['want'] == 32 and r['friends'] and max(r['rows'] or [99]) <= 11 and len(r['rows']) <= 3,
+                      '13 the photo: all %d friends of the nine islands (Spider-Man, Hulk, Optimus, Bumblebee among them), rows of at most 11 %s' % (r['want'], r))
+            pg.context.close()
+
+        # 14 Store.validate knows w4x and fin.w4x; a save without them gets 0 / ''
+        pg = fresh(br, base, save=SAVES['w2'])
+        r = pg.evaluate("""() => { const a = JSON.parse(JSON.stringify(Store.s)); const o = JSON.parse(JSON.stringify(Store.s)); delete o.w4x; delete o.fin.w4x;
+          const v = Store.validate(o), w = Store.validate(JSON.parse(JSON.stringify(Object.assign(a, { w4x: 2, fin: Object.assign({}, a.fin, { w4x: 'due' }) }))));
+          const bad = Store.validate(Object.assign(JSON.parse(JSON.stringify(Store.s)), { w4x: 'x', fin: Object.assign({}, Store.s.fin, { w4x: 7 }) }));
+          return [v.w4x, v.fin.w4x, w.w4x, w.fin.w4x, bad.w4x, bad.fin.w4x]; }""")
+        log.check(r == [0, '', 2, 'due', 0, ''], '14 Store.validate: w4x and fin.w4x kept, missing or broken -> 0 / "" %s' % r)
+        pg.context.close()
+    finally:
+        if page0 is None:
+            os.environ.pop('KM_PAGE', None)
+        else:
+            os.environ['KM_PAGE'] = page0
+        for f in ('index_t89.html', os.path.join('assets', 'js', 'w4_t89.js'), os.path.join('assets', 'js', 'wm_t89.js')):
+            try:
+                os.remove(os.path.join(ROOT, f))
+            except OSError:
+                pass
+
+    # 15 the data of ⑧ ⑨ and SENSE4 (tools/check_w4x.py: one order a story, one right box, only taught characters, <= 8, the guessers)
+    c = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check_w4x.py')], cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', env=dict(os.environ, PYTHONIOENCODING='utf-8'))
+    log.check(c.returncode == 0, '15 tools/check_w4x.py: %s' % ' | '.join(l for l in c.stdout.splitlines() if l.startswith(('FAIL', 'ALL', 'SENSE4', 'STORY8')))[:600])
     br.close()
 sys.exit(0 if log.close() else 1)

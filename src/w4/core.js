@@ -93,9 +93,9 @@ W4X.Write = Object.assign({}, W3Write);
    ISL[id].games (find, write, en, quiz). bgs: the island's backgrounds (new art, or the fallback tools/build.py chose) */
 function w4Island(id, plays) {
   const W = ISL[id]; if (!W) return;               /* not live */
-  const cast = W.cast, host = cast[0], [find, en, quiz] = plays, bg = W.bgs;
+  const cast = W.cast, host = cast[0], [find, en, quiz, wx] = plays, bg = W.bgs;      /* wx (optional): members over W4X.Write for this island (⑧ ⑨'s finishing shows) */
   zGame(Object.assign({}, W4X.Base, find), { id: id + ':find', world: id, bg: bg[0], chars: cast, host, title: '认字', iconNode: find.iconNode || (() => Glyph.zh(W.chars[0].c, 60)) });
-  writeGame(Object.assign({}, W4X.Write, { id: id + ':write', world: id, lang: 'zh', bg: bg[1], chars: cast.slice(0, 1), host, title: '写字', intro: '写一写！', iconNode: () => Glyph.zh(W.write[0], 60, '#E8414B'), decor: writeDecor }));
+  writeGame(Object.assign({}, W4X.Write, { id: id + ':write', world: id, lang: 'zh', bg: bg[1], chars: cast.slice(0, 1), host, title: '写字', intro: '写一写！', iconNode: () => Glyph.zh(W.write[0], 60, '#E8414B'), decor: writeDecor }, wx || {}));
   zGame(Object.assign({}, W4X.Base, { kind0: 'en', verb: 'ABC' }, en), { id: id + ':en', world: id, bg: bg[2], chars: cast.slice(0, 1), host, title: '英文' });
   zGame(Object.assign({}, W4X.Base, { kind0: 'quiz', verb: '想！' }, quiz), { id: id + ':quiz', world: id, bg: bg[3], chars: cast, host, title: '挑战' });
 }
@@ -131,7 +131,7 @@ Object.assign(W4X, {
       row._cells = Array.from(line).map(c => {
         if (/[。！？，]/.test(c)) { const p = el('span', '', row); p.textContent = c; Object.assign(p.style, { font: '900 ' + Math.round(h * 0.6) + 'px system-ui,sans-serif', color: INK }); return null; }
         const cell = el('div', '', row); Object.assign(cell.style, { width: h + 'px', height: h + 'px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' });
-        cell.appendChild(Glyph.zh(c, h * 0.92, this.knownChar(c) ? INK : '#BDB3A0')); cell.dataset.ch = c;
+        cell.appendChild(Glyph.zh(c, h * 0.92, this.knownChar(c) ? INK : '#8A8070')); cell.dataset.ch = c;
         tapify(cell, () => { const it = ITEM[c]; Voice.sayNow(it ? it.line : c, { tag: 'story' }); cell.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 300 }); });
         return cell;
       }).filter(Boolean);
@@ -156,4 +156,132 @@ Object.assign(W4X, {
     Voice.sayNow(s.title, { tag: 'story' });
     Voice.say(W4D.scrollKind[s.kind], { tag: 'story' });
   },
+});
+
+/* ---------------------------------------------------------------- 卡片进空格 (docs/W4-DESIGN.md §12.11): ⑧-4 故事排排队 and ⑨-3 拼出一句话
+   put their cards into slots the same way. The play draws its board, its slots and its cards (ZX.thing); W4X.slots does the
+   moving, and the play listens:
+     a TAP on a card below flies it into the first empty slot; a tap on a card in a slot sends it back down;
+     a DRAG drops it into any slot (onto a full one: that card goes back down; dropped anywhere else it springs back);
+     a HOLD (0.65 s) on a card calls o.hear(i): the play says it, and that question earns no star (§12.5 "卡不念");
+     every slot full: o.full(order), order[s] = the card in slot s - the play submits it (Session.submit(st, order.join(','))).
+   const S = st.slots = W4X.slots(st, { cards, n, slot: s => rect, tray: i => rect, full(order) {}, hear(i) {}, look(i, s) {}, changed() {} })
+   (rects in stage px for the current orientation; look: a card's style in a slot (s >= 0) or below (-1)).
+   place(st): S.layout()   onGesture: const r = S.gesture(name, p); if (r) return r;   explain: await S.back(i, ms), await S.put(i, s, ms)
+   next(st, strat) (the tests): return S.next(want, strat) - want[s] = the right card of slot s. Card ids: 'card0'...'card9'. */
+Object.assign(W4X, {
+  slots(st, o) {
+    const cards = o.cards, N = o.n, at = new Array(N).fill(-1), where = cards.map(() => -1), slotIds = () => Array.from({ length: N }, (_, s) => ({ id: 'slot' + s, rect: () => o.slot(s) }));
+    const S = {
+      at, where, n: N, cards, locked: false,
+      rect(i) { return where[i] >= 0 ? o.slot(where[i]) : o.tray(i); },
+      /* a card to r - from where it is seen now (a drag leaves a transform on it) */
+      go(i, r, ms) {
+        const e = cards[i], b = box(e), m = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(e.style.transform || ''), ox = b.x + (m ? Number(m[1]) : 0), oy = b.y + (m ? Number(m[2]) : 0);
+        e.getAnimations().forEach(a => a.cancel()); e.style.transform = ''; place(e, r.x, r.y, r.w, r.h); e.style.zIndex = where[i] >= 0 ? 14 : 12;
+        if (o.look) o.look(i, where[i]);
+        if (!ms || st.scope.dead) return Promise.resolve();
+        return st.scope.anim(e, [{ transform: 'translate(' + (ox - r.x) + 'px,' + (oy - r.y) + 'px)' }, { transform: 'translate(0,0)' }], { duration: ms, easing: EASE.glide, fill: 'none' });
+      },
+      layout() { cards.forEach((e, i) => { e.getAnimations().forEach(a => a.cancel()); e.style.transform = ''; const r = this.rect(i); place(e, r.x, r.y, r.w, r.h); e.style.zIndex = where[i] >= 0 ? 14 : 12; if (o.look) o.look(i, where[i]); }); },
+      firstEmpty() { return at.indexOf(-1); },
+      isFull() { return at.every(i => i >= 0); },
+      order() { return at.slice(); },
+      put(i, s, ms) {
+        const j = at[s];
+        if (j !== i) {
+          if (where[i] >= 0) at[where[i]] = -1;
+          if (j >= 0) { where[j] = -1; this.go(j, o.tray(j), 260); }
+          at[s] = i; where[i] = s;
+        }
+        return this.go(i, o.slot(s), ms == null ? 260 : ms);
+      },
+      back(i, ms) { if (where[i] >= 0) { at[where[i]] = -1; where[i] = -1; } return this.go(i, o.tray(i), ms == null ? 240 : ms); },
+      check() { if (!this.locked && this.isFull()) { this.locked = true; o.full(this.order()); } },
+      gesture(name, p) {
+        const i = K.cardIndex(p && p.id);
+        if (this.locked || st.submitted || i < 0 || i >= cards.length) return false;
+        if (name === 'hold') { if (o.hear) o.hear(i); K.hop(st, cards[i], 12); return 'free'; }
+        if (name === 'tap' && where[i] >= 0) { Sfx.tap(); this.back(i); if (o.changed) o.changed(); return 'free'; }
+        let s = -1;
+        if (name === 'tap') s = this.firstEmpty();
+        else if (name === 'drop') { const m = /^slot(\d)$/.exec(p.to || ''); s = m ? Number(m[1]) : -1; }
+        if (s < 0 || s >= N) { if (name === 'drop') this.go(i, this.rect(i), 200); return false; }
+        Sfx.place(); this.put(i, s); if (o.changed) o.changed(); this.check();
+        return 'ok';
+      },
+      /* the tests: right - the right card of the first slot that is not right yet (a wrong card there goes back first);
+         wrong - a card that is not the right one for the first empty slot (the order made is then wrong) */
+      next(want, strat) {
+        if (this.locked || st.submitted) return null;
+        if (strat === 'wrong') {
+          const s = this.firstEmpty(); if (s < 0) return null;
+          const i = cards.findIndex((e, k) => where[k] < 0 && k !== want[s]);
+          return { g: 'tap', p: { id: 'card' + (i >= 0 ? i : want[s]) } };
+        }
+        const s = at.findIndex((k, j) => k !== want[j]); if (s < 0) return null;
+        if (at[s] >= 0) return { g: 'tap', p: { id: 'card' + at[s] } };
+        const i = want[s];
+        if (where[i] >= 0 || s === this.firstEmpty()) return { g: 'tap', p: { id: 'card' + i } };
+        const r = o.slot(s);
+        return { g: 'drop', p: { id: 'card' + i, to: 'slot' + s }, to: { x: r.x + r.w / 2, y: r.y + r.h / 2 } };
+      },
+    };
+    cards.forEach((e, i) => K.reg(st, 'card' + i, e, { drag: true, hold: 650, tapOk: true, drops: slotIds }));
+    st.cards = cards;
+    return S;
+  },
+});
+
+/* ---------------------------------------------------------------- ⑧ ⑨ on the map (docs/W4-DESIGN.md §12.9; boot.js W4X.news asks):
+   on another sea, once: the brush says that 神笔海 has a new island (a tap flies there, where its cloud flies away); on 神笔海, a
+   child who saw the finale before ⑧ ⑨ were done gets it once more now that both have their flags - the photo with the new friends */
+Object.assign(W4X, {
+  async news2(MV, live) {
+    const S = Store.s;
+    if (MV.set !== 'w4') {
+      S.w4x = 2; Store.save();
+      Sfx.fanfare(); Voice.say('神笔海有新岛！', { tag: 'unlock' }); MV.pointAt('brush');
+      await new Promise(r => setTimeout(r, T(1800)));
+      return true;
+    }
+    S.fin.w4x = 'seen'; Store.save();
+    const F = MV.isl.fest; if (!F) return false;
+    F.glow.style.opacity = 1;
+    F.land.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: 'translate(-50%,-50%) scale(1.2)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: T(800) + 1, easing: EASE.pop });
+    Sfx.fanfare(); Voice.say('大家都到齐啦！', { tag: 'unlock' }); MV.pointAt('fest');
+    await new Promise(r => setTimeout(r, T(2400)));
+    if (live()) Finale.play('w4');
+    return true;
+  },
+});
+
+/* ---------------------------------------------------------------- the parent panel's 神笔海 section (§10.6; boot.js W4X.parent puts
+   its heading and asks for this): the lesson table (W4D.lessons: LESSONS4 + the rows of ⑧ ⑨ once live) and "go there now" */
+Object.assign(W4X, {
+  parent2(sh) {
+    el('div', 'mut', sh, { text: '神笔海的字和顺序跟的是统编版一年级上册（2024 新版）；每周的形式（汉字儿歌 + 古诗 + 故事书）照学而思小猴语文 L1。下表：课本这一课在神笔海的哪个岛、哪个游戏。拿到真正的学而思课表时，只改这张表的数据。'
+      + (WORLDS_INFO.w4.partial ? '（神笔海的岛做好一个上线一个：现在上线 ' + ORDER.w4.length + ' 个，其余在地图上是云。）' : '') });
+    const t = el('table', '', sh); t.innerHTML = '<tr><th>统编一上（2024）的课</th><th>神笔海</th></tr>';
+    W4D.lessons.forEach(([a, b]) => { const tr = el('tr', '', t); el('td', '', tr, { text: a }); el('td', '', tr, { text: b }); });
+    const open = this.open(), go = el('button', 'pbtn', sh, { text: open ? '现在就去神笔海' : '神笔海还没开（晨光海七面旗插满后开）' });
+    go.dataset.w4go = 1;
+    if (!open) go.disabled = true;
+    go.addEventListener('click', () => {
+      if (!this.open()) return;
+      Parent.close();
+      if (Session.G) Session.home();
+      Screens.show('map'); Voice.enter('map'); MapView.build();
+      if (MapView.set === 'w4') { MapView.update(); return; }
+      MapView.update(); MapView.sail('w4');
+    });
+    el('div', 'mut', sh, { text: '“现在就去神笔海”只是带孩子飞过去，不改任何进度。平时每片海地图上同一个位置都有一支发光的毛笔，点它就去神笔海；神笔海中间的月亮门回到来的那片海。' });
+  }
+});
+
+/* ---------------------------------------------------------------- English word pictures (W4R1N-10): of WORDS3 / WORDS4 entries
+   ([word, picture, clear]) only those a 4-year-old names by that very word (clear = 1) and whose picture we have. Every play that
+   shows a word's picture WITHOUT saying the word takes its words from here (bun is a 包子, can a blank tin: clear 0) */
+Object.assign(W4X, {
+  picWords(list) { return list.filter(v => v[2] && W4X.hasPic(v[1])); },
 });

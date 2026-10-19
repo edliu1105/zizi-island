@@ -7,8 +7,9 @@ out from existing object pictures - an exact layout, never a generated guess (sa
   前 front     three ducklings (assets/obj/duck.png) walking right in a row, the front (rightmost) one in the gold ring
   后 back      the same row, the last (leftmost) one in the gold ring
   右 rightsign assets/obj/leftsign.png (our own generated picture, not the client's) mirrored left-right
-usage: python tools/compose_w4.py  ->  assets/obj/{many,few,middle,front,back,rightsign}.png (400 px, transparent)"""
-import os
+  变 change    the yellow car (assets/obj/yellowcar.png) -> a gold arrow -> the client's Bumblebee, unchanged (§12.4)
+usage: python tools/compose_w4.py [change]  ->  assets/obj/{many,few,middle,front,back,rightsign,change}.png (400 px, transparent)"""
+import os, sys
 from PIL import Image, ImageDraw, ImageOps
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -81,7 +82,43 @@ def row(path, ringed, h=150, lean=0):
     return im
 
 
+def change():
+    """变 (docs/W4-DESIGN.md §12.4): an ordinary little yellow car (our own new picture), a curved gold arrow, and the client's
+    Bumblebee (assets/chars/bumblebee.png - only scaled, never redrawn). Without the car: the arrow and Bumblebee alone"""
+    im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    bee = load(os.path.join(ROOT, 'assets', 'chars', 'bumblebee.png'), h=236)
+    car_p = os.path.join(OBJ, 'yellowcar.png')
+    k = 4
+    big = Image.new('RGBA', (S * k, S * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(big)
+    if os.path.exists(car_p):
+        car = load(car_p, w=150)
+        put(im, car, 80, 318)
+        ax0, ax1 = 70, 168          # the arrow arcs from above the car to Bumblebee
+    else:
+        ax0, ax1 = 40, 168
+    # a thick curved arrow: a quadratic arc, then its head (drawn 4x and scaled down: smooth)
+    pts = []
+    for t in [i / 40 for i in range(41)]:
+        x = (1 - t) ** 2 * ax0 + 2 * (1 - t) * t * ((ax0 + ax1) / 2) + t * t * ax1
+        y = (1 - t) ** 2 * 236 + 2 * (1 - t) * t * 40 + t * t * 196
+        pts.append((x * k, y * k))
+    d.line(pts, fill=EDGE, width=26 * k, joint='curve')
+    d.line(pts, fill=GOLD, width=16 * k, joint='curve')
+    hx, hy = ax1 + 10, 214          # the head points down and right, at Bumblebee
+    head = [(hx * k, hy * k), ((hx - 34) * k, (hy - 18) * k), ((hx - 4) * k, (hy - 42) * k)]
+    d.polygon(head, fill=GOLD, outline=EDGE)
+    d.line(head + [head[0]], fill=EDGE, width=4 * k)
+    im.alpha_composite(big.resize((S, S), Image.LANCZOS))
+    put(im, bee, S - 6 - bee.width / 2, S - 30 - bee.height / 2)
+    b = im.getbbox(); out = Image.new('RGBA', (S, S), (0, 0, 0, 0))          # centred in the square
+    out.alpha_composite(im.crop(b), ((S - (b[2] - b[0])) // 2, (S - (b[3] - b[1])) // 2))
+    return out
+
+
 def main():
+    if sys.argv[1:] == ['change']:
+        save(change(), 'change'); return
     if os.path.exists(os.path.join(PROPS, 'plate.png')) and os.path.exists(os.path.join(PROPS, 'cookie.png')):
         save(plate_with(8), 'many')
         save(plate_with(2), 'few')
@@ -96,6 +133,7 @@ def main():
         save(ImageOps.mirror(Image.open(src).convert('RGBA')), 'rightsign')
     else:
         print('skip rightsign: assets/obj/leftsign.png not made yet')
+    save(change(), 'change')
 
 
 if __name__ == '__main__':

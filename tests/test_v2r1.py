@@ -71,9 +71,11 @@ with sync_playwright() as p, serve() as base:
     # 05
     r = page.evaluate("(() => { Store.s.album.n = CARDS.length; const src = String(Keys.turn); return src.includes('this.album()'); })()")
     log.check(r, '05 all cards out: the key opens the album')
-    # 06
+    # 06 (神笔海's books, read together, may show characters not taught yet - 我们一家人！: their outlines are in
+    #     assets/data/hanzi_extra.json, which the glyphs fall back to; it comes with the lazy file)
+    page.wait_for_function("typeof W4Lazy === 'undefined' || !W4Lazy.loaded || !!Hanzi.extra", timeout=20000)
     r = page.evaluate("""() => { const all = new Set(); Object.values(FW_SENTS).forEach(l => l.forEach(([t]) => Array.from(t).forEach(c => all.add(c)))); READ.forEach(r => Array.from(r[0]).forEach(c => all.add(c))); BOOKS.forEach(b => b.pages.forEach(([t]) => Array.from(t).forEach(c => all.add(c))));
-      return Array.from(all).filter(c => !/[。！？，]/.test(c) && !Hanzi.data[c]); }""")
+      return Array.from(all).filter(c => !/[。！？，]/.test(c) && !Hanzi.data[c] && !(Hanzi.extra && Hanzi.extra[c])); }""")
     log.check(not r, '06 every character of every sentence has stroke data %s' % r)
     # 07
     # V2R2-11: only what ships (assets/voice/bank.json through Bank.has), not the build-side list in raw/

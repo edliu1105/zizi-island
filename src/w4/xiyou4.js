@@ -368,8 +368,8 @@
   };
 
   /* ---------------------------------------------------------------- ④-4 挑战 「归！」 送字回家 (sort by meaning)
-     Five little houses, a kind of thing on each door: the sky (a cloud), the ground (a hill and grass), animals (paw prints),
-     the body (a little person), doing (a runner), the family (three heads: only once the child knows a family character). A card
+     Five little houses, a big round sign over each door: the sky (a cloud), the ground (a hill and grass), animals (a puppy),
+     the body (a hand and an eye), doing (a running boy), the family (three heads: only once the child knows a family character). A card
      in the middle (read, not said: a tap says it and that question earns no star). Drag it into its house, or tap the house.
      Every character has one kind (KIND4); the disputable ones are not asked. Levels: 1 the card's picture beside it; 2 the
      character alone; 3 a character with a look-alike of another kind (日/目, 手/牛, 田/日): read it carefully; 4 a word of two
@@ -381,21 +381,38 @@
   const kindLine = k => W4D.kindLine[KZ[k]];
   const charPic = c => { const o = ITEM[c] && ITEM[c].obj; return o && (o[0] === '@' || W4X.hasPic(o)) ? o : null; };
   const itemPic = t => (t.length === 1 ? charPic(t) : zhPic(t));
+  /* the signs on the doors (W4R1N-08): >= 100 px, pictures a 4-year-old names at once - the sky (a cloud in the blue) and the
+     ground (a hill on the grass) drawn; animals = a puppy's face, the body = a hand and an eye, doing = the running boy (the
+     app's own pictures); the family = three heads (only once a family character is known) */
   const KIND_ICON = {
-    sky: '<circle cx="30" cy="30" r="27" fill="#BFE6FF" stroke="#2B2118" stroke-width="2.5"/><path d="M15 41C9 41 7 35 10 31C12 28 16 27 19 29C20 22 26 18 32 19C38 19 42 23 43 28C48 27 53 31 52 36C52 39 49 41 46 41Z" fill="#fff" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/>',
-    ground: '<circle cx="30" cy="30" r="27" fill="#E4F4D2" stroke="#2B2118" stroke-width="2.5"/><path d="M9 44L24 17L33 31L39 23L52 44Z" fill="#9AA4B0" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/><path d="M19 26L24 17L29 25Z" fill="#fff"/><path d="M5 44C14 37 46 37 55 44V50C46 56 14 56 5 50Z" fill="#5CC46E" stroke="#2B2118" stroke-width="3"/>',
-    animal: '<circle cx="30" cy="30" r="27" fill="#FFE9CC" stroke="#2B2118" stroke-width="2.5"/><g fill="#8B5E3C"><ellipse cx="21" cy="38" rx="7.5" ry="6.5"/><circle cx="13" cy="29" r="3.4"/><circle cx="18" cy="24" r="3.4"/><circle cx="25" cy="24" r="3.4"/><circle cx="29.5" cy="29" r="3.4"/><ellipse cx="40" cy="24" rx="6" ry="5.2"/><circle cx="33.5" cy="17" r="2.7"/><circle cx="37.5" cy="13" r="2.7"/><circle cx="43" cy="13" r="2.7"/><circle cx="46.5" cy="17" r="2.7"/></g>',
-    body: '<circle cx="30" cy="30" r="27" fill="#FFE3EA" stroke="#2B2118" stroke-width="2.5"/><circle cx="30" cy="17" r="7" fill="#fff" stroke="#2B2118" stroke-width="3.5"/><path d="M30 25V40M18 31H42M30 40L22 52M30 40L38 52" stroke="#2B2118" stroke-width="4" stroke-linecap="round" fill="none"/>',
-    action: '<circle cx="30" cy="30" r="27" fill="#E8E2FF" stroke="#2B2118" stroke-width="2.5"/><circle cx="36" cy="14" r="5.5" fill="#2B2118"/><path d="M34 22L27 35L36 41L31 51M27 35L18 44M32 26L43 31M32 26L21 24" stroke="#2B2118" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-    family: '<circle cx="30" cy="30" r="27" fill="#FFF1C4" stroke="#2B2118" stroke-width="2.5"/><g fill="#2B2118"><circle cx="18" cy="20" r="6"/><path d="M9 47C9 31 27 31 27 47Z"/><circle cx="42" cy="20" r="6"/><path d="M33 47C33 31 51 31 51 47Z"/><circle cx="30" cy="32" r="4.5"/><path d="M23.5 49C23.5 38 36.5 38 36.5 49Z"/></g>',
+    sky: '<circle cx="30" cy="30" r="27" fill="#BFE6FF"/><path d="M15 41C9 41 7 35 10 31C12 28 16 27 19 29C20 22 26 18 32 19C38 19 42 23 43 28C48 27 53 31 52 36C52 39 49 41 46 41Z" fill="#fff" stroke="#2B2118" stroke-width="2.6" stroke-linejoin="round"/>',
+    ground: '<circle cx="30" cy="30" r="27" fill="#E4F4D2"/><path d="M9 44L24 17L33 31L39 23L52 44Z" fill="#9AA4B0" stroke="#2B2118" stroke-width="2.6" stroke-linejoin="round"/><path d="M19 26L24 17L29 25Z" fill="#fff"/><path d="M3 44C14 37 46 37 57 44V58H3Z" fill="#5CC46E" stroke="#2B2118" stroke-width="2.6"/>',
+    family: '<circle cx="30" cy="30" r="27" fill="#FFF1C4"/><g fill="#2B2118"><circle cx="18" cy="20" r="6"/><path d="M9 47C9 31 27 31 27 47Z"/><circle cx="42" cy="20" r="6"/><path d="M33 47C33 31 51 31 51 47Z"/><circle cx="30" cy="32" r="4.5"/><path d="M23.5 49C23.5 38 36.5 38 36.5 49Z"/></g>',
+  };
+  const SIGN_BG = { sky: '#BFE6FF', ground: '#E4F4D2', animal: '#FFE9CC', body: '#FFE3EA', action: '#E8E2FF', family: '#FFF1C4' };
+  /* a round sign: size in px, or null to fill its parent */
+  const signNode = (k, size) => {
+    const d = el('div', ''), wh = size ? size + 'px' : '100%';
+    Object.assign(d.style, { position: 'relative', width: wh, height: wh, borderRadius: '50%', overflow: 'hidden', background: SIGN_BG[k], pointerEvents: 'none', flex: 'none' });
+    const pic = (o, css) => { const i = img(OBJURL(o), '', d); Object.assign(i.style, { position: 'absolute', objectFit: 'contain', pointerEvents: 'none' }, css); return i; };
+    if (KIND_ICON[k]) d.innerHTML = '<svg viewBox="3 3 54 54" width="100%" height="100%" style="display:block">' + KIND_ICON[k] + '</svg>';
+    else if (k === 'animal') pic('dog', { width: '128%', height: '160%', left: '-14%', top: '4%', objectFit: 'cover', objectPosition: '50% 0' });
+    else if (k === 'body') { pic('hand', { width: '60%', height: '60%', left: '6%', top: '34%' }); pic('eye', { width: '58%', height: '58%', left: '38%', top: '10%' }); }
+    else if (k === 'action') pic('run', { width: '88%', height: '88%', left: '6%', top: '6%' });
+    const rim = el('div', '', d); Object.assign(rim.style, { position: 'absolute', inset: '0', borderRadius: '50%', boxShadow: 'inset 0 0 0 ' + (size && size < 70 ? 3 : 5) + 'px #2B2118', pointerEvents: 'none' });
+    return d;
   };
   const HOUSE_COL = { sky: ['#4FA3E8', '#EAF6FF'], ground: ['#3FAE4A', '#F1F8E4'], animal: ['#C8743A', '#FFF3E2'], body: ['#E86A8E', '#FFF0F4'], action: ['#7A5CD6', '#F2EEFF'], family: ['#F59A23', '#FFF7E2'] };
-  const houseSvg = k => '<svg viewBox="0 0 170 190" width="100%" height="100%"><path d="M8 84L85 10L162 84Z" fill="' + HOUSE_COL[k][0] + '" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>'
-    + '<rect x="20" y="78" width="130" height="106" rx="10" fill="' + HOUSE_COL[k][1] + '" stroke="#2B2118" stroke-width="6"/><path d="M36 184V124C36 96 134 96 134 124V184Z" fill="#B07A45" stroke="#2B2118" stroke-width="5"/>'
-    + '<g transform="translate(46,102) scale(1.3)">' + KIND_ICON[k] + '</g></svg>';
-  const iconSvg = (k, size) => { const d = el('div', ''); d.innerHTML = '<svg viewBox="0 0 60 60" width="' + size + '" height="' + size + '">' + KIND_ICON[k] + '</svg>'; return d.firstChild; };
-  const HW = () => (L() ? 168 : 180), HH = () => (L() ? 186 : 198);
-  const HOUSES = () => (L() ? [0, 1, 2, 3, 4].map(i => [512 + (i - 2) * 182, 393]) : [[130, 540], [352, 540], [574, 540], [241, 768], [463, 768]]);
+  /* a house: roof, wall, a little door - and the big sign over the door (62 % of the house's width: >= 105 px) */
+  const house = (d, k) => {
+    d.innerHTML = '<svg viewBox="0 0 170 210" width="100%" height="100%" style="position:absolute;inset:0"><path d="M6 86L85 8L164 86Z" fill="' + HOUSE_COL[k][0] + '" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>'
+      + '<rect x="16" y="78" width="138" height="126" rx="10" fill="' + HOUSE_COL[k][1] + '" stroke="#2B2118" stroke-width="6"/><path d="M68 204V190C68 178 102 178 102 190V204Z" fill="#B07A45" stroke="#2B2118" stroke-width="5"/></svg>';
+    const w = el('div', '', d); Object.assign(w.style, { position: 'absolute', left: '50%', top: '57%', width: '62%', aspectRatio: '1', transform: 'translate(-50%,-50%)', pointerEvents: 'none' });
+    w.appendChild(signNode(k, null));
+    return d;
+  };
+  const HW = () => (L() ? 168 : 180), HH = () => Math.round(HW() * 210 / 170);
+  const HOUSES = () => (L() ? [0, 1, 2, 3, 4].map(i => [512 + (i - 2) * 182, 388]) : [[130, 530], [352, 530], [574, 530], [241, 776], [463, 776]]);
   const Sort = {
     rule: 'sort-by-meaning', kind0: 'quiz', verb: '归！', intro: '送字回家！', props: [],
     gen(G, o) {
@@ -440,7 +457,7 @@
       const q = st.q;
       st.ix = 0; st.done = [];
       st.opts = q.opts.slice();
-      st.cards = q.opts.map((k, i) => { const d = ZX.thing(st, HW(), HH(), 5, 'item'); d.innerHTML = houseSvg(k); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 60 * i); return d; });
+      st.cards = q.opts.map((k, i) => { const d = house(ZX.thing(st, HW(), HH(), 5, 'item'), k); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 60 * i); return d; });
       st.reads = q.items.map((t, j) => this.readCard(st, t, j));
       st.readEl = st.reads[0]; st.readText = q.items[0];
       if (q.pic) st.pics = [this.picCard(st, 0)];
@@ -539,7 +556,7 @@
     },
     pairAdd(st, d, want) {
       const s = d._s, eq = el('div', ''); eq.innerHTML = '<svg viewBox="0 0 40 40" width="40" height="40"><path d="M8 20H32M24 12L32 20L24 28" fill="none" stroke="#B07800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      const ic = iconSvg(want, s);
+      const ic = signNode(want, s);
       if (d._left) { eq.firstChild.style.transform = 'scaleX(-1)'; d.insertBefore(eq, d.firstChild); d.insertBefore(ic, d.firstChild); place(d, parseFloat(d.style.left) - s - 50 - 10, parseFloat(d.style.top)); d.style.width = d.style.height = 'auto'; }
       else { d.appendChild(eq); d.appendChild(ic); }
       d.dataset.ex = 'pair'; d.style.boxShadow = '0 0 0 4px ' + EX_GOLD + ', 0 6px 0 rgba(43,33,24,.2)';
@@ -560,7 +577,7 @@
     },
     workEls(st) { return (st.cards || []).concat((st.reads || []).filter((_, j) => !(st.done || []).includes(j))); },
     snap(st) { return { opts: st.opts || null, ix: st.ix || 0 }; },
-    iconNode() { const d = el('div'); d.innerHTML = houseSvg('animal'); Object.assign(d.style, { width: '76%', height: '76%' }); return d; },
+    iconNode() { const d = house(el('div'), 'animal'); Object.assign(d.style, { position: 'relative', width: '64%', height: '79%' }); return d; },
   };
 
   w4Island('xiyou4', [Peach, Flash, Sort]);

@@ -87,3 +87,67 @@ Several agents share one working tree: `python tools/build.py --live=ultra4,pepp
 `KM_PAGE=index_a.html W4_ONLY=peppa4 python tests/test_w4.py` (every suite honours `KM_PAGE`). Delete the snapshot afterwards.
 Before an island goes live: `test_w4` for it, `tests/test_options.py`, `tests/test_layout.py`, `tests/test_w4open.py` and
 `bash tests/run_all.sh` pass; its lines are recorded; its backgrounds are new or checked fallbacks.
+
+## ⑧ 复仇者·英雄训练场 (`avengers4`) and ⑨ 变形金刚·汽车人工厂 (`robot4`) - docs/W4-DESIGN.md §12
+
+New since the seven islands (package 0 of ⑧⑨, 2026-10-19). Everything else above holds unchanged.
+
+**Files.** `src/w4/avengers4.js` (package ⑧: 圈字 `char-in-sentence`, 拍节拍 `count-the-beats`, 排故事 `story-order`) and
+`src/w4/robot4.js` (package ⑨: 跟住它 `track-after-transform`, 拼句子 `build-the-sentence`, 加一笔 `add-one-stroke`), each
+`w4Island(id, [find, en, quiz, wx])`. Not in `tools/w4_live.json` until the island is done: try it with
+`python tools/build.py --live=ultra4,peppa4,pj4,xiyou4,huluwa4,paw4,bluey4,avengers4 --tag=a8` (⑨ also needs `avengers4`).
+
+**`wx` (optional, 4th):** members laid over `W4X.Write` for that island's 写字 only - the finishing shows of §12.5 (好: 女 and 子
+apart then together, the thumbs-up hops; 力: Hulk flexes; 工: the toolbox; 厂: the gear turns). E.g.
+`{ async reveal(st) { await WriteBase.reveal.call(this, st); if (st.q.answer === '好') { ... } } }`. Never edit `W4X.Write`
+(the writing modes own it).
+
+**Data** (`tools/content.py`, the ⑧⑨ block; in the lazy file as `W4D.*`; package 0 changes it, the islands only read):
+
+| `W4D.` | content.py | What |
+|---|---|---|
+| `sent8` | `SENT8` | ⑧-1: `[k, sentence, word]` x 40 - k is in it exactly once; `word` = the two-character word holding k (level 5) or `''`. Any character that is in a sentence once may be asked there (a review). Ask a sentence only when `W4X.knowsAll(G, s)`. Look-alikes: `LOOK[k]` (joined at init) |
+| `story8` | `STORY8` | ⑧-4: `{ s: [3-4 cards], pic: [a scene a card], why: ['', reason, ...], think: 0/1 }` x 24 - exactly ONE order (each card can only happen after the one before; `tools/check_w4x.py` counts the orders). `think` = levels 3 / 5. Ask a story only when every card is known |
+| `beats8` | `BEATS8` | ⑧-3: `[word, picture, 'ba-na-na']` x 42 (1-4 beats); `beats8ph`: `[phrase, 'big-ba-na-na', scene]` x 15 (level 5) |
+| `esent9` | `ESENT9` | ⑨-3: `[sentence, scene, extra]` x 36 (3-5 words, one possible order; the end mark is the last, fixed cell); `extra` = level 5's card that fits no slot. `sight9`: the 8 new sight words |
+| `add1` | (from `STROKE_FAMILIES`) | ⑨-4's questions: `{ a, b, keep, add, say }` - B = A + the stroke `add` (an index into B's strokes: the gold stroke of the explanation, the dashed line of the 2nd hint); `keep` = where A's strokes are in B; `say` = the writing modes' line (人加一横变成大！) |
+| `near1` | (computed) | `['AB', ...]` every pair that is - or could be taken for - "A + one stroke = B" among ALL taught characters: never offer B' with `near1.includes(a + B')` as a wrong box (nor A' with `near1.includes(A' + b)` in the reverse question). That makes exactly one right box |
+| `read` / `scrolls` | `READ4` / `SCROLLS4` | + 6 sentences (王坐下。…), + 《好朋友》 (r8, after `avengers4`), 《小汽车》 (r9, after `robot4`) |
+
+Pictures: 好 `thumbsup`, 力 `@hulk`, 出 `mouseout`, 王 `crown`, 高 `tower`, 变 `change` (composed: a yellow car -> Bumblebee),
+能 `cube`, 工 `toolbox`, 厂 `factory`, 路 `road`; also `yellowcar`, `jump`, and from 点点岛 `pumpkin turtle carrot watermelon
+helicopter donut tomato sandwich`. Backgrounds `avengers4_find/_write/_abc/_quiz`, `robot4_*` (each empty where its game draws).
+`SAMEPIC`: 变 / 车 and 好 / 手 are never offered together; `HOLDS`: 女 子 -> 好, 工 -> 左 红, 口 -> 高 路, 土 -> 王, 足 -> 路, 月 -> 能.
+
+**`W4X.slots(st, o)`** (core.js) - the cards-into-slots of ⑧-4 and ⑨-3, the same for both. The play draws the board, the
+slots and the cards (`ZX.thing`); the helper registers the cards (`card0`...) and moves them:
+* tap a card below: it flies into the first empty slot; tap a card in a slot: back down; drag: into any slot (a card already
+  there goes back down; dropped elsewhere it springs back); HOLD a card 0.65 s: `o.hear(i)` (say it; that question earns no
+  star - "卡不念"); every slot full: `o.full(order)` (`order[s]` = the card in slot s): submit it.
+* `const S = st.slots = W4X.slots(st, { cards, n, slot: s => ({x, y, w, h}), tray: i => ({x, y, w, h}), full(order) {...}, hear(i) {...}, look(i, s) {...} })`
+  (stage px, current orientation; `look`: restyle a card in a slot `s >= 0` / below `-1`).
+* `place(st)`: `S.layout()`; `onGesture`: `const r = S.gesture(name, p); if (r) return r;`; explain: `await S.back(i, ms)`,
+  `await S.put(i, s, ms)`; `next(st, strat)`: `return S.next(want, strat)` (`want[s]` = the right card of slot s).
+* Hand it in as a BUILD question (`build: 1`, `opts: null`, `chance` = 1/n!; with an extra card 1/(6·5·4·3·2)).
+
+**Lines recorded by package 0** (`tools/voice_lines.py` `w4x_lines()`): 圈X！, 找X！, X在哪辆车里？ for every character; the 40
+sentences; the story cards; every beat word and phrase, and the same slowly: `Voice.say('~' + word)` (the '~' is not said);
+the ESENT9 sentences and their words (as written and lower case); "A加一笔是B" / "B减一笔是A" for every `add1` pair and its
+`say`; 神笔海有新岛！ / 大家都到齐啦！. Your own literals (拍了两下, 这一句在后面, 变形！ ...) are found in your file as before:
+run `python tools/voice_lines.py` and send the new lines to the orchestrator.
+
+**Map** (package 0): 神笔海 has nine places (`MAPPOS4`, islands at 0.85); ⑧⑨ not live are clouds with Spider-Man's /
+Optimus's shadow ("新岛还在建哦！"); the temple fair stays (`partial` looks at the first seven only). Old saves: ⑦ flagged ->
+⑧ opens with its cloud show (`Store.s.w4x`), the brush on other seas says "神笔海有新岛！" once; `fin.w4x`: the finale once
+more with the new friends for a child who saw it before ⑧⑨.
+
+**Also new (review W4R1N, 2026-10-19):**
+* `W4X.picWords(list)` - of WORDS3 / WORDS4 entries `[word, picture, clear]` only those whose picture a 4-year-old names by
+  that word (clear = 1). A play that shows a word's picture WITHOUT saying it must take its words from here (bun = 包子).
+* The parent panel's 神笔海 section is lazy (`W4X.parent2` in core.js, the lesson table `W4D.lessons`); nothing of it on the
+  first screen.
+* `tools/build.py` drops the whole-line `/* */` comments of the FIRST-SCREEN script (`tools/jsstrip.py`, only if the result
+  passes `node --check`); the sources keep them, the lazy files too.
+* `tools/voice_lines.py` also finds the lines in an array given to any call (`W4X.exRight(st, e, k, ['...'])`, `EX.cards(...,
+  { lines: [...] })`).
+* Data checks: `python tools/check_w4x.py` (⑧⑨'s tables, SENSE4's "guess without reading" baseline via `tools/sense_guess.py`).

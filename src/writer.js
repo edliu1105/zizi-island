@@ -30,6 +30,9 @@ const STROKE_NAMES = {
   多: '撇 横撇 点 撇 横撇 点', 少: '竖 撇 点 撇', 开: '横 横 撇 竖', 关: '点 撇 横 横 撇 捺', 去: '横 竖 横 撇折 点',
   左: '横 撇 横 竖 横', 右: '横 撇 竖 横折 横', 中: '竖 横折 横 竖', 前: '点 撇 横 竖 横折钩 横 横 竖 竖钩', 后: '撇 撇 横 竖 横折 横',
   爷: '撇 点 撇 捺 横折钩 竖', 奶: '撇点 撇 提 横折折折钩 撇', 妹: '撇点 撇 提 横 横 竖 撇 点', 女: '撇点 撇 横', 子: '横撇 竖钩 横',
+  /* 神笔海 ⑧ ⑨ (docs/W4-DESIGN.md §12.10, GF 0023-2020: 王's last stroke is a 横 - a 提 only as a left part) */
+  好: '撇点 撇 提 横撇 竖钩 横', 力: '横折钩 撇', 出: '竖折 竖 竖 竖折 竖', 王: '横 横 竖 横', 高: '点 横 竖 横折 横 竖 横折钩 竖 横折 横',
+  变: '点 横 竖 竖 撇 点 横撇 捺', 能: '撇折 点 竖 横折钩 横 横 撇 竖弯钩 撇 竖弯钩', 工: '横 竖 横', 厂: '横 撇', 路: '竖 横折 横 竖 横 竖 提 撇 横撇 捺 竖 横折 横',
 };
 const Hanzi = {
   data: null, p: null,
@@ -152,10 +155,15 @@ const Geo = {
 let WSEQ = 0;
 const INK = '#2B2118', HILITE = '#FFB35C';
 class Writer {
-  /* opt: { kind: 'zh' | 'en', glyph, level, x, y, size (zh: square side; en: height), onDone(clean), say: true } */
+  /* opt: { kind: 'zh' | 'en', glyph, level, x, y, size (zh: square side; en: height), bare, z,
+            given: [i] - strokes the brush writes, each at its turn in the order (the writing modes, docs/WRITE-MODES.md: the
+                   known part of 加一笔 / 部件拼字, the rest of 补缺笔, every other stroke of 接龙); the child writes the others,
+            ghost: the given strokes' outline shows from the start (a familiar ghost),
+            cues: { guide 0..1, hi, dot: 'cur' | 'all' | 'first' | false, arrow } - what helps him, instead of his level's } */
   constructor(st, opt) {
     this.st = st; this.opt = opt; this.kind = opt.kind; this.glyph = opt.glyph; this.level = opt.level || 1;
     this.id = ++WSEQ; this.k = 0; this.slips = 0; this.slipK = -1; this.done = false; this.paused = false;
+    this.given = new Set(opt.given || []); this.cues = opt.cues || null; this.flush = null;
     if (this.kind === 'zh') {
       this.S = 1024;
       this.strokes = Hanzi.strokes(opt.glyph).map(s => ({ med: s.med, outline: s.outline, name: s.name }));
@@ -187,18 +195,21 @@ class Writer {
     }
     /* the glyph layers: guide (outline), done strokes, highlight, cues, trail */
     const flip = zh ? { transform: 'translate(0,900) scale(1,-1)' } : {};
+    this.gGhost = svg('g', flip, s);
     this.gGuide = svg('g', flip, s);
     this.gDone = svg('g', {}, s);
+    this.gFx = svg('g', {}, s);                    /* a writing mode's pictures (the known character sliding into place) */
     this.gHi = svg('g', flip, s);
     this.gCue = svg('g', {}, s);
     this.gTrail = svg('g', {}, s);
     this.strokes.forEach((sk, i) => {
+      const gh = opt.ghost && this.given.has(i), gp = gh ? this.gGhost : this.gGuide, gc = gh ? '#D2C4AE' : '#E3DACB';
       if (zh) {
-        sk.guide = svg('path', { d: sk.outline, fill: '#E3DACB' }, this.gGuide);
+        sk.guide = svg('path', { d: sk.outline, fill: gc }, gp);
         const cp = svg('clipPath', { id: 'cp' + this.id + '_' + i }, defs);
         svg('path', { d: sk.outline, transform: 'translate(0,900) scale(1,-1)' }, cp);
       } else {
-        sk.guide = svg('path', { d: this.dOf(sk.med), fill: 'none', stroke: '#E3DACB', 'stroke-width': 11, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, this.gGuide);
+        sk.guide = svg('path', { d: this.dOf(sk.med), fill: 'none', stroke: gc, 'stroke-width': 11, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gp);
       }
       sk.L = Geo.len(sk.med);
     });
@@ -212,7 +223,7 @@ class Writer {
   dOf(pts) { return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(''); }
   /* the outline: how much of it shows at this level */
   setGuide() {
-    const lv = this.level, op = this.free ? 1 : lv >= 5 ? 0 : lv === 4 ? 0.32 : 1;
+    const lv = this.level, op = this.cues ? this.cues.guide : this.free ? 1 : lv >= 5 ? 0 : lv === 4 ? 0.32 : 1;
     this.gGuide.style.opacity = op;
   }
   place(x, y, size) {
@@ -228,20 +239,23 @@ class Writer {
   /* the cues for the stroke to write now: its highlight, the green start dot (numbered), the arrow */
   cue(force) {
     this.gHi.innerHTML = ''; this.gCue.innerHTML = '';
-    const sk = this.strokes[this.k]; if (!sk || this.done) return;
-    const lv = this.free ? 1 : this.level, zh = this.kind === 'zh', S = this.S;
-    if (lv <= 3 || force) {
+    const sk = this.strokes[this.k]; if (!sk || this.done || this.given.has(this.k)) return;
+    const lv = this.free ? 1 : this.level, zh = this.kind === 'zh', S = this.S, c = this.cues, slip = force || this.slipK === this.k;
+    const dot = c ? c.dot : lv <= 2 ? 'cur' : false;
+    if (c ? c.hi || force : lv <= 3 || force) {
       if (zh) svg('path', { d: sk.outline, fill: HILITE, stroke: '#E8862B', 'stroke-width': 10 }, this.gHi);
       else svg('path', { d: this.dOf(sk.med), fill: 'none', stroke: HILITE, 'stroke-width': 11.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, this.gHi);
       this.gHi.animate([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 1400, iterations: Infinity });      /* the stroke to write now: clearly orange, breathing */
     }
-    if (lv <= 2 || force || this.slipK === this.k) {
-      const p0 = sk.med[0], r = zh ? 46 : 6.5;
+    /* the green start dot(s), numbered: this stroke's; or every stroke still to write (照着写); or only the first (自己写) */
+    const dots = slip || dot === 'cur' ? [this.k] : dot === 'all' ? this.strokes.map((_, i) => i).filter(i => i >= this.k && !this.given.has(i)) : dot === 'first' && !this.strokes.some((_, i) => i < this.k && !this.given.has(i)) ? [this.k] : [];
+    dots.reverse().forEach(i => {
+      const p0 = this.strokes[i].med[0], r = zh ? 46 : 6.5;
       svg('circle', { cx: p0[0], cy: p0[1], r, fill: '#5CC46E', stroke: INK, 'stroke-width': zh ? 9 : 1.4 }, this.gCue);
       const t = svg('text', { x: p0[0], y: p0[1] + r * 0.36, 'text-anchor': 'middle', 'font-size': r * 1.05, 'font-weight': 900, fill: '#fff', 'font-family': 'system-ui, sans-serif' }, this.gCue);
-      t.textContent = String(this.k + 1);
-    }
-    if (lv === 1 || force || this.slipK === this.k) {
+      t.textContent = String(i + 1);
+    });
+    if (c ? c.arrow || slip : lv === 1 || slip) {
       /* the arrow: the centre line, a little inside, marching dashes and a head at the end */
       const m = sk.med, sw = zh ? 16 : 2.2;
       const a = svg('path', { d: this.dOf(m), fill: 'none', stroke: '#2E6FD8', 'stroke-width': sw, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': zh ? '34 30' : '5 4.5', opacity: 0.9 }, this.gCue);
@@ -266,9 +280,9 @@ class Writer {
     a.onfinish = () => { p.style.strokeDashoffset = 0; };
     return p;
   }
-  /* the brush shows strokes (all from k on, or just one), in the highlight colour, then they fade */
-  async demo(st, only, keep, color) {
-    const sc = st.scope, ids = only != null ? [only] : this.strokes.map((_, i) => i).filter(i => i >= this.k);
+  /* the brush shows strokes (all from k on, or just these), in the highlight colour, then they fade (keep: they stay) */
+  async demo(st, only, keep, color, fast) {
+    const sc = st.scope, ids = only != null ? [].concat(only) : this.strokes.map((_, i) => i).filter(i => i >= this.k);
     this.paused = true; this.gCue.style.opacity = 0;
     const brush = img('assets/props/brush.png', '', Stage.el); brush.style.position = 'absolute'; brush.style.zIndex = 30; brush.style.pointerEvents = 'none';
     const bs = this.box.w * (this.kind === 'zh' ? 0.24 : 0.5);
@@ -277,7 +291,7 @@ class Writer {
     for (const i of ids) {
       if (st.scope.dead) return;
       /* a letter's one long stroke (m: down, up, over, down, up, over, down) gets a little more time */
-      const sk = this.strokes[i], dur = Math.max(420, Math.min(this.kind === 'en' ? 1300 : 900, sk.L / this.S * 1400));
+      const sk = this.strokes[i], dur = Math.max(420, Math.min(this.kind === 'en' ? 1300 : 900, sk.L / this.S * 1400)) * (fast ? 0.7 : 1);
       shown.push(this.ink(i, color || '#FF9F43', dur));
       Sfx.nz(0, dur / 1000, 1400, 900, 0.6, 0.05);
       /* the brush tip follows the centre line (enough points to go up and back down a retraced line) */
@@ -285,7 +299,7 @@ class Writer {
       const kf = pts.map(q => ({ left: (q.x - bs * 0.18) + 'px', top: (q.y - bs * 0.92) + 'px' }));
       place(brush, pts[0].x - bs * 0.18, pts[0].y - bs * 0.92, bs, bs);
       await sc.anim(brush, kf, { duration: dur, easing: 'linear', fill: 'forwards' });
-      await sc.wait(160);
+      await sc.wait(fast ? 60 : 160);
     }
     brush.remove();
     if (keep) { this.paused = false; return; }
@@ -311,7 +325,9 @@ class Writer {
     if (res.ok) {
       this.ink(this.k, INK, 260);
       this.k++;
-      if (this.k >= this.strokes.length) { this.done = true; this.gHi.innerHTML = ''; this.gCue.innerHTML = ''; res.done = true; }
+      res.done = !this.strokes.some((_, i) => i >= this.k && !this.given.has(i));      /* none of his left (the brush may still write) */
+      if (this.given.has(this.k)) this.flush = this.auto();
+      else if (this.k >= this.strokes.length) { this.done = true; this.gHi.innerHTML = ''; this.gCue.innerHTML = ''; }
       else this.cue();
     } else {
       this.slips++; this.slipK = this.k;
@@ -320,9 +336,42 @@ class Writer {
     res.name = sk.name;
     return res;
   }
+  /* the brush writes its strokes (given) that come now in the order, in ink; then it is his turn again (or all is written) */
+  async auto() {
+    const st = this.st;
+    this.paused = true; this.gHi.innerHTML = ''; this.gCue.innerHTML = '';
+    while (this.k < this.strokes.length && this.given.has(this.k)) {
+      await this.demo(st, this.k, true, INK, true);
+      if (st.scope.dead) return;
+      this.paused = true; this.k++;
+    }
+    this.gCue.style.opacity = 1;
+    if (this.k >= this.strokes.length) this.done = true;
+    else { this.paused = false; this.cue(); }
+  }
+  /* before his first stroke: the brush's strokes that come first (明 with 日 given: the brush writes 日, then he writes 月) */
+  start() { if (this.given.has(0)) this.flush = this.auto(); return this.flush || Promise.resolve(); }
   /* for tests and the helper: the stroke to write now, in stage points (reversed = written the wrong way) */
   expected(rev) { const sk = this.strokes[this.k]; if (!sk) return null; const m = Geo.resample(sk.med, 14).map(q => this.toStage(q)); return (rev ? m.reverse() : m).map(p => [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10]); }
   center() { return { x: this.box.x + this.box.w / 2, y: this.box.y + this.box.h / 2 }; }
 }
 /* the factual line for a slip (never "wrong") */
 const SLIP = { start: '从绿点开始写', back: '跟着箭头写', order: '先写这一笔', shape: '跟着箭头写' };
+/* the writing modes (docs/WRITE-MODES.md, client 2026-10-18: "writing is always the same") come in their own small file,
+   assets/js/wm.js (WMJS, built from src/wm.js), the first time a writing game asks for it; until it is there - offline before
+   it was ever cached - every writing is the classic trace */
+const WM = {
+  on: false, p: null,
+  load() {
+    if (this.on || typeof WMJS === 'undefined') return Promise.resolve(this.on);
+    if (this.p) return this.p;
+    return (this.p = new Promise(res => {
+      const s = document.createElement('script'), t = setTimeout(() => res(this.on), 5000);
+      s.src = WMJS; s.async = true;
+      s.onload = () => { clearTimeout(t); res(this.on); };
+      s.onerror = () => { clearTimeout(t); s.remove(); this.p = null; res(false); };
+      document.head.appendChild(s);
+    }));
+  },
+  loaded() { this.on = true; },
+};

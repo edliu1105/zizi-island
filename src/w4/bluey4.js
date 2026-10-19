@@ -8,13 +8,15 @@
   const GOLD = '#FFB400';
 
   /* ---------------------------------------------------------------- ⑦-1 认字 「牵！」 顺着线找一找
-     Five kites in the sky, a character on each; five of the family on the grass below - Bluey, Bingo, Bandit, Chilli and 葫芦爷爷
-     (the client's pictures) - each holding a string. The strings run from the kites down to the hands and cross. Tap the one who
+     Five kites in the sky, a character on each; five friends on the grass below - Bluey, Bandit, Chilli, Skye and Marshall (the
+     client's pictures; never 葫芦爷爷 or Bingo, who are the pictures of 爷 and 妹) - each holding a string. The strings run from the kites down to the hands and cross. Tap the one who
      holds X's kite (a tap on a kite only says how: "点拉线的人！"). Levels: 1 the strings run straight down, the picture on the
      task card; 2 heard only, X's string crosses one other; 3 every string crosses another, look-alikes and an old character on
      the kites; 4 every string bends twice and they cross more; 5 every string the same colour (1-4: five colours). A random tap
      is right 1 time in 5. Its 2nd hint lights the top of X's string (real help: no star). */
-  const HOLD = ['bluey', 'bingo', 'bandit', 'chilli', 'grandpa'];
+  /* who holds the strings: never anyone whose picture is a character's picture (W4R1N-01: 葫芦爷爷 is 爷, Bingo is 妹, 猪爸爸 is 爸,
+     猪妈妈 is 妈 - a child would tap the picture, not follow the string): Bluey, Bandit, Chilli and two pups who visit */
+  const HOLD = () => ['bluey', 'bandit', 'chilli', 'skye', 'marshall', 'rocky', 'zuma', 'owlette'].filter(id => !ITEMS.some(x => x.obj === '@' + id)).slice(0, 5);
   const LINE_C = ['#E8554A', '#2E6FD8', '#3FAE4A', '#F59A4A', '#8E6CFF'], SAME_C = '#7A5A3A', KITE_C = ['#FFD23C', '#7BC8F6', '#FF8DB3', '#9BE07A', '#FFB37A'];
   const inversions = kp => { let n = 0; for (let i = 0; i < kp.length; i++) for (let j = i + 1; j < kp.length; j++) if (kp[i] > kp[j]) n++; return n; };
   const crossOf = (kp, i) => kp.filter((x, j) => (j < i && x > kp[i]) || (j > i && x < kp[i])).length;
@@ -53,7 +55,7 @@
     gen(G, o) {
       const lv = o.level, pool = poolOf(G, 'zh', false), answer = W4X.pick(G, pool), opts = known5(G, lv, answer), a = opts.indexOf(answer), lk = LOOK[answer] || '';
       const kp = strings(G, lv, a), wig = lv >= 4 ? opts.map(() => [G.rng.int(34, 62) * (G.rng() < 0.5 ? -1 : 1), G.rng.int(34, 62) * (G.rng() < 0.5 ? -1 : 1)]) : null;
-      return { k: [answer, opts.join(''), kp.join('')], answer, opts, kp, wig, who: G.rng.shuffle(HOLD.slice()), pic: lv <= 1 ? 1 : 0, same: lv >= 5 ? 1 : 0,
+      return { k: [answer, opts.join(''), kp.join('')], answer, opts, kp, wig, who: G.rng.shuffle(HOLD()), pic: lv <= 1 ? 1 : 0, same: lv >= 5 ? 1 : 0,
         cross: inversions(kp), mine: crossOf(kp, a), look: opts.filter(k => k !== answer && lk.includes(k)).length, rev: opts.filter(k => !pool.includes(k)).length };
     },
     /* the picture gone, crossings (X's own counts double), look-alikes and old characters, strings that bend, one colour for all */

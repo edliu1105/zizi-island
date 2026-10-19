@@ -448,20 +448,20 @@ with sync_playwright() as p, serve() as base:
       pass('hulk3'); Prog.check(false); out.passed = Store.w('thor3').unlocked && !Store.w('panther3').unlocked;
       const seq = [];
       ['thor3', 'panther3', 'widow3', 'hawk3'].forEach((id, i, a) => { done(id); pass(id); Prog.check(false); seq.push(a[i + 1] ? Store.w(a[i + 1]).unlocked : Store.s.fin.w3); });
-      out.seq = seq; out.order = ORDER.w3.join(','); out.partial = !!WORLDS_INFO.w3.partial; out.info = WORLDS_INFO.w3; out.dot = Supply.low();
+      out.seq = seq; out.order = ORDER.w3.join(','); out.partial = !!WORLDS_INFO.w3.partial; out.info = WORLDS_INFO.w3; out.dot = Supply.low(); out.left = ALL_ISL().filter(id => !flagged(id)).length;
       Store.s.w4seen = true; Store.s.flags = ALL_ISL().filter(id => ['hawk3'].indexOf(id) < 0 && flagged(id)); Store.s.fin.w1 = 'seen'; Store.s.fin.w2 = 'seen'; Store.s.gate2 = Store.s.gate3 = Store.s.w2seen = Store.s.w3seen = true; Store.save();
       return out; }""")
     log.check(r['first'] == [True, False] and r['gamesOnly'] is False and r['passed'] and r['seq'] == [True, True, True, 'due'] and not r['partial'],
               '08 islands open one after another, only after the flag (4 ✓ + characters passed); the seventh -> the festival is due %s' % r)
-    log.check(r['order'] == 'xiyou2,robot2,hulk3,thor3,panther3,widow3,hawk3' and r['info'].get('finale') == 'finale_w3' and r['info'].get('fest') == 'fest3' and r['dot'], '08 彩虹海 has 7 islands, its own festival island and finale; the red dot (last installed world) %s' % r['info'])
+    log.check(r['order'] == 'xiyou2,robot2,hulk3,thor3,panther3,widow3,hawk3' and r['info'].get('finale') == 'finale_w3' and r['info'].get('fest') == 'fest3' and r['dot'] == (r['left'] < 7), '08 彩虹海 has 7 islands, its own festival island and finale; the red dot only with fewer than 7 islands left in all the worlds (docs/W4-DESIGN.md §10.5: %d left, dot %s) %s' % (r['left'], r['dot'], r['info']))
     page.evaluate("() => { MapView.useSet('w3'); MapView.closePanel(true); Screens.show('map'); MapView.update(); MapView.after(10); }")
     try:
         page.wait_for_function("Screens.cur === 'finale'", timeout=40000)
-        fin = page.evaluate("() => ({ bg: getComputedStyle(document.querySelector('#finale .fbg')).backgroundImage, crowd: document.querySelectorAll('#finale .crowd img').length, soon: Object.keys(MapView.isl).filter(k => /^soon/.test(k)).length, fest: !!MapView.isl.fest, flags: Store.s.flags.includes('hawk3'), dot: document.querySelector('#gear').classList.contains('dot') })")
+        fin = page.evaluate("() => ({ bg: getComputedStyle(document.querySelector('#finale .fbg')).backgroundImage, crowd: document.querySelectorAll('#finale .crowd img').length, soon: Object.keys(MapView.isl).filter(k => /^soon/.test(k)).length, fest: !!MapView.isl.fest, flags: Store.s.flags.includes('hawk3'), dot: document.querySelector('#gear').classList.contains('dot'), low: Supply.low() })")
     except Exception as e:
         fin = {'err': str(e)[:100]}
-    log.check('finale_w3' in fin.get('bg', '') and fin.get('crowd', 0) >= 15 and fin.get('soon') == 0 and fin.get('fest') and fin.get('flags') and fin.get('dot'),
-              '08 the last flag on the map -> 彩虹海\'s finale (its own scene, everyone of the sea); no "soon" islands; the red dot %s' % fin)
+    log.check('finale_w3' in fin.get('bg', '') and fin.get('crowd', 0) >= 15 and fin.get('soon') == 0 and fin.get('fest') and fin.get('flags') and fin.get('dot') == fin.get('low'),
+              '08 the last flag on the map -> 彩虹海\'s finale (its own scene, everyone of the sea); no "soon" islands; the red dot as the rule says %s' % fin)
     page.evaluate("gesture('home')")
     miss = page.evaluate("Array.from(window.__vmiss || [])")
     log.check(not miss, '09 every sentence said has a recording %s' % miss[:10])

@@ -21,14 +21,86 @@ EXTRA += ['放不进去']                                                       
 W4FILES = sorted('w4/' + f for f in os.listdir(os.path.join(ROOT, 'src', 'w4')) if f.endswith('.js')) if os.path.isdir(os.path.join(ROOT, 'src', 'w4')) else []
 
 
+def arg_array(s, i):
+    """the '[' at i opens an array that is an argument of a call - f(.., [..]) - or the value of a `lines:` property: the
+    innermost bracket around it is the '(' of a call (a name or a ')' before it), or a '{' whose property here is lines.
+    Tables (peppa: ['佩奇', ..]), nested arrays and labels of the parent panel are not lines"""
+    k, depth = i - 1, 0
+    while k >= 0 and s[k] in ' \t\n':
+        k -= 1
+    prev = s[k] if k >= 0 else ''
+    if prev == ':':
+        m = re.search(r'(\w+)\s*$', s[:k])
+        return bool(m) and m.group(1) == 'lines'
+    if prev not in '(,':
+        return False
+    while k >= 0:
+        c = s[k]
+        if c in ')]}':
+            depth += 1
+        elif c in '([{':
+            if depth == 0:
+                if c != '(':
+                    return False
+                b = k - 1
+                while b >= 0 and s[b] in ' \t\n':
+                    b -= 1
+                return b >= 0 and (s[b].isalnum() or s[b] in '_$)')
+            depth -= 1
+        k -= 1
+    return False
+
+
+def call_arrays(s):
+    """the string literals inside every array literal that is an argument of a call (or a lines: property), except those
+    joined with + to something else"""
+    out, i, n = set(), 0, len(s)
+    while True:
+        i = s.find('[', i)
+        if i < 0:
+            return out
+        if not arg_array(s, i):
+            i += 1
+            continue
+        depth, j, q = 0, i, None                      # the matching ] (strings and nested brackets skipped)
+        while j < n:
+            c = s[j]
+            if q:
+                if c == '\\':
+                    j += 2
+                    continue
+                if c == q:
+                    q = None
+            elif c in '\'"`':
+                q = c
+            elif c == '[':
+                depth += 1
+            elif c == ']':
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        body = s[i + 1:j]
+        for m in re.finditer(r"'((?:[^'\\\n]|\\.)+)'", body):
+            before = body[:m.start()].rstrip()[-1:]
+            after = body[m.end():].lstrip()[:1]
+            if before != '+' and after != '+':
+                out.add(m.group(1))
+        i = j + 1
+
+
 def literals():
     out = set()
-    for f in ['app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js', 'w3.js'] + W4FILES:
+    for f in ['app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js', 'w3.js', 'wm.js'] + W4FILES:
         s = open(os.path.join(ROOT, 'src', f), encoding='utf-8').read()
         # 神笔海 (src/w4/*.js, README): the lines of an explanation EX.say(st, ['..', '..']) and lines said through variables,
         # listed in W4X.lines(['..', ..])
         for m in re.finditer(r"(?:EX\.say\(st,\s*|W4X\.lines\()\[([^\]]*)\]", s):
             out |= set(re.findall(r"'([^'\\]+)'", m.group(1)))
+        # every array given to a call or a property - W4X.exRight(st, e, k, ['..']), W4X.exChosen, EX.cards(st, ans, { lines: [..] })
+        # ...: its quoted lines (not the pieces of a '..' + x). A line handed to a helper in an array is said (2026-10-19: 先是这一句
+        # was missed)
+        out |= call_arrays(s)
         for m in re.finditer(r"(?:Voice\.say|Voice\.sayNow|K\.say\(st,|W2X\.say|say)\(\s*'([^'\\]+)'", s):
             out.add(m.group(1))
         for m in re.finditer(r"K\.say\(st,\s*'([^'\\]+)'\)", s):
@@ -161,9 +233,40 @@ def w4_lines():
     return out
 
 
+def wm_lines():
+    """the writing modes (docs/WRITE-MODES.md): the lines of the character families - 人加一横变成大！ / 目比日多一横 / 日加月变成明！
+    (tools/write_pairs.py makes them from STROKE_FAMILIES; wm.js's own literal lines come with the scan above)"""
+    import write_pairs
+    return write_pairs.lines()
+
+
+def w4x_lines():
+    """神笔海 ⑧ ⑨ (docs/W4-DESIGN.md §12.11): their characters' lines come with w4_lines() (they are in W4); here 圈X！ (⑧-1),
+    找X！ and X在哪辆车里？ (⑨-1) for every character (a review may ask any), the sentences of ⑧-1, the story cards of ⑧-4 (a held
+    card says it), the beat words and phrases of ⑧-3 - normal and slow ('~' + word: tools/voice_bank.py records it slowly), the
+    sentences of ⑨-3 and every word of them (a held card says it; as written and lower case), 加一笔 / 减一笔 of ⑨-4, the map's two"""
+    out = set()
+    zh_all = [c for lst in (W1, W2, W3, C4.W4) for d in lst for c, _, _, _ in d['chars']]
+    out |= {'圈' + c + '！' for c in zh_all} | {'找' + c + '！' for c in zh_all} | {c + '在哪辆车里？' for c in zh_all}
+    out |= {s for _, s, _ in C4.SENT8} | {t for st in C4.STORY8 for t in st['s']}
+    for w, _, _ in C4.BEATS8:
+        out |= {w, '~' + w}
+    for ph, _, _ in C4.BEATS8_PHRASES:
+        out |= {ph, '~' + ph}
+    out |= set(C4.SIGHT9)
+    for t, _, ex in C4.ESENT9:
+        ws = re.findall(r"[A-Za-z]+", t) + ([ex] if ex else [])
+        out |= {t} | set(ws) | {w.lower() for w in ws if w != 'I'}
+    import w4x_data
+    a1, _ = w4x_data.tables()
+    out |= {x['a'] + '加一笔是' + x['b'] for x in a1} | {x['b'] + '减一笔是' + x['a'] for x in a1}
+    out |= {'神笔海有新岛！', '大家都到齐啦！'}
+    return out
+
+
 def main():
-    lines = sorted(t for t in (literals() | data_lines() | w4_lines()) if t)
-    long_zh = [t for t in lines if re.search(r'[\u4e00-\u9fff]', t) and len(t) > 8]
+    lines = sorted(t for t in (literals() | data_lines() | w4_lines() | wm_lines() | w4x_lines()) if t)
+    long_zh = [t for t in lines if len(re.findall(r'[一-鿿]', t)) > 8]      # <= 8 characters (punctuation is not one)
     json.dump(lines, open(os.path.join(ROOT, 'raw', 'voice_lines.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
     print(len(lines), 'lines;', sum(1 for t in lines if not re.search(r'[\u4e00-\u9fff]', t)), 'English')
     print('longer than 8:', long_zh)

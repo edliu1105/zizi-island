@@ -156,7 +156,9 @@
   const LOOKL = { b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'mh', h: 'n', u: 'n' };
   const CONS = 'bcdfghjklmnprstvwz';
   const picOf = w => { const x = W4D.words.find(v => v[0] === w) || WORDS3.find(v => v[0] === w); return x ? x[1] : null; };
-  const W4WORDS = () => Array.from(new Set(W4D.words.map(v => v[0]).concat(WORDS3.map(v => v[0])))).filter(w => W4X.hasPic(picOf(w)));
+  /* the words whose picture is shown as the word to make: only pictures named by that very word (W4X.picWords, W4R1N-10) */
+  const CLEAR = () => W4X.picWords(W4D.words.concat(WORDS3)).map(v => v[0]);
+  const W4WORDS = () => Array.from(new Set(CLEAR()));
   const diffAt = (a, b) => [0, 1, 2].filter(i => a[i] !== b[i]);
   const Change = {
     rule: 'change-one-letter', kind0: 'en', verb: '变！', intro: '变身换字母！', softHint: true, props: [],
@@ -178,10 +180,10 @@
         const to = bagFrom(G, 'to' + lv, tos.length ? tos : cand), from = G.rng.pick(cand.filter(x => x !== to && x.slice(1) === to.slice(1)));
         steps = [{ from, to, slot: 0 }];
       } else if (lv === 4) {
-        const ok = PAIRS4.filter(([a, b]) => W4X.hasPic(picOf(b)) && b !== last), [from, to] = bagFrom(G, 'p4', ok.length ? ok : PAIRS4);
+        const ok = PAIRS4.filter(([a, b]) => CLEAR().includes(b) && b !== last), [from, to] = bagFrom(G, 'p4', ok.length ? ok : PAIRS4);
         steps = [{ from, to, slot: diffAt(from, to)[0] }];
       } else {
-        const ok = CHAINS5.filter(c => c.slice(1).every(w => W4X.hasPic(picOf(w))) && c[2] !== last), c = bagFrom(G, 'c5', ok.length ? ok : CHAINS5);
+        const ok = CHAINS5.filter(c => c.slice(1).every(w => CLEAR().includes(w)) && c[2] !== last), c = bagFrom(G, 'c5', ok.length ? ok : CHAINS5);
         steps = [{ from: c[0], to: c[1], slot: diffAt(c[0], c[1])[0] }, { from: c[1], to: c[2], slot: diffAt(c[1], c[2])[0] }];
       }
       steps.forEach(s => { s.opts = this.letters(G, s.from, s.to, s.slot, lv >= 3); });

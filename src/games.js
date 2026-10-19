@@ -594,30 +594,45 @@ const WriteBase = {
     return L ? { x: en ? 600 : 610, y: 390, size: en ? 470 : 500, ox: 214, oy: 360, os: 230 } : { x: 352, y: 610, size: en ? 520 : 560, ox: 352, oy: 236, os: 190 };
   },
   async present(st) {
-    const q = st.q, G = st.G, k = q.answer, it = ITEM[k], g = this.geo(st);
+    const q = st.q, G = st.G, k = q.answer, it = ITEM[k];
     st.prompt = it.line; st.noPraise = true;
     let met = false;                                     /* a letter is first met here: the apple, then the A */
     if (!G.practice) { met = await ZX.meet(st, k); if (!Session.alive(st)) return; }
-    const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); if (it.obj) ZX.pic(OBJURL(it.obj), pic); else pic.appendChild(Scene.node(FW_SENTS[k][0][1], g.os)); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
-    K.pop(st, pic);
-    const lv = G.practice ? 1 : st.level;
-    const W = st.w = new Writer(st, { kind: this.lang === 'zh' ? 'zh' : 'en', glyph: k, level: lv, x: g.x, y: g.y, size: g.size });
+    /* the writing modes (docs/WRITE-MODES.md): trace the first time; later 加一笔变新字, 部件拼字, 补缺笔, 接龙, 描仿写, 像不像 */
+    if (await WM.load()) { if (Session.alive(st)) await WM.present(this, st, met); return; }
+    if (!Session.alive(st)) return;
+    this.setup(st);
+    await this.lead(st, met);
+    await this.arm(st);
+  },
+  /* the thing it names and the paper (opt: the Writer's own - given strokes, a ghost, cues; noPic: no picture) */
+  setup(st, opt) {
+    const G = st.G, k = st.q.answer, it = ITEM[k], g = this.geo(st);
+    if (!(opt && opt.noPic) && !st.pic) {
+      const pic = st.pic = ZX.thing(st, g.os, g.os, 8, 'objpop'); if (it.obj) ZX.pic(OBJURL(it.obj), pic); else pic.appendChild(Scene.node(FW_SENTS[k][0][1], g.os)); place(pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os);
+      K.pop(st, pic);
+    }
+    const W = st.w = new Writer(st, Object.assign({ kind: this.lang === 'zh' ? 'zh' : 'en', glyph: k, level: G.practice ? 1 : st.level, x: g.x, y: g.y, size: g.size }, opt || {}));
     if (G.practice) W.free = true;
     K.pop(st, W.el);
-    if (!met) Voice.say(it.line, { tag: 'prompt' });       /* just said by the meeting: straight on to the brush (R3-04) */
     if (isEn(k)) st.prompt = it.line;
-    /* the first time (or level 1, or practice): the brush shows the whole character / letter first */
-    if (lv <= 1 || !learned(k)) {
+    return W;
+  },
+  /* its line (just said by the meeting: straight on, R3-04); the first time (or level 1, or practice) the brush writes it all first */
+  async lead(st, met) {
+    const k = st.q.answer;
+    if (!met) Voice.say(ITEM[k].line, { tag: 'prompt' });
+    if ((st.G.practice ? 1 : st.level) <= 1 || !learned(k)) {
       await st.scope.guard(Voice.afterSay(150));
       Voice.say('看我写一遍', { tag: 'prompt' });
-      await W.demo(st);
+      await st.w.demo(st);
       if (!Session.alive(st)) return;
       Voice.say('该你写啦！', { tag: 'prompt' });
     }
-    W.armed = true;
-    st.phase = 'ready';
   },
-  place(st) { if (!st.w) return; const g = this.geo(st); st.w.place(g.x, g.y, g.size); if (st.pic) place(st.pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os); },
+  /* his turn: first the brush's strokes that come before his (a writing mode's known part) */
+  async arm(st) { await st.w.start(); if (!Session.alive(st)) return; st.w.armed = true; st.phase = 'ready'; },
+  place(st) { if (!st.w) return; const g = this.geo(st); st.w.place(g.x, g.y, g.size); if (st.pic) place(st.pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os); if (st.wmPlace) st.wmPlace(); },
   onGesture(st, name, p) {
     if (name !== 'stroke' || p.id !== 'paper' || !st.w || st.w.done) return false;
     const r = st.w.stroke(p.pts || []);
@@ -625,13 +640,24 @@ const WriteBase = {
     if (r.ok) {
       Sfx.place(); Sfx.mar(Sfx.SCALE[Math.min(9, st.w.k)], 0, 0.3, 0.4);
       if (this.lang === 'zh' && r.name) Voice.sayNow(r.name, { tag: 'stroke' });
-      if (r.done) { st.ok2 = !st.w.slips; this.finished(st); }
+      if (r.done) this.written(st);
     } else {
       const sa = st.slipAt || (st.slipAt = []); if (!sa.includes(st.w.k)) sa.push(st.w.k);
       Voice.sayNow(SLIP[r.why] || SLIP.shape, { tag: 'slip' });
       if (st.level >= 4 || st.w.slips >= 2) { st.w.demo(st, st.w.k); }
     }
     return 'ok';
+  },
+  /* every stroke of his written: the brush finishes its own; a mode may go on (the next round of 描仿写, the difference of
+     像不像); then it is finished - clean if no stroke slipped in any round */
+  async written(st) {
+    const w = st.w;
+    st.slips0 = (st.slips0 || 0) + w.slips;
+    if (w.flush) await w.flush;
+    if (!Session.alive(st) || st.w !== w) return;
+    if (st.wm && st.wm.after && await st.wm.after(st)) return;
+    if (!Session.alive(st)) return;
+    st.ok2 = !st.slips0; this.finished(st);
   },
   async finished(st) {
     const k = st.q.answer, c = st.w.center();

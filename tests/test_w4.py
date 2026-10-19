@@ -360,7 +360,7 @@ with sync_playwright() as p, serve() as base:
         sid = [x[0] for x in sh if x[0] in page.evaluate("W4D.scrolls.map(s => s.id)")]
         if sid:
             page.evaluate("(id) => { document.getElementById('shelf').remove(); W4X.showScroll(id); }", sid[0]); page.wait_for_timeout(300)
-            sc = page.evaluate("() => ({ cells: document.querySelectorAll('#scroll4 [data-ch]').length, grey: Array.from(document.querySelectorAll('#scroll4 [data-ch] path')).some(p => p.getAttribute('fill') === '#BDB3A0') })")
+            sc = page.evaluate("() => ({ cells: document.querySelectorAll('#scroll4 [data-ch]').length, grey: Array.from(document.querySelectorAll('#scroll4 [data-ch] path')).some(p => p.getAttribute('fill') === '#8A8070') })")
             page.evaluate("() => { const s = document.getElementById('scroll4'); if (s) s.remove(); }")
         else:
             sc = {'cells': -1}

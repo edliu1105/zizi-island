@@ -300,7 +300,6 @@
         K.reg(st, i ? 'read1' : 'read', card, {});
         const yes = ZX.thing(st, 104, 104, 7, 'card'), no = ZX.thing(st, 104, 104, 7, 'card');
         yes.innerHTML = PUP(true); no.innerHTML = PUP(false);
-        const ck = el('div', '', yes); ck.innerHTML = ICONS.check; Object.assign(ck.style, { position: 'absolute', right: '-10px', top: '-10px', width: '38px', height: '38px', borderRadius: '50%', background: '#5CC46E', boxShadow: '0 0 0 3px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }); ck.firstChild.setAttribute('width', '26'); ck.firstChild.setAttribute('height', '26');
         Object.assign(yes.style, { background: '#E2F6E4', borderColor: '#8FD39A' }); Object.assign(no.style, { background: '#E6EBF8', borderColor: '#A9B8DE' });
         Loops.run(yes.firstChild, [{ transform: 'translateY(0)' }, { transform: 'translateY(5px)' }, { transform: 'translateY(0)' }], { duration: 900, easing: 'ease-in-out' });
         Loops.run(no.firstChild, [{ transform: 'rotate(0)' }, { transform: 'rotate(-7deg)' }, { transform: 'rotate(7deg)' }, { transform: 'rotate(0)' }], { duration: 1100, easing: 'ease-in-out' });

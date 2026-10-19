@@ -68,7 +68,7 @@ const Glyph = {
 const KEY = 'zzi.v1', VER = 1;
 const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || [], ORDER.w4 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
-function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '', w4: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, w4: false, w4seen: false, w4from: 'w1', mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
+function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '', w4: '', w4x: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, w4: false, w4seen: false, w4from: 'w1', w4x: 0, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
     mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, teach: null, v2: 1 }; }
 const Store = {
   s: null,
@@ -96,10 +96,10 @@ const Store = {
     if (o.learned && typeof o.learned === 'object') for (const k in o.learned) if (ITEM[k]) { const x = o.learned[k] || {}; d.learned[k] = { w: num(x.w, 0, 0, 1e6), p: num(x.p, 0, 0, 1e6) }; }
     if (o.met && typeof o.met === 'object') for (const k in o.met) if (ITEM[k] && o.met[k] === true) d.met[k] = true;
     d.flags = Array.isArray(o.flags) ? o.flags.filter(x => !!ISL[x]) : [];
-    ['w1', 'w2', 'w3', 'w4'].forEach(w => { const f = o.fin && o.fin[w]; d.fin[w] = f === 'due' || f === 'seen' ? f : ''; });
+    ['w1', 'w2', 'w3', 'w4', 'w4x'].forEach(w => { const f = o.fin && o.fin[w]; d.fin[w] = f === 'due' || f === 'seen' ? f : ''; });
     d.gate2 = o.gate2 === true; d.w2seen = o.w2seen === true; d.gate3 = o.gate3 === true; d.w3seen = o.w3seen === true; d.mapSet = ['w2', 'w3', 'w4'].includes(o.mapSet) ? o.mapSet : 'w1'; d.all = o.all === true;
     /* 神笔海 (docs/W4-DESIGN.md §10): opened once = open for good; the one-time flight; the sea it was entered from */
-    d.w4 = o.w4 === true; d.w4seen = o.w4seen === true; d.w4from = ['w2', 'w3'].includes(o.w4from) ? o.w4from : 'w1';
+    d.w4 = o.w4 === true; d.w4seen = o.w4seen === true; d.w4from = ['w2', 'w3'].includes(o.w4from) ? o.w4from : 'w1'; d.w4x = [1, 2].includes(o.w4x) ? o.w4x : 0;
     if (o.settings && typeof o.settings === 'object') { d.settings.en = o.settings.en !== false; if ([0, 10, 15, 20, 30].includes(o.settings.mins)) d.settings.mins = o.settings.mins; d.settings.wgate = o.settings.wgate === true; if (['off', 'auto', 'step'].includes(o.settings.ex)) d.settings.ex = o.settings.ex; }
     /* v2 memory (docs/PLAN-v2.md): per item {b box, due, last, up, seen, pass, n, ok}; kept only for real items */
     if (o.mem && typeof o.mem === 'object') for (const k in o.mem) if (ITEM[k] && o.mem[k] && typeof o.mem[k] === 'object') { const m = o.mem[k]; d.mem[k] = { b: num(m.b, 0, 0, 7), due: num(m.due, 0, 0, 1e7), last: num(m.last, 0, 0, 1e7), up: num(m.up, -1, -1, 1e7), seen: num(m.seen, 0, 0, 1e7), pass: Array.isArray(m.pass) ? m.pass.filter(x => typeof x === 'string').slice(-4) : [], n: num(m.n, 0, 0, 1e6), ok: num(m.ok, 0, 0, 1e6) }; if (typeof m.evd === 'number') d.mem[k].evd = m.evd; }
@@ -155,6 +155,7 @@ const Prog = {
         if (Store.s.all || ORDER[w].slice(0, k).every(x => this.islandDone(x))) { ws.unlocked = true; if (show) ws.justOpened = true; any = true; }
       });
       if (this.worldDone(w) && !Store.s.fin[w] && !WORLDS_INFO[w].partial) { Store.s.fin[w] = 'due'; any = true; }
+      if (w === 'w4' && ORDER.w4.length >= (WORLDS_INFO.w4.total || 99) && this.worldDone(w) && !Store.s.fin.w4x) { Store.s.fin.w4x = Store.s.fin.w4 === 'seen' ? 'due' : 'seen'; any = true; }      /* 神笔海's encore (§12.9) */
     });
     if (any) Store.save();
   },
@@ -687,7 +688,7 @@ const MapView = {
     this.built = true;
     this.tint();
     const root = $('#islands'), WI = WORLDS_INFO[this.set];
-    const soon = WI.partial ? Array.from({ length: Math.max(0, 7 - this.ids().length) }, (_, i) => 'soon' + i) : [];
+    const soon = WI.partial || (WI.soon && WI.soon.length) ? Array.from({ length: Math.max(0, (WI.total || 7) - this.ids().length) }, (_, i) => 'soon' + i) : [];
     const brush = this.set !== 'w4' && W4X.open() ? ['brush'] : [];      /* 神笔海's own entrance, always at the same place (§10.3) */
     this.ids().concat(soon, WI.partial ? ['gate'] : ['fest', 'gate'], brush).forEach(id => {
       const sp = id === 'fest' || id === 'gate' || id === 'brush' || /^soon/.test(id);
@@ -716,11 +717,11 @@ const MapView = {
     this.update();
     this.idle();
   },
-  pos(id) { const P = (window.innerHeight > window.innerWidth * 1.02) ? MAPPOS.port : MAPPOS.land; if (/^soon/.test(id)) return P[ORDER[this.set].length + Number(id.slice(4))]; return id === 'fest' || id === 'gate' || id === 'brush' ? P[id] : P[ORDER[this.set].indexOf(id)]; },
+  pos(id) { const M = this.set === 'w4' ? MAPPOS4 : MAPPOS, P = (window.innerHeight > window.innerWidth * 1.02) ? M.port : M.land; if (/^soon/.test(id)) return P[ORDER[this.set].length + Number(id.slice(4))]; return id === 'fest' || id === 'gate' || id === 'brush' ? P[id] : P[ORDER[this.set].indexOf(id)]; },
   layout() {
     if (!this.built) return;
     const vw = window.innerWidth, vh = window.innerHeight, port = vh > vw * 1.02;
-    const S = Math.round(Math.min(vw, vh) * (port ? 0.27 : 0.25));
+    const S = Math.round(Math.min(vw, vh) * (port ? 0.27 : 0.25)) * (this.set === 'w4' ? 0.85 : 1);      /* 神笔海: its nine islands at 0.85 (§12.9) */
     const pts = [];
     Object.keys(this.isl).forEach(id => {
       const I = this.isl[id], [px, py] = this.pos(id), x = vw * px / 100, y = vh * py / 100, sp = id === 'fest' || id === 'gate' || id === 'brush', s = id === 'fest' ? S * 0.9 : id === 'gate' ? S * 0.8 : id === 'brush' ? Math.max(120, S * 0.62) : S;
@@ -938,6 +939,7 @@ const MapView = {
       if (live()) Finale.play(w);
       return true;
     }
+    if (await W4X.news(this, live)) return true;
     if (w === 'w2' && Prog.worldOpen('w3') && !Store.s.gate3 && Store.s.fin.w2 !== 'due' && this.isl.gate) {
       Store.s.gate3 = true; Store.save();
       this.isl.gate.d.classList.add('sky');
@@ -1198,7 +1200,7 @@ const Finale = {
     sc.add(() => home.remove());
     const vw = window.innerWidth, vh = window.innerHeight;
     const all = Array.from(new Set(ORDER[w].flatMap(id => ISL[id].crew)));
-    const rows = [all.slice(0, 9), all.slice(9, 18), all.slice(18)].filter(r => r.length);
+    const k = Math.max(9, Math.ceil(all.length / 3)), rows = [all.slice(0, k), all.slice(k, 2 * k), all.slice(2 * k)].filter(r => r.length);
     const base = Math.min(vw, vh);
     rows.forEach((row, r) => {
       const h = base * [0.22, 0.26, 0.3][r];
@@ -1289,6 +1291,7 @@ const Boot = {
 function boot() {
   Store.load();
   Bank.load(FIRST_LINE);
+  W4X.migrate();
   Prog.check(false);
   if (Store.s.flags.some(w => !flagged(w))) { Store.s.flags = Store.s.flags.filter(flagged); Store.save(); }
   Fx.init();

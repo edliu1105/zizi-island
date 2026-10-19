@@ -39,6 +39,8 @@ const W4X = {
       MV.rebuilding = true; $('#islands').innerHTML = ''; MV.isl = {}; MV.built = false; Loops.sweep(); MV.build(); MV.rebuilding = false; return;
     }
     const B = MV.isl.brush; if (B) { B.d.classList.remove('locked'); B.glow.style.opacity = 1; }
+    const nw = !!B && this.fresh();      /* a new 神笔海 island: the brush's gold ring pulses (§12.9) */
+    if (B && !!B.nw !== nw) { B.nw = nw; B.glow.style.boxShadow = nw ? '0 0 0 7px #FFC93C' : ''; if (nw) Loops.run(B.glow, [{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 1100 }); }
     if (this.open() && !W4Lazy.loaded && !W4Lazy.p && !W4Lazy.later) W4Lazy.later = setTimeout(() => { W4Lazy.later = 0; W4Lazy.load(); }, fast() ? 0 : 1500);
   },
   /* §10.4: once, the first time the map comes up after the world opened (everything else on the map has been shown first): the
@@ -69,26 +71,22 @@ const W4X = {
     Loops.run(d.firstChild, [{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 900 });
     return d;
   },
-  /* the parent panel (behind the gear's long press, §10.6): the lesson table and "go there now" */
+  /* the parent panel (behind the gear's long press, §10.6): its section comes with the lazy file (core.js parent2: the lesson
+     table and "go there now") - nothing of it on the first screen (W4R1N-06) */
   parent(sh) {
-    el('h3', '', sh, { text: '神笔海（跟着课本）· 上课对照' });
-    el('div', 'mut', sh, { text: '神笔海的字和顺序跟的是统编版一年级上册（2024 新版）；每周的形式（汉字儿歌 + 古诗 + 故事书）照学而思小猴语文 L1。下表：课本这一课在神笔海的哪个岛、哪个游戏。拿到真正的学而思课表时，只改这张表的数据。'
-      + (WORLDS_INFO.w4.partial ? '（神笔海的岛做好一个上线一个：现在上线 ' + ORDER.w4.length + ' 个，其余在地图上是云。）' : '') });
-    const t = el('table', '', sh); t.innerHTML = '<tr><th>统编一上（2024）的课</th><th>神笔海</th></tr>';
-    LESSONS4.forEach(([a, b]) => { const tr = el('tr', '', t); el('td', '', tr, { text: a }); el('td', '', tr, { text: b }); });
-    const open = this.open(), go = el('button', 'pbtn', sh, { text: open ? '现在就去神笔海' : '神笔海还没开（晨光海七面旗插满后开）' });
-    go.dataset.w4go = 1;
-    if (!open) go.disabled = true;
-    go.addEventListener('click', () => {
-      if (!this.open()) return;
-      Parent.close();
-      if (Session.G) Session.home();
-      Screens.show('map'); Voice.enter('map'); MapView.build();
-      if (MapView.set === 'w4') { MapView.update(); return; }
-      MapView.update(); MapView.sail('w4');
-    });
-    el('div', 'mut', sh, { text: '“现在就去神笔海”只是带孩子飞过去，不改任何进度。平时每片海地图上同一个位置都有一支发光的毛笔，点它就去神笔海；神笔海中间的月亮门回到来的那片海。' });
+    const box = el('div', '', sh); el('h3', '', box, { text: '神笔海（跟着课本）· 上课对照' });
+    W4Lazy.load().then(ok => { if (box.isConnected) { if (ok) this.parent2(box); else el('div', 'mut', box, { text: '等一下再打开看看。' }); } });
   },
+  /* ⑧ ⑨ (§12.9): an island waits for its cloud show; once after the update a flagged ⑦ opens ⑧ with that show (Store.s.w4x:
+     1 done, 2 the brush has said its line); the brush's line and the finale's encore are in core.js (news) */
+  fresh() { return ORDER.w4.some(id => Store.w(id).justOpened); },
+  migrate() {
+    const S = Store.s, i = ORDER.w4.indexOf('avengers4'), ws = i > 0 && Store.w(ORDER.w4[i]);
+    if (S.w4x || !ws) return;
+    S.w4x = 1; if (flagged(ORDER.w4[i - 1]) && !ws.unlocked) ws.unlocked = ws.justOpened = true;
+    Store.save();
+  },
+  async news(MV, live) { return ((MV.set !== 'w4' && MV.isl.brush && this.fresh() && Store.s.w4x === 1) || (MV.set === 'w4' && Store.s.fin.w4x === 'due')) && await W4Lazy.load() && live() && this.news2(MV, live); },
   /* the end of assets/js/w4.js calls this: the file is in (core.js adds W4X.init) */
   loaded() { if (W4Lazy.loaded) return; W4Lazy.loaded = true; if (this.init) this.init(); },
 };
@@ -119,3 +117,8 @@ const W4Lazy = {
    (landscape) / below it (portrait); measured clear of every island, gate and corner button at eight screen sizes (§10.3) */
 MAPPOS.land.brush = [68, 49];
 MAPPOS.port.brush = [50, 64];
+/* 神笔海's nine places, islands at 0.85 (§12.9; tests/test_w4open.py measures them at eight sizes) */
+const MAPPOS4 = {
+  land: { 0: [8, 42], 1: [22, 16], 2: [41, 16], 3: [59, 16], 4: [78, 15], 5: [92, 41], 6: [90, 72], 7: [71, 74], 8: [47, 75], fest: [22, 71], gate: [50, 46] },      /* ① ⑥ 1% lower than §12.9: at 1024 x 768 a lantern grazed the next island */
+  port: { 0: [12, 25], 1: [47, 15], 2: [74, 25], 3: [84, 50], 4: [88, 79], 5: [63, 80], 6: [37, 81], 7: [12, 78], 8: [18, 51], fest: [54, 61], gate: [50, 44] },
+};

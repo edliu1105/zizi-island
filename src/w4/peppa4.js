@@ -151,14 +151,16 @@
      said. Tap the one that is not of the family. Levels: 1 a picture on every card, the odd one differs in vowel and end; 2 no
      pictures; 3 the odd one has the family's vowel, another end (bun); 4 the family's last letter, another vowel (bag); 5 two
      rows, one odd one in each (one of each kind) - both found. George reads them for whoever taps his speaker: that question
-     earns no star. A random tap is right 1 time in 5 (two rows: 1 in 25). */
-  const EASYW = 'big dig hop pop men ten fun run hit sit bit fit hot pot dot not wet pet sad dad bad mad bag tag rag wag lip hip tip zip red fed hug tug pin win tin bin fog hog jog cut hut nut';
+     earns no star. A random tap is right 1 time in 5 (two rows: 1 in 20-25).
+     Only words the child was taught - the CVC words of 彩虹海 (WORDS3) and 神笔海 (WORDS4) whose picture names them clearly
+     (W4X.picWords: clear and drawn; W4R1N-02, review item 10). A row of five needs a family of four of them (-at -an); a row of
+     level 5 may be a family of three and one outsider (-ug). */
   let FAMS = null;
   const fams = () => {
     if (FAMS) return FAMS;
     const pic = {};
-    W4D.words.concat(WORDS3).forEach(([w, o]) => { if (/^[a-z]{3}$/.test(w) && !pic[w] && W4X.hasPic(o)) pic[w] = o; });
-    const all = Array.from(new Set(Object.keys(pic).concat(EASYW.split(' ')))).filter(w => /^[a-z]{3}$/.test(w) && W4D.dict.includes(w));
+    W4X.picWords(W4D.words.concat(WORDS3)).forEach(([w, o]) => { if (/^[a-z]{3}$/.test(w) && !pic[w]) pic[w] = o; });
+    const all = Object.keys(pic);
     const by = {}; all.forEach(w => (by[w.slice(1)] = by[w.slice(1)] || []).push(w));
     return (FAMS = { pic, all, by });
   };
@@ -167,21 +169,28 @@
   const GOLDT = '#E39B00';
   const OddOne = {
     rule: 'odd-one-out', kind0: 'en', verb: '找！', intro: '谁不是一家？', props: [],
-    row(G, F, kind, pic, used) {
-      const words = (pic ? F.all.filter(w => F.pic[w]) : F.all).filter(w => !used.has(w));
-      const odds = r => words.filter(w => w.slice(1) !== r && oddOk[kind](w, r));
-      const ok = Object.keys(F.by).filter(r => F.by[r].filter(w => words.includes(w)).length >= 4 && odds(r).length && !used.has('-' + r));
-      const r = bagFrom(G, 'fam' + kind + (pic ? 'p' : ''), ok), fam = G.rng.shuffle(F.by[r].filter(w => words.includes(w))).slice(0, 4), odd = G.rng.pick(odds(r));
+    /* one row: a family (four of it; level 5 may take a family of three) and the odd one of this kind - no word twice in a question */
+    row(G, F, kind, used, three) {
+      const words = F.all.filter(w => !used.has(w)), size = r => F.by[r].filter(w => words.includes(w)).length;
+      const odds = (r, kd) => words.filter(w => w.slice(1) !== r && oddOk[kd](w, r));
+      let r = null, kd = kind;
+      for (const [k2, min] of [[kind, three ? 3 : 4], ['both', 4], ['both', 3]]) {
+        const ok = Object.keys(F.by).filter(x => size(x) >= min && odds(x, k2).length && !used.has('-' + x));
+        if (ok.length) { r = bagFrom(G, 'fam' + k2 + (three ? '3' : ''), ok); kd = k2; break; }
+      }
+      const fam = G.rng.shuffle(F.by[r].filter(w => words.includes(w))).slice(0, 4), odd = G.rng.pick(odds(r, kd));
       fam.concat([odd, '-' + r]).forEach(w => used.add(w));
-      return { rime: r, fam, odd, kind, opts: W4X.put(G, fam, odd) };
+      return { rime: r, fam, odd, kind: kd, opts: W4X.put(G, fam, odd) };
     },
     gen(G, o) {
-      const lv = o.level, F = fams(), used = new Set(), pic = lv <= 1;
-      const kinds = lv >= 5 ? G.rng.shuffle(['vowel', 'end']) : [lv <= 2 ? 'both' : lv === 3 ? 'vowel' : 'end'];
-      const rows = kinds.map(kind => this.row(G, F, kind, pic, used)), two = rows.length > 1;
+      const lv = o.level, F = fams(), used = new Set(), pic = lv <= 1, two = lv >= 5;
+      const kinds = two ? G.rng.shuffle(['vowel', 'end']) : [lv <= 2 ? 'both' : lv === 3 ? 'vowel' : 'end'];
+      const rows = kinds.map(kind => this.row(G, F, kind, used, two));
       return { k: rows.map(r => r.opts.join(',')), rows, opts: [].concat(...rows.map(r => r.opts)), answer: two ? 'all' : rows[0].odd, seq: two ? rows.map(r => r.odd) : null,
         pic: pic ? 1 : 0, two: two ? 1 : 0, vow: rows.filter(r => r.kind === 'vowel').length, end: rows.filter(r => r.kind === 'end').length };
     },
+    /* the row of card i */
+    rowOf(st, i) { let n = 0; for (let r = 0; r < st.q.rows.length; r++) { n += st.q.rows[r].opts.length; if (i < n) return r; } return -1; },
     itemOf() { return null; },
     hard(q) { return (1 - q.pic) + q.vow * 1.5 + q.end * 2 + q.two * 3; },
     build(G) { ZBase.build.call(this, G); if (!G.actors.george) K.actor(G, 'george', 170); },
@@ -216,10 +225,19 @@
     },
     place(st) {
       if (!st.readEl) return;
-      K.cardsPlace(st, this.cardSpot(st));
+      const sp = this.cardSpot(st);
+      if (!st.q.two) K.cardsPlace(st, sp);
+      else {                                  /* two rows (four or five cards each), each centred */
+        const S = st.cardSize || 124, n0 = st.q.rows[0].opts.length;
+        st.q.rows.forEach((row, r) => {
+          const n = row.opts.length, x0 = sp.cx - (n * S + (n - 1) * sp.gap) / 2, y = sp.cy - (S + sp.rowGap) / 2 + r * (S + sp.rowGap) - S / 2;
+          for (let j = 0; j < n; j++) place(st.cards[(r ? n0 : 0) + j], Math.round(x0 + j * (S + sp.gap)), Math.round(y), S, S);
+        });
+      }
       place(st.readEl, L() ? 34 : 34, L() ? 400 : 770, 100, 100);
+      let at = 0;
       (st.panels || []).forEach((d, r) => {
-        const a = box(st.cards[r * 5]), b = box(st.cards[r * 5 + 4]);
+        const n = st.q.rows[r].opts.length, a = box(st.cards[at]), b = box(st.cards[at + n - 1]); at += n;
         place(d, a.x - 14, a.y - 14, b.x + b.w - a.x + 28, a.h + 28);
       });
     },
@@ -247,7 +265,7 @@
       if (name !== 'tap' || st.submitted) return false;
       if (p.id === 'read') { this.readOut(st); return 'ok'; }
       const i = K.cardIndex(p.id); if (i < 0) return false;
-      const q = st.q, r = Math.floor(i / 5); if (st.found[r]) return false;
+      const q = st.q, r = this.rowOf(st, i); if (r < 0 || st.found[r]) return false;
       const w = st.opts[i];
       st.tapped = i; st.row = r; Sfx.tap();
       if (w !== q.rows[r].odd) { Session.submit(st, w); return 'ok'; }
@@ -290,7 +308,7 @@
       const row = st.q.rows[r], i = strat === 'wrong' ? st.opts.indexOf(row.fam[0]) : st.opts.indexOf(row.odd);
       return { g: 'tap', p: { id: 'card' + i } };
     },
-    workEls(st) { return (st.cards || []).filter((c, i) => st.found && !st.found[Math.floor(i / 5)]); },
+    workEls(st) { return (st.cards || []).filter((c, i) => st.found && !st.found[this.rowOf(st, i)]); },
     snap(st) { return { opts: st.opts || null, found: (st.found || []).filter(Boolean).length, peeked: !!st.peeked }; },
     iconNode() {
       const d = el('div'); Object.assign(d.style, { display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '0' });

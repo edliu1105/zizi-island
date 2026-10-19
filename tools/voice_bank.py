@@ -3,6 +3,7 @@
 Chinese voice - the same voice as the counting numbers (tools/make_voice.py) - into assets/voice/v/<fnv1a>.mp3, and the
 list of recorded keys into assets/voice/bank.json (index.html: Bank). Only sentences without a recording are made, so
 re-running after new games costs only the new sentences.
+A line that begins with '~' is the same words said slowly (the '~' is not said).
 usage: python tools/voice_bank.py [lines.json]      (default raw/voice_lines.json, a JSON list of sentences)"""
 import os, sys, json, struct, asyncio, subprocess, re
 import edge_tts
@@ -42,10 +43,12 @@ async def one(sem, text, stats):
     async with sem:
         for attempt in range(4):
             try:
-                if re.search(r'[一-鿿]', text):
-                    await edge_tts.Communicate(text, VOICE, rate='-6%', pitch='+4Hz').save(raw)
+                slow = text.startswith('~')                     # '~banana': the same word said slowly (神笔海 ⑧-3 拍节拍)
+                say = text[1:] if slow else text
+                if re.search(r'[一-鿿]', say):
+                    await edge_tts.Communicate(say, VOICE, rate='-40%' if slow else '-6%', pitch='+4Hz').save(raw)
                 else:                                         # English: a clear American voice, a little slower
-                    await edge_tts.Communicate(text, VOICE_EN, rate='-12%').save(raw)
+                    await edge_tts.Communicate(say, VOICE_EN, rate='-45%' if slow else '-12%').save(raw)
                 break
             except Exception as e:
                 if attempt == 3:

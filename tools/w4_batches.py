@@ -204,9 +204,81 @@ def batches():
     return out
 
 
+# ================================================================ ⑧ 复仇者·英雄训练场 and ⑨ 变形金刚·汽车人工厂 (docs/W4-DESIGN.md §12.4): their
+# own index (batches/index_w4x.tsv, `--x`) so that nothing already made is drawn again. 8 backgrounds, 2 islands, 8 pictures,
+# the boy jumping (jump: an English word of ⑨-3); 变 (change) is composed by tools/compose_w4.py (the yellow car + an arrow +
+# the client's Bumblebee, unchanged). Nothing of the client's pictures is drawn.
+BGS_X = {
+    # ⑧-1 圈字: the game draws its own screen with the sentence - the background's screen is blank
+    'avengers4': ['an outdoor superhero training ground on a sunny day: a red and blue climbing frame and a jumping platform only at the far left and far right edges, a city skyline small and far behind, one huge EMPTY blank white screen standing on two legs in the middle background with nothing on it (no writing, no symbols, no pictures)' + FLOOR + ', no letters, no logos, no people',
+                  'a quiet rooftop of a tall building at dusk: a calm orange and purple sky, a city skyline small and far away along the bottom edge, a water tower at the far right edge, a big calm empty sky in the whole middle, no letters, no logos, no people',
+                  # ⑧-3 拍节拍: the game puts a drum on the stage - the stage is empty
+                  'a small empty outdoor stage in a superhero training ground: a plain wooden stage floor across the whole lower half, red and blue curtains only at the far left and far right edges, a blue sky behind, the stage is completely EMPTY: no drum, no instruments, no microphone, no props' + NOEN,
+                  # ⑧-4 排故事: a mission board of the game's own goes on the wall
+                  'inside a superhero mission room: dark blue walls with soft glowing light strips, one big EMPTY blank light grey board on the back wall with nothing on it, a plain floor' + FLOOR + ', no writing, no maps, no screens with pictures, no logos, no letters'],
+    # ⑨-1 跟住它: the robots and the cars are the game's - the parking lot is empty
+    'robot4': ['an empty parking lot in front of a big friendly robot-car factory with a saw-tooth roof far behind: plain grey asphalt in the whole lower half with only a few simple straight white parking lines (no numbers, no letters, no arrows), a blue sky, NO cars, NO vehicles, NO robots, no people',
+               'a quiet factory yard at sunset: the saw-tooth roof of a factory small and far away at the far left, a calm orange sky, a big calm empty middle, no cars, no robots, no letters, no smoke',
+               # ⑨-3 拼句子: the robot frame is the game's; no letters on the walls (§12.5)
+               'inside a robot workshop: plain light grey metal walls with a few bolts, tool racks with wrenches only at the far left and far right edges, warm lights from the ceiling, a plain concrete floor' + FLOOR + NOEN + ', no letters on the walls, no robots, no cars',
+               # ⑨-4 加一笔: the game's machine stands on the belt
+               'inside a robot-car factory: one long EMPTY conveyor belt running straight across the lower middle of the picture, plain light walls with big windows high up, yellow and grey machines only at the far left and far right edges, nothing on the belt, no cars, no robots, no boxes, no letters, no numbers, no smoke'],
+}
+REFS_X = {'avengers4': 'ironman', 'robot4': 'chase'}
+ISLANDS_X = {
+    'avengers4': 'a superhero training-ground island: a red and blue climbing frame, a small jumping platform with a springboard, one small tall slim tower with a round lookout on top, a little running track round the edge, no letters, no logos, no symbols',
+    'robot4': 'a robot-car factory island: a factory building with a saw-tooth roof and a big yellow gear on its wall, a little grey road going round the island, a short conveyor belt, yellow and grey colours, no smoke, no letters, no logos',
+}
+OBJ_X = {
+    # 出: a hole in a WOODEN wall - not a heap of soil (土)
+    'mouseout': 'a cute little grey mouse peeking its head and two front paws OUT of a small round mouse hole at the bottom of a light brown wooden plank wall, smiling, only the wall and the mouse, no soil, no ground heap, no cheese',
+    # 王: a crown alone (the English Q is a queen)
+    'crown': 'one shiny golden king crown with five points and little red and blue gems, front view, nothing else, no person, no head',
+    # 高: a very tall building and a tiny tree beside it - no mountain (山)
+    'tower': 'one very very tall slim cartoon skyscraper tower building with rows of light blue glass windows, reaching high from the bottom to the top of the picture, one tiny round green tree at its foot to show how tall it is, no mountains, no other buildings, no letters, no logos',
+    # 工: a toy-like hammer, nothing sharp or scary
+    'toolbox': 'an open red toolbox seen from the front and a little from above, a big silver wrench and a small friendly toy-like wooden hammer lying inside it, nothing sharp, no saw, no other tools',
+    # 厂: no smoke (云)
+    'factory': 'a small friendly cartoon factory building: a saw-tooth roof, light cream walls with a row of square windows, one big round yellow gear on its front wall, a wide door, NO smoke, NO chimney, no clouds, no letters, no logos',
+    # 路: an EMPTY road - no car (车)
+    'road': 'a rounded-square picture patch of an empty curvy road seen from slightly above: grey asphalt winding from the bottom edge to the top edge with a white dashed line in the middle, green grass on both sides, NO cars, NO vehicles, NO people, no signs, no houses',
+    # for 变 (composed): an ordinary little car, not a robot, not Bumblebee
+    'yellowcar': 'a cute plain small yellow car, an ordinary little hatchback seen from the side facing right, round wheels, no stripes, no logos, no face, NOT a robot',
+}
+BODY_X = {
+    # 好: thumbs up - a closed fist and one thumb, not an open hand (手)
+    'thumbsup': 'a round light yellow sticker badge with a few little gold stars around its edge and in the middle one cartoon hand giving a big THUMBS UP: the fist closed, only the thumb pointing straight up, skin coloured like the reference stickers, no face, no letters, no writing',
+}
+ACT_X = {
+    'jump': KID + 'full body, jumping high with joy: both feet off the ground, knees bent, both arms raised up, a small round shadow on the ground under him',
+}
+
+
+def batches_x():
+    R = lambda *names: ['raw/refs/%s.png' % n for n in names]
+    out = []
+    for iid, four in BGS_X.items():
+        items = [('raw/bg/%s_%s.png' % (iid, g), four[k] + ', ' + BG) for k, g in enumerate(GAMES)]
+        for j, ch in chunks(items, 2):
+            out.append(('w4x_bg_%s_%d' % (iid, j), HEADER, R(REFS_X[iid], 'peppa'), ch))
+    out.append(('w4x_isl', HEADER, R('ironman', 'peppa'), [('raw/islands/%s.png' % i, ISL + p) for i, p in ISLANDS_X.items()]))
+    objs = [('raw/obj/%s.png' % o, d + ', ' + PROP) for o, d in OBJ_X.items()]
+    for j, ch in chunks(objs, 3):
+        out.append(('w4x_obj_%d' % j, HEADER, R('peppa', 'chase'), ch))
+    out.append(('w4x_body', BODY_HEADER, ['assets/obj/nose.png', 'assets/obj/hand.png'], [('raw/obj/%s.png' % o, d + ', ' + PROP) for o, d in BODY_X.items()]))
+    out.append(('w4x_act', ACT_HEADER, ['raw/refs/person.png', 'assets/obj/walk.png'], [('raw/obj/%s.png' % o, d + ', ' + PROP) for o, d in ACT_X.items()]))
+    return out
+
+
 def main(redo):
     os.makedirs(BD, exist_ok=True)
-    allb = batches()
+    if '--x' in sys.argv:
+        bx = batches_x()
+        lines = [write_custom(bid, hdr, refs, items) for bid, hdr, refs, items in bx]
+        open(os.path.join(BD, 'index_w4x.tsv'), 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+        print(len(lines), 'batches', sum(len(b[3]) for b in bx), 'images (islands 8 and 9)')
+        return
+    allb = batches() + batches_x()
     if redo:
         # a picture rejected by eye: one batch per picture, same header / references / (updated) prompt -> index_w4redo.tsv
         # (delete the raw file first: run_batches.sh skips targets that exist)

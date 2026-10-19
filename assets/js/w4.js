@@ -1,6 +1,6 @@
 /* 字字岛 · 神笔海 (world 4, docs/W4-DESIGN.md): the lazily loaded part - built by tools/build.py from tools/content.py and src/w4/*.js; do not edit. */
 'use strict';
-const W4D = {"read":[["鱼在水中。",[["river",0.5,0.55,0.94],["fish",0.5,0.5,0.42]],[[["mountain",0.5,0.66,0.6],["fish",0.5,0.24,0.3]],[["river",0.5,0.55,0.94],["bird",0.5,0.5,0.42]],[["tree",0.5,0.66,0.6],["fish",0.5,0.24,0.3]],[["car",0.5,0.66,0.6],["fish",0.5,0.24,0.3]]]],["鸟飞上天。",[["sky",0.5,0.5,0.96],["bird",0.5,0.4,0.42]],[[["soil",0.5,0.76,0.62],["bird",0.5,0.42,0.46]],[["sky",0.5,0.5,0.96],["fish",0.5,0.4,0.42]],[["sky",0.5,0.5,0.96],["cow",0.5,0.4,0.42]],[["river",0.5,0.55,0.94],["bird",0.5,0.5,0.42]]]],["山上有雪。",[["mountain",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["snow",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["fire",0.5,0.24,0.3]],[["car",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[["mountain",0.5,0.66,0.6],["grass",0.5,0.24,0.3]]]],["地上有草。",[["soil",0.5,0.76,0.62],["grass",0.5,0.42,0.46]],[[["sky",0.5,0.5,0.96],["grass",0.5,0.4,0.42]],[["soil",0.5,0.76,0.62],["snow",0.5,0.42,0.46]],[["soil",0.5,0.76,0.62],["fire",0.5,0.42,0.46]],[["soil",0.5,0.76,0.62],["fish",0.5,0.42,0.46]]]],["小虫在草上。",[["grass",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[[["cup",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[["grass",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[["snow",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[["door",0.5,0.66,0.6],["insect",0.5,0.24,0.3]]]],["牛在左，马在右。",[["cow",0.28,0.58,0.5],["horse",0.72,0.6,0.5]],[[["horse",0.28,0.58,0.5],["cow",0.72,0.6,0.5]],[["cow",0.28,0.58,0.5],["cow",0.72,0.6,0.5]],[["sheep",0.28,0.58,0.5],["horse",0.72,0.6,0.5]],[["cow",0.28,0.58,0.5],["sheep",0.72,0.6,0.5]]]],["我坐下。",[["sit",0.5,0.55,0.8]],[[["stand",0.5,0.55,0.8]],[["walk",0.5,0.55,0.8]],[["talk",0.5,0.55,0.8]],[["listen",0.5,0.55,0.8]]]],["我站在门口。",[["stand",0.32,0.6,0.62],["door",0.74,0.54,0.5]],[[["sit",0.32,0.66,0.5],["door",0.74,0.54,0.5]],[["stand",0.32,0.6,0.62],["car",0.74,0.62,0.44]],[["walk",0.32,0.6,0.62],["door",0.74,0.54,0.5]],[["stand",0.32,0.6,0.62],["mountain",0.74,0.5,0.5]]]],["我去山上。",[["goaway",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]],[[["come",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]],[["goaway",0.3,0.62,0.6],["water",0.72,0.5,0.44]],[["sit",0.5,0.74,0.44],["mountain",0.5,0.34,0.56]],[["look",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]]]],["门开了。",[["door_open",0.5,0.55,0.7]],[[["door",0.5,0.55,0.7]],[["chest_open",0.5,0.55,0.7]],[["umbrella",0.5,0.55,0.7]],[["lamp",0.5,0.55,0.7]]]],["门关了。",[["door",0.5,0.55,0.7]],[[["door_open",0.5,0.55,0.7]],[["chest_shut",0.5,0.55,0.7]],[["umbrella",0.5,0.55,0.7]],[["car",0.5,0.55,0.7]]]],["鸟多，鱼少。",[["bird",0.15,0.35,0.18],["bird",0.39,0.35,0.18],["bird",0.15,0.55,0.18],["bird",0.39,0.55,0.18],["bird",0.15,0.75,0.18],["fish",0.73,0.45,0.24],["fish",0.73,0.65,0.24]],[[["bird",0.27,0.45,0.24],["bird",0.27,0.65,0.24],["fish",0.61,0.35,0.18],["fish",0.85,0.35,0.18],["fish",0.61,0.55,0.18],["fish",0.85,0.55,0.18],["fish",0.61,0.75,0.18]],[["bird",0.15,0.45,0.18],["bird",0.39,0.45,0.18],["bird",0.15,0.65,0.18],["fish",0.61,0.45,0.18],["fish",0.85,0.45,0.18],["fish",0.61,0.65,0.18]],[["bird",0.15,0.35,0.18],["bird",0.39,0.35,0.18],["bird",0.15,0.55,0.18],["bird",0.39,0.55,0.18],["bird",0.15,0.75,0.18],["cow",0.73,0.45,0.24],["cow",0.73,0.65,0.24]],[["bird",0.27,0.55,0.24],["fish",0.73,0.55,0.24]]]],["妹妹有鱼。",[["@bingo",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[[["@peppa",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[["@bingo",0.3,0.58,0.7],["bird",0.74,0.64,0.38]],[["@george",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[["@bingo",0.3,0.58,0.7],["umbrella",0.74,0.64,0.38]]]],["爷爷有车。",[["@grandpa",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[[["@daddy_pig",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[["@grandpa",0.3,0.58,0.7],["umbrella",0.74,0.64,0.38]],[["@george",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[["@grandpa",0.3,0.58,0.7],["horse",0.74,0.64,0.38]]]]],"books":[{"id":"b7","title":"天上地下","after":"ultra4","cover":[["sky",0.5,0.5,0.96],["sun",0.5,0.4,0.42]],"pages":[["天上有日。",[["sky",0.5,0.5,0.96],["sun",0.5,0.4,0.42]]],["天上有月。",[["sky",0.5,0.5,0.96],["moon",0.5,0.4,0.42]]],["天上有云。",[["sky",0.5,0.5,0.96],["cloud",0.5,0.4,0.5]]],["地上有山。",[["grass",0.5,0.82,0.9],["mountain",0.5,0.44,0.64]]],["地上有水。",[["river",0.5,0.55,0.82]]],["山下有金！",[["mountain",0.5,0.4,0.6],["gold",0.5,0.84,0.28]]]]},{"id":"b8","title":"我的头","after":"peppa4","pages":[["这是我的头。",[["head",0.5,0.55,0.7]]],["这是我的耳。",[["ear",0.5,0.55,0.7]]],["这是我的口。",[["mouth",0.5,0.55,0.7]]],["这是我的牙。",[["tooth",0.5,0.55,0.7]]],["这是我的手。",[["hand",0.5,0.55,0.7]]],["这是我的足！",[["foot",0.5,0.55,0.7]]]]},{"id":"b9","title":"开门关门","after":"huluwa4","pages":[["门开了。",[["door_open",0.5,0.55,0.7]]],["牛来了。",[["door_open",0.3,0.55,0.6],["cow",0.74,0.64,0.4]]],["牛多了。",[["cow",0.198,0.393,0.28],["cow",0.5,0.393,0.28],["cow",0.802,0.393,0.28],["cow",0.349,0.707,0.28],["cow",0.651,0.707,0.28]]],["门关了。",[["door",0.5,0.55,0.7]]],["牛去了。",[["door",0.3,0.55,0.6],["cow",0.76,0.7,0.26]]],["牛少了！",[["cow",0.338,0.55,0.3],["cow",0.662,0.55,0.3]]]]},{"id":"b10","title":"一家人","after":"bluey4","pages":[["这是爷爷。",[["@grandpa",0.5,0.58,0.8]]],["这是奶奶。",[["grandma",0.5,0.55,0.8]]],["这是妹妹。",[["@bingo",0.5,0.58,0.8]]],["爷爷坐下。",[["@grandpa",0.5,0.58,0.8]]],["奶奶坐下。",[["grandma",0.5,0.55,0.8]]],["我们一家人！",[["@grandpa",0.18,0.6,0.5],["grandma",0.4,0.6,0.5],["person",0.62,0.64,0.44],["@bingo",0.83,0.68,0.36]]]]}],"scrolls":[{"id":"r1","kind":"rhyme","title":"金木水火土","after":"ultra4","pic":[["sun",0.28,0.3,0.3],["moon",0.72,0.3,0.3],["mountain",0.5,0.7,0.56]],"lines":["一二三四五，","金木水火土。","天地分上下，","日月照今古。"]},{"id":"r2","kind":"rhyme","title":"五官歌","after":"peppa4","pic":[["head",0.5,0.45,0.6],["heart",0.82,0.78,0.26]],"lines":["头，点点头。","耳，听一听。","牙，白又白。","足，走一走。","心，好开心！"]},{"id":"r3","kind":"rhyme","title":"站如松","after":"pj4","pic":[["stand",0.3,0.55,0.56],["sit",0.72,0.6,0.5]],"lines":["站如松，","坐如钟。","行如风，","卧如弓。"]},{"id":"r4","kind":"rhyme","title":"对韵歌","after":"xiyou4","pic":[["cloud",0.25,0.25,0.3],["rain",0.72,0.25,0.3],["snow",0.25,0.7,0.28],["insect",0.72,0.7,0.26]],"lines":["云对雨，","雪对风。","花对树，","鸟对虫。","山清对水秀，","柳绿对桃红。"]},{"id":"r5","kind":"rhyme","title":"大小多少","after":"huluwa4","pic":[["cow",0.3,0.52,0.46],["duck",0.74,0.6,0.3]],"lines":["一个大，","一个小，","一头黄牛一只猫。","一边多，","一边少，","一群鸭子一只鸟。"]},{"id":"r6","kind":"rhyme","title":"影子","after":"paw4","pic":[["walk",0.38,0.55,0.6],["dog",0.74,0.66,0.34]],"lines":["影子在前，","影子在后，","影子常常跟着我，","就像一条小黑狗。","影子在左，","影子在右，","影子常常陪着我，","它是我的好朋友。"]},{"id":"r7","kind":"rhyme","title":"一家人","after":"bluey4","pic":[["@grandpa",0.16,0.6,0.46],["grandma",0.38,0.6,0.46],["@daddy_pig",0.62,0.6,0.46],["@mummy_pig",0.84,0.6,0.46]],"lines":["爷爷奶奶，","爸爸妈妈，","哥哥姐姐，","弟弟妹妹，","我们是一家。"]},{"id":"p1","kind":"poem","title":"咏鹅","after":"pj4","pic":[["river",0.5,0.6,0.9],["goose",0.5,0.46,0.46]],"lines":["鹅，鹅，鹅，","曲项向天歌。","白毛浮绿水，","红掌拨清波。"]},{"id":"p2","kind":"poem","title":"画","after":"huluwa4","pic":[["mountain",0.3,0.4,0.46],["river",0.7,0.66,0.5],["flower",0.22,0.78,0.26],["bird",0.74,0.28,0.24]],"lines":["远看山有色，","近听水无声。","春去花还在，","人来鸟不惊。"]},{"id":"p3","kind":"poem","title":"静夜思","after":"bluey4","pic":[["bed",0.5,0.7,0.6],["moon",0.72,0.24,0.3]],"lines":["床前明月光，","疑是地上霜。","举头望明月，","低头思故乡。"]}],"scrollKind":{"rhyme":"儿歌卷","poem":"古诗卷"},"words":[["cat","cat",1],["hat","hat",1],["bat","bat",1],["mat","mat",1],["rat","rat",1],["fan","fan",1],["pan","pan",1],["van","van",1],["man","man",1],["can","tincan",1],["map","map",1],["cap","cap",1],["pig","pig",1],["wig","wig",1],["fig","fig",0],["bug","insect",1],["rug","rug",1],["mug","mug",1],["jug","jug",0],["mop","mop",1],["top","top",0],["hop","hop",0],["pen","pen",1],["hen","hen",1],["ten","num10",0],["net","net",0],["jet","jet",1],["sun","sun",1],["bun","bun",1],["run","run",0],["box","box",1],["fox","fox",1],["dog","dog",1],["log","log",1],["bed","bed",1]],"sight":["I","a","the","see","my","is","it","in","on","up","go","can","look","me","we","and","you","big","little","down","come","not","one","two","three","red","blue","yellow","here","said","play","at","under","by"],"bridge":[["big","大","big"],["little","小","small"],["up","上","up"],["down","下","down"],["go","去","goaway"],["come","来","come"],["look","看","look"],["I","我",null],["you","你",null],["is","是",null],["not","不",null],["one","一","num1"],["two","二","num2"],["three","三","num3"],["red","红","strawberry"],["blue","蓝","whale"],["yellow","黄","banana"]],"esent":[["I see.",[["look",0.5,0.55,0.8]]],["I can hop.",[["hop",0.5,0.55,0.7]]],["I can run.",[["run",0.5,0.55,0.7]]],["Look up!",[["look",0.4,0.62,0.66],["sun",0.78,0.2,0.3]]],["A big pig.",[["pig",0.5,0.55,0.86]]],["A red hat.",[["hat",0.5,0.55,0.7]]],["Come and play!",[["come",0.5,0.55,0.8]]],["A little rat.",[["rat",0.5,0.64,0.34]]],["I see a cat.",[["look",0.3,0.6,0.6],["cat",0.75,0.62,0.4]]],["The pig is big.",[["pig",0.5,0.55,0.86]]],["The sun is up.",[["mountain",0.5,0.66,0.6],["sun",0.5,0.24,0.3]]],["My hat is red.",[["hat",0.5,0.55,0.7]]],["Look at the hen.",[["hen",0.5,0.55,0.7]]],["The cup is blue.",[["cup",0.5,0.55,0.7]]],["Here is my cap.",[["cap",0.5,0.55,0.7]]],["I see a big jet.",[["look",0.28,0.62,0.56],["jet",0.72,0.34,0.5]]],["A bug is on the rug.",[["rug",0.5,0.66,0.6],["insect",0.5,0.24,0.3]]],["The cat is on the box.",[["box",0.5,0.66,0.6],["cat",0.5,0.24,0.3]]],["I can see a man.",[["look",0.3,0.62,0.56],["man",0.72,0.6,0.5]]],["It is on the box.",[["box",0.5,0.66,0.6],["fox",0.5,0.24,0.3]]],["Is it a hen?",[["hen",0.5,0.55,0.7]]],["The rat is little.",[["rat",0.5,0.64,0.34]]],["A cat can hop.",[["cat",0.5,0.55,0.7]]],["Go, dog, go!",[["dog",0.5,0.55,0.7]]],["Run, man, run!",[["man",0.5,0.55,0.7]]],["Hop, hop, hop!",[["hop",0.5,0.55,0.7]]],["A pig and a hen.",[["pig",0.28,0.58,0.5],["hen",0.72,0.6,0.5]]],["The cat and the dog.",[["cat",0.28,0.58,0.5],["dog",0.72,0.6,0.5]]],["We can play in the sun.",[["sun",0.5,0.55,0.7]]],["My mug is on the mat.",[["mat",0.5,0.66,0.6],["mug",0.5,0.24,0.3]]],["I see three red hats.",[["hat",0.198,0.55,0.28],["hat",0.5,0.55,0.28],["hat",0.802,0.55,0.28]]],["Look, a fox on a box!",[["box",0.5,0.66,0.6],["fox",0.5,0.24,0.3]]],["The hen is not big.",[["hen",0.5,0.64,0.34]]],["Two cats and a dog.",[["cat",0.2,0.6,0.32],["cat",0.45,0.6,0.32],["dog",0.76,0.6,0.38]]],["Come and see my map.",[["map",0.5,0.55,0.7]]],["The jet is up, up, up!",[["jet",0.5,0.55,0.7]]]],"tf":[{"lv":1,"pic":[["pig",0.5,0.55,0.86]],"s":[["A big pig.",1],["I see a pig.",1],["A little pig.",0],["A blue pig.",0]]},{"lv":1,"pic":[["cat",0.5,0.64,0.34]],"s":[["A little cat.",1],["I see a cat.",1],["A big cat.",0],["A red cat.",0]]},{"lv":1,"pic":[["hat",0.5,0.55,0.7]],"s":[["A red hat.",1],["I see a hat.",1],["A blue hat.",0],["A yellow hat.",0]]},{"lv":1,"pic":[["cup",0.5,0.55,0.7]],"s":[["A blue cup.",1],["I see a cup.",1],["A red cup.",0],["A yellow cup.",0]]},{"lv":1,"pic":[["dog",0.5,0.55,0.86]],"s":[["A big dog.",1],["I see a dog.",1],["A little dog.",0],["A big hen.",0]]},{"lv":2,"pic":[["pig",0.5,0.55,0.86]],"s":[["The pig is big.",1],["It is a pig.",1],["The pig is little.",0],["It is a dog.",0]]},{"lv":2,"pic":[["sun",0.5,0.55,0.7]],"s":[["The sun is yellow.",1],["It is the sun.",1],["The sun is blue.",0],["It is a bun.",0]]},{"lv":2,"pic":[["cup",0.5,0.55,0.7]],"s":[["The cup is blue.",1],["It is a cup.",1],["The cup is red.",0],["It is a cap.",0]]},{"lv":2,"pic":[["hen",0.5,0.64,0.34]],"s":[["The hen is little.",1],["It is a hen.",1],["The hen is big.",0],["It is a pen.",0]]},{"lv":3,"pic":[["cat",0.198,0.55,0.28],["cat",0.5,0.55,0.28],["cat",0.802,0.55,0.28]],"s":[["I see three cats.",1],["I see cats.",1],["I see two cats.",0],["I see one cat.",0]]},{"lv":3,"pic":[["hat",0.338,0.55,0.3],["hat",0.662,0.55,0.3]],"s":[["I see two hats.",1],["I see hats.",1],["I see three hats.",0],["I see one hat.",0]]},{"lv":3,"pic":[["dog",0.5,0.55,0.3]],"s":[["I see one dog.",1],["I see a dog.",1],["I see two dogs.",0],["I see three dogs.",0]]},{"lv":3,"pic":[["cup",0.198,0.55,0.28],["cup",0.5,0.55,0.28],["cup",0.802,0.55,0.28]],"s":[["I see three cups.",1],["I see cups.",1],["I see one cup.",0],["I see two cups.",0]]},{"lv":4,"pic":[["cat",0.5,0.64,0.34]],"s":[["The cat is not big.",1],["It is not a dog.",1],["The cat is not little.",0],["It is not a cat.",0]]},{"lv":4,"pic":[["pig",0.5,0.55,0.86]],"s":[["The pig is not little.",1],["It is not a hen.",1],["The pig is not big.",0],["It is not a pig.",0]]},{"lv":4,"pic":[["hat",0.5,0.55,0.7]],"s":[["The hat is not blue.",1],["It is not a cap.",1],["The hat is not red.",0],["It is not a hat.",0]]},{"lv":4,"pic":[["cup",0.5,0.55,0.7]],"s":[["The cup is not red.",1],["It is not a mug.",1],["The cup is not blue.",0],["It is not a cup.",0]]},{"lv":5,"pic":[["box",0.5,0.66,0.6],["cat",0.5,0.24,0.3]],"s":[["The cat is on the box.",1],["The cat is not in the box.",1],["The cat is in the box.",0],["The cat is under the box.",0]]},{"lv":5,"pic":[["cat",0.28,0.58,0.44],["box",0.72,0.6,0.5]],"s":[["The cat is by the box.",1],["The cat is not on the box.",1],["The cat is on the box.",0],["The cat is in the box.",0]]},{"lv":5,"pic":[["bed",0.5,0.66,0.6],["hat",0.5,0.24,0.3]],"s":[["The hat is on the bed.",1],["The hat is not under the bed.",1],["The hat is under the bed.",0],["The hat is in the box.",0]]},{"lv":5,"pic":[["bed",0.5,0.4,0.6],["dog",0.5,0.84,0.28]],"s":[["The dog is under the bed.",1],["The dog is not on the bed.",1],["The dog is on the bed.",0],["The dog is in the box.",0]]}],"placeThings":[["cat","cat"],["dog","dog"],["hat","hat"],["cup","cup"],["bug","insect"]],"placeSpots":[["in","box"],["on","bed"],["on","box"],["on","mat"],["under","bed"],["by","bed"],["by","box"],["by","mat"]],"place":["The cat is in the box.","The cat is on the bed.","The cat is on the box.","The cat is on the mat.","The cat is under the bed.","The cat is by the bed.","The cat is by the box.","The cat is by the mat.","The dog is in the box.","The dog is on the bed.","The dog is on the box.","The dog is on the mat.","The dog is under the bed.","The dog is by the bed.","The dog is by the box.","The dog is by the mat.","The hat is in the box.","The hat is on the bed.","The hat is on the box.","The hat is on the mat.","The hat is under the bed.","The hat is by the bed.","The hat is by the box.","The hat is by the mat.","The cup is in the box.","The cup is on the bed.","The cup is on the box.","The cup is on the mat.","The cup is under the bed.","The cup is by the bed.","The cup is by the box.","The cup is by the mat.","The bug is in the box.","The bug is on the bed.","The bug is on the box.","The bug is on the mat.","The bug is under the bed.","The bug is by the bed.","The bug is by the box.","The bug is by the mat."],"wordsZh":[["天上",""],["地上",""],["天下",""],["地下",""],["山上",""],["山下",""],["上天",""],["大地",""],["土地","soil"],["天地",""],["山川",""],["金鱼","fish"],["大鱼",""],["小鱼",""],["鱼头",""],["小虫","insect"],["草地","grass"],["小草",""],["雪地",""],["大雪","snow"],["小雪",""],["雪山","mountain"],["水草",""],["火山","volcano"],["山水",""],["大火","fire"],["门口",""],["人口",""],["山口",""],["石头","stone"],["木头","log"],["牛头",""],["马头",""],["大头","head"],["手心","hand"],["小心",""],["人心",""],["月牙","moon"],["坐下","sit"],["听说",""],["上下",""],["大小",""],["日月","bright"],["牛马",""],["大人",""],["小人",""],["多少",""],["开关",""],["开门","door_open"],["关门","door"],["大门",""],["小门",""],["左手",""],["右手",""],["左右",""],["前后",""],["爷爷","@grandpa"],["奶奶","grandma"],["妹妹","@bingo"],["下山",""],["上山",""],["对门",""],["不对",""],["对了",""]],"wordsZh3":[["小金鱼","fish"],["大金鱼",""],["大雪山","mountain"],["小雪山",""],["小草地","grass"],["大草地",""],["大火山","volcano"],["小火山",""],["大石头","stone"],["小石头",""],["大木头","log"],["小木头",""]],"sense":[{"pre":"鸟飞","ok":"上天。","no":["上牙。","上米。","上月。","下石中。"],"subj":"bird"},{"pre":"马去","ok":"山上。","no":["天上。","牙上。","耳中。","米中。"],"subj":"horse"},{"pre":"爷爷","ok":"坐下。","no":["坐牙上。","站米上。","坐耳上。","坐月上。"],"subj":"@grandpa"},{"pre":"鱼","ok":"去水中。","no":["去米中。","去山上。","坐车上。","飞上月。"],"subj":"fish"},{"pre":"牛","ok":"站地上。","no":["站天上。","站月上。","站米上。","站牙上。"],"subj":"cow"},{"pre":"奶奶","ok":"坐车上。","no":["坐月上。","站米上。","坐牙上。","坐耳中。"],"subj":"grandma"},{"pre":"羊","ok":"站山上。","no":["站米上。","站月上。","站牙上。","站耳中。"],"subj":"sheep"},{"pre":"小虫","ok":"去草中。","no":["去月上。","去日上。","去金中。","去石中。"],"subj":"insect"},{"pre":"妹妹","ok":"站门口。","no":["站月上。","站米上。","站牙上。","站耳中。"],"subj":"@bingo"},{"pre":"小鸟","ok":"站木上。","no":["站米上。","站月上。","站耳中。","站石中。"],"subj":"bird"},{"pre":"车","ok":"去山下。","no":["去天上。","去月上。","去米中。","去牙中。"],"subj":"car"},{"pre":"小马","ok":"去草地。","no":["去月上。","去米中。","去牙中。","去耳中。"],"subj":"horse"},{"pre":"大牛","ok":"去水中。","no":["飞上天。","去米中。","坐牙上。","站耳上。"],"subj":"cow"},{"pre":"爷爷坐","ok":"车上。","no":["米上。","月上。","牙上。","耳中。"],"subj":"@grandpa"},{"pre":"小鸟飞","ok":"上天。","no":["上牙。","上米。","上月。","下石中。"],"subj":"bird"},{"pre":"小鱼去","ok":"水中。","no":["米中。","天上。","山上。","牙上。"],"subj":"fish"},{"pre":"鱼在","ok":"水中。","no":["天上。","米中。","牙上。","石中。"],"subj":"fish"},{"pre":"牛在","ok":"地上。","no":["天上。","米中。","牙上。","耳中。"],"subj":"cow"},{"pre":"小虫在","ok":"草上。","no":["月上。","金中。","日上。","石中。"],"subj":"insect"},{"pre":"鸟在","ok":"天上。","no":["米中。","牙中。","耳中。","金中。"],"subj":"bird"},{"pre":"门","ok":"开了。","no":["飞了。","说了。","听了。","坐了。"],"subj":"door"},{"pre":"雪是","ok":"白的。","no":["红的。","绿的。","蓝的。","金的。"],"subj":"snow"},{"pre":"爸爸","ok":"喝汤。","no":["喝石头。","喝门。","喝车。","喝伞。"],"subj":"@daddy_pig"},{"pre":"妈妈","ok":"吃饭。","no":["吃石头。","吃门。","吃车。","吃伞。"],"subj":"@mummy_pig"},{"pre":"我","ok":"看书。","no":["喝书。","吃车。","坐牙上。","坐耳中。"],"subj":"look"},{"pre":"兔子","ok":"吃草。","no":["吃车。","吃石头。","吃门。","吃伞。"],"subj":"rabbit"},{"pre":"我坐","ok":"车上。","no":["米上。","月上。","牙上。","耳中。"],"subj":"sit"},{"pre":"小狗","ok":"在地上。","no":["在月上。","在米上。","在牙上。","在耳中。"],"subj":"dog"},{"pre":"弟弟","ok":"在门口。","no":["在月上。","在米中。","在牙中。","在耳上。"],"subj":"@george"},{"pre":"小鸡","ok":"吃米。","no":["吃车。","吃门。","吃伞。","吃灯。"],"subj":"chicken"}],"endPic":{"伞":"umbrella","灯":"lamp","天":"sky","火":"fire","牙":"tooth","耳":"ear","石":"stone","日":"sun","月":"moon","金":"gold","山":"mountain","水":"river","地":"soil","草":"grass","车":"car","门":"door","木":"tree","书":"book","饭":"ricebowl","汤":"soup","米":"rice"},"orderRules":["先横后竖","从上到下","先撇后捺","从左到右","先中间后两边","先外后内","先进去后关门"],"orderPairs":[["十",1,2,"先横后竖",1],["土",1,2,"先横后竖",1],["木",1,2,"先横后竖",1],["耳",1,2,"先横后竖",1],["草",1,2,"先横后竖",1],["地",1,2,"先横后竖",1],["去",1,2,"先横后竖",1],["禾",2,3,"先横后竖",1],["车",3,4,"先横后竖",1],["米",3,4,"先横后竖",1],["手",3,4,"先横后竖",1],["坐",5,6,"先横后竖",1],["林",1,2,"先横后竖",1],["来",4,5,"先横后竖",1],["走",1,2,"先横后竖",1],["在",4,5,"先横后竖",1],["天",1,2,"从上到下",1],["开",1,2,"从上到下",1],["云",1,2,"从上到下",1],["二",1,2,"从上到下",1],["三",2,3,"从上到下",1],["上",2,3,"从上到下",1],["羊",3,4,"从上到下",1],["牛",2,3,"从上到下",1],["手",2,3,"从上到下",1],["关",3,4,"从上到下",1],["耳",4,5,"从上到下",1],["人",1,2,"先撇后捺",2],["大",2,3,"先撇后捺",2],["天",3,4,"先撇后捺",2],["木",3,4,"先撇后捺",2],["禾",4,5,"先撇后捺",2],["米",5,6,"先撇后捺",2],["火",3,4,"先撇后捺",2],["关",5,6,"先撇后捺",2],["足",6,7,"先撇后捺",2],["八",1,2,"先撇后捺",2],["从",3,4,"先撇后捺",2],["走",6,7,"先撇后捺",2],["川",1,2,"从左到右",2],["小",2,3,"从左到右",2],["火",1,2,"从左到右",2],["坐",2,3,"从左到右",2],["林",4,5,"从左到右",2],["从",2,3,"从左到右",2],["小",1,2,"先中间后两边",3],["水",1,2,"先中间后两边",3],["少",1,2,"先中间后两边",3],["山",1,2,"先中间后两边",3],["光",1,2,"先中间后两边",3],["月",2,3,"先外后内",3],["目",2,3,"先外后内",3],["田",2,3,"先外后内",3],["日",2,3,"先外后内",3],["肉",2,3,"先外后内",3],["风",2,3,"先外后内",3],["四",2,3,"先外后内",3],["白",3,4,"先外后内",3],["日",3,4,"先进去后关门",4],["目",4,5,"先进去后关门",4],["田",4,5,"先进去后关门",4],["四",4,5,"先进去后关门",4],["白",4,5,"先进去后关门",4],["牛",2,4,"先横后竖",4],["车",1,4,"先横后竖",4],["羊",3,6,"先横后竖",4],["土",1,3,"从上到下",4],["羊",3,5,"从上到下",4],["耳",1,4,"从上到下",4],["目",3,5,"先进去后关门",4],["田",3,5,"先进去后关门",4],["川",2,3,"从左到右",5],["耳",2,3,"从左到右",5],["草",2,3,"从左到右",5],["心",3,4,"从左到右",5],["坐",1,3,"从左到右",5],["多",1,4,"从上到下",5],["林",1,5,"从左到右",5],["竹",1,4,"从左到右",5],["雪",5,7,"从左到右",5],["雪",5,6,"从上到下",5]],"kind":{"天上":"天日月云雨电雪","地上":"地土山石田草川禾木竹","动物":"牛羊马鸟鱼虫龙兔狗鸡","身体":"口目手耳足头牙心","动作":"坐站飞说听吃喝看走来去","家人":"爸妈哥姐弟爷奶妹"},"kindLine":{"天上":"这是天上的","地上":"这是地上的","动物":"这是动物","身体":"这是身体","动作":"这是动作","家人":"这是家人"},"kindWords":[["金鱼","动物"],["小鸟","动物"],["小虫","动物"],["雪山","地上"],["草地","地上"],["石头","地上"],["大雪","天上"],["月牙","天上"],["手心","身体"],["大头","身体"],["坐下","动作"],["听说","动作"],["爷爷","家人"],["奶奶","家人"],["妹妹","家人"],["爸爸","家人"]],"body":[["听","耳","listen"],["说","口","talk"],["站","足","stand"],["看","目","look"],["吃","口","eat"],["喝","口","drink"],["走","足","walk"]],"opp":["大小","上下","多少","开关","来去","左右","前后","天地"],"oppWords":[["上山","下山"],["开门","关门"],["大门","小门"],["天上","地下"],["左手","右手"]],"look":{"天":"大开","地":"他","土":"上","川":"三小","耳":"目","足":"走是","心":"小","飞":"风","听":"吃","雪":"雨","虫":"中电","少":"小","开":"天关","关":"开天","去":"云","左":"右在","右":"左有石","中":"虫","爷":"爸","奶":"妈","妹":"姐妈","子":"了"},"lookBack":{"大":"天","上":"土","小":"少","风":"飞","雨":"雪","云":"去","在":"左","有":"右","石":"右","了":"子","走":"足","是":"足","目":"耳","爸":"爷","妈":"奶妹","姐":"妹","电":"虫","吃":"听","他":"地"},"holds":{"大":"天","土":"地在坐去","口":"足听中右后","人":"坐金","小":"少","日":"草","雨":"雪","中":"虫","天":"关","女":"奶妹妈姐","田":"鱼"},"samePic":{"川":"水","水":"川"},"motion":{"sky":"up","soil":"hop","ear":"sway","head":"sway","sit":"down","stand":"up","plane":"fly","insect":"fly","check":"grow","chest_open":"grow","chest_shut":"shrink","leftsign":"left","rightsign":"right","front":"grow","back":"shrink","girl":"sway","baby":"sway","earth":"spin","gold":"grow","river":"sway","snow":"down","grass":"sway","goaway":"shrink","heart":"grow","tooth":"hop","foot":"hop","talk":"sway","listen":"sway","grandma":"sway","middle":"hop","many":"hop","few":"hop"},"naiMilk":["奶，牛奶的奶！","milk"],"dict":["bad","bag","ban","bat","bed","beg","bet","bib","bid","big","bin","bit","bog","bop","box","bud","bug","bun","bus","but","cab","can","cap","cat","cob","cod","cog","cop","cot","cub","cup","cut","dad","dam","den","did","dig","dim","din","dip","dog","dot","dug","fad","fan","fat","fed","fen","fig","fin","fit","fix","fog","fox","fun","fur","gap","gas","get","gig","gum","gun","gut","had","ham","has","hat","hen","hid","him","hip","his","hit","hog","hop","hot","hug","hum","hut","jab","jam","jet","jig","job","jog","jot","jug","jut","kid","kin","kit","lab","lad","lag","lap","led","leg","let","lid","lip","lit","log","lot","mad","man","map","mat","men","met","mid","mix","mob","mom","mop","mud","mug","nab","nag","nap","net","nip","nod","not","nun","nut","pad","pal","pan","pat","peg","pen","pet","pig","pin","pit","pod","pop","pot","pub","pug","pun","pup","put","rag","ram","ran","rap","rat","red","rib","rid","rig","rim","rip","rob","rod","rot","rub","rug","rum","run","rut","sad","sag","sap","sat","set","sip","sit","sob","sod","sun","tab","tag","tan","tap","ten","tin","tip","top","tub","tug","van","vat","vet","wag","web","wet","wig","win","wit","yak","yam","yap","yet","zap","zip"],"all":[{"id":"ultra4","name":"天地岛","host":"ultraman","color":"#E23B3B","chars":"天地金土川","write":"天土"},{"id":"peppa4","name":"小医院","host":"peppa","color":"#FF8DB3","chars":"耳足头牙心","write":"耳头"},{"id":"pj4","name":"月光乐园","host":"catboy","color":"#3A5CC0","chars":"坐站飞说听","write":"坐飞"},{"id":"xiyou4","name":"水帘洞","host":"wukong","color":"#F5B324","chars":"对雪虫鱼草","write":"虫对"},{"id":"huluwa4","name":"葫芦洞","host":"gourd2","color":"#46C27A","chars":"多少开关去","write":"开关"},{"id":"paw4","name":"十字路口","host":"chase","color":"#E8554A","chars":"左右中前后","write":"左右"},{"id":"bluey4","name":"大家庭","host":"bluey","color":"#6BB9F2","chars":"爷奶妹女子","write":"女子"}],"have":["ant","apple","baby","back","ball","bamboo","banana","bat","bed","big","bird","book","box","bright","bun","bus","cap","car","cat","check","chest_open","chest_shut","chicken","cloud","come","cow","cup","dino","dog","door","door_open","down","dragon","drink","duck","ear","earth","eat","egg","elephant","eye","fan","few","field","fig","fire","fish","flower","follow","foot","fox","frog","front","fruit","girl","glove","goaway","gold","goose","grandma","grapes","grass","hand","hat","head","heart","hen","hop","horse","house","icecream","insect","jacket","jam","jet","jug","juice","key","kite","lamp","leaf","leftsign","light","lightning","lion","listen","log","look","man","many","map","mat","meat","melon","middle","milk","moon","moonlight","mop","mountain","mouth","mug","net","nose","notebook","nut","orange","owl","pan","pen","person","pig","pinwheel","plane","polarbear","queen","quilt","rabbit","rain","raincoat","rat","rest","rice","ricebowl","riceplant","rightsign","ring","river","rockinghorse","rug","ruler","run","schoolbag","sheep","shirt","sit","sky","small","snow","soil","soup","spoon","stand","star","stone","strawberry","sun","talk","tent","tincan","tooth","top","towel","train","tree","umbrella","unicorn","up","van","vase","volcano","walk","watch","water","web","whale","wig","wind","window","woods","xylophone","yogurt","yoyo","zebra","zip","@bajie","@bandit","@bingo","@bluey","@bumblebee","@captain","@catboy","@chase","@chilli","@daddy_pig","@dragon_horse","@gekko","@george","@gourd1","@gourd2","@gourd3","@gourd4","@gourd5","@gourd6","@gourd7","@grandpa","@hawkeye","@hulk","@ironman","@kaiju1","@kaiju2","@luna_girl","@marshall","@miles","@mummy_pig","@optimus","@owlette","@panther","@peppa","@pj_robot","@rocky","@romeo","@rubble","@ryder","@scorpion","@shaseng","@skye","@snake","@spiderman","@tangseng","@thor","@ultraman","@widow","@wukong","@zero","@zuma"]};
+const W4D = {"read":[["鱼在水中。",[["river",0.5,0.55,0.94],["fish",0.5,0.5,0.42]],[[["mountain",0.5,0.66,0.6],["fish",0.5,0.24,0.3]],[["river",0.5,0.55,0.94],["bird",0.5,0.5,0.42]],[["tree",0.5,0.66,0.6],["fish",0.5,0.24,0.3]],[["car",0.5,0.66,0.6],["fish",0.5,0.24,0.3]]]],["鸟飞上天。",[["sky",0.5,0.5,0.96],["bird",0.5,0.4,0.42]],[[["soil",0.5,0.76,0.62],["bird",0.5,0.42,0.46]],[["sky",0.5,0.5,0.96],["fish",0.5,0.4,0.42]],[["sky",0.5,0.5,0.96],["cow",0.5,0.4,0.42]],[["river",0.5,0.55,0.94],["bird",0.5,0.5,0.42]]]],["山上有雪。",[["mountain",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[[["mountain",0.5,0.4,0.6],["snow",0.5,0.84,0.28]],[["mountain",0.5,0.66,0.6],["fire",0.5,0.24,0.3]],[["car",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[["mountain",0.5,0.66,0.6],["grass",0.5,0.24,0.3]]]],["地上有草。",[["soil",0.5,0.76,0.62],["grass",0.5,0.42,0.46]],[[["sky",0.5,0.5,0.96],["grass",0.5,0.4,0.42]],[["soil",0.5,0.76,0.62],["snow",0.5,0.42,0.46]],[["soil",0.5,0.76,0.62],["fire",0.5,0.42,0.46]],[["soil",0.5,0.76,0.62],["fish",0.5,0.42,0.46]]]],["小虫在草上。",[["grass",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[[["cup",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[["grass",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[["snow",0.5,0.66,0.6],["insect",0.5,0.24,0.3]],[["door",0.5,0.66,0.6],["insect",0.5,0.24,0.3]]]],["牛在左，马在右。",[["cow",0.28,0.58,0.5],["horse",0.72,0.6,0.5]],[[["horse",0.28,0.58,0.5],["cow",0.72,0.6,0.5]],[["cow",0.28,0.58,0.5],["cow",0.72,0.6,0.5]],[["sheep",0.28,0.58,0.5],["horse",0.72,0.6,0.5]],[["cow",0.28,0.58,0.5],["sheep",0.72,0.6,0.5]]]],["我坐下。",[["sit",0.5,0.55,0.8]],[[["stand",0.5,0.55,0.8]],[["walk",0.5,0.55,0.8]],[["talk",0.5,0.55,0.8]],[["listen",0.5,0.55,0.8]]]],["我站在门口。",[["stand",0.32,0.6,0.62],["door",0.74,0.54,0.5]],[[["sit",0.32,0.66,0.5],["door",0.74,0.54,0.5]],[["stand",0.32,0.6,0.62],["car",0.74,0.62,0.44]],[["walk",0.32,0.6,0.62],["door",0.74,0.54,0.5]],[["stand",0.32,0.6,0.62],["mountain",0.74,0.5,0.5]]]],["我去山上。",[["goaway",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]],[[["come",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]],[["goaway",0.3,0.62,0.6],["water",0.72,0.5,0.44]],[["sit",0.5,0.74,0.44],["mountain",0.5,0.34,0.56]],[["look",0.3,0.62,0.6],["mountain",0.72,0.42,0.5]]]],["门开了。",[["door_open",0.5,0.55,0.7]],[[["door",0.5,0.55,0.7]],[["chest_open",0.5,0.55,0.7]],[["umbrella",0.5,0.55,0.7]],[["lamp",0.5,0.55,0.7]]]],["门关了。",[["door",0.5,0.55,0.7]],[[["door_open",0.5,0.55,0.7]],[["chest_shut",0.5,0.55,0.7]],[["umbrella",0.5,0.55,0.7]],[["car",0.5,0.55,0.7]]]],["鸟多，鱼少。",[["bird",0.15,0.35,0.18],["bird",0.39,0.35,0.18],["bird",0.15,0.55,0.18],["bird",0.39,0.55,0.18],["bird",0.15,0.75,0.18],["fish",0.73,0.45,0.24],["fish",0.73,0.65,0.24]],[[["bird",0.27,0.45,0.24],["bird",0.27,0.65,0.24],["fish",0.61,0.35,0.18],["fish",0.85,0.35,0.18],["fish",0.61,0.55,0.18],["fish",0.85,0.55,0.18],["fish",0.61,0.75,0.18]],[["bird",0.15,0.45,0.18],["bird",0.39,0.45,0.18],["bird",0.15,0.65,0.18],["fish",0.61,0.45,0.18],["fish",0.85,0.45,0.18],["fish",0.61,0.65,0.18]],[["bird",0.15,0.35,0.18],["bird",0.39,0.35,0.18],["bird",0.15,0.55,0.18],["bird",0.39,0.55,0.18],["bird",0.15,0.75,0.18],["cow",0.73,0.45,0.24],["cow",0.73,0.65,0.24]],[["bird",0.27,0.55,0.24],["fish",0.73,0.55,0.24]]]],["妹妹有鱼。",[["@bingo",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[[["@peppa",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[["@bingo",0.3,0.58,0.7],["bird",0.74,0.64,0.38]],[["@george",0.3,0.58,0.7],["fish",0.74,0.64,0.38]],[["@bingo",0.3,0.58,0.7],["umbrella",0.74,0.64,0.38]]]],["爷爷有车。",[["@grandpa",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[[["@daddy_pig",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[["@grandpa",0.3,0.58,0.7],["umbrella",0.74,0.64,0.38]],[["@george",0.3,0.58,0.7],["car",0.74,0.64,0.38]],[["@grandpa",0.3,0.58,0.7],["horse",0.74,0.64,0.38]]]],["王坐下。",[["sit",0.5,0.62,0.7],["crown",0.5,0.19,0.22]],[[["stand",0.5,0.6,0.7],["crown",0.5,0.17,0.22]],[["sit",0.5,0.55,0.7]],[["crown",0.5,0.55,0.7]],[["sit",0.5,0.62,0.7],["hat",0.5,0.2,0.22]]]],["鱼出水。",[["water",0.5,0.78,0.56],["fish",0.5,0.32,0.42]],[[["river",0.5,0.55,0.94],["fish",0.5,0.5,0.42]],[["sky",0.5,0.5,0.96],["bird",0.5,0.4,0.42]],[["water",0.5,0.78,0.56],["duck",0.5,0.4,0.4]],[["soil",0.5,0.76,0.62],["fish",0.5,0.42,0.46]]]],["山好高。",[["mountain",0.5,0.55,0.92]],[[["mountain",0.5,0.64,0.34]],[["river",0.5,0.55,0.7]],[["field",0.5,0.55,0.7]],[["stone",0.5,0.55,0.7]]]],["车上路。",[["road",0.5,0.6,0.92],["car",0.5,0.5,0.32]],[[["road",0.5,0.6,0.92],["cow",0.5,0.5,0.32]],[["grass",0.5,0.7,0.8],["car",0.5,0.46,0.32]],[["field",0.5,0.62,0.9],["car",0.5,0.5,0.32]],[["road",0.5,0.55,0.9]]]],["车出厂。",[["factory",0.3,0.5,0.56],["car",0.76,0.68,0.34]],[[["factory",0.3,0.5,0.56],["cow",0.76,0.68,0.34]],[["house",0.3,0.5,0.56],["car",0.76,0.68,0.34]],[["factory",0.5,0.55,0.7]],[["door_open",0.24,0.5,0.5],["car",0.72,0.64,0.44]]]],["牛有力。",[["cow",0.34,0.6,0.52],["log",0.76,0.7,0.4]],[[["sheep",0.34,0.6,0.5],["log",0.76,0.7,0.4]],[["dog",0.34,0.62,0.48],["log",0.76,0.7,0.4]],[["fish",0.5,0.55,0.7]],[["bird",0.34,0.5,0.36],["log",0.76,0.7,0.4]]]]],"books":[{"id":"b7","title":"天上地下","after":"ultra4","cover":[["sky",0.5,0.5,0.96],["sun",0.5,0.4,0.42]],"pages":[["天上有日。",[["sky",0.5,0.5,0.96],["sun",0.5,0.4,0.42]]],["天上有月。",[["sky",0.5,0.5,0.96],["moon",0.5,0.4,0.42]]],["天上有云。",[["sky",0.5,0.5,0.96],["cloud",0.5,0.4,0.5]]],["地上有山。",[["grass",0.5,0.82,0.9],["mountain",0.5,0.44,0.64]]],["地上有水。",[["river",0.5,0.55,0.82]]],["山下有金！",[["mountain",0.5,0.4,0.6],["gold",0.5,0.84,0.28]]]]},{"id":"b8","title":"我的头","after":"peppa4","pages":[["这是我的头。",[["head",0.5,0.55,0.7]]],["这是我的耳。",[["ear",0.5,0.55,0.7]]],["这是我的口。",[["mouth",0.5,0.55,0.7]]],["这是我的牙。",[["tooth",0.5,0.55,0.7]]],["这是我的手。",[["hand",0.5,0.55,0.7]]],["这是我的足！",[["foot",0.5,0.55,0.7]]]]},{"id":"b9","title":"开门关门","after":"huluwa4","pages":[["门开了。",[["door_open",0.5,0.55,0.7]]],["牛来了。",[["door_open",0.3,0.55,0.6],["cow",0.74,0.64,0.4]]],["牛多了。",[["cow",0.198,0.393,0.28],["cow",0.5,0.393,0.28],["cow",0.802,0.393,0.28],["cow",0.349,0.707,0.28],["cow",0.651,0.707,0.28]]],["门关了。",[["door",0.5,0.55,0.7]]],["牛去了。",[["door",0.3,0.55,0.6],["cow",0.76,0.7,0.26]]],["牛少了！",[["cow",0.338,0.55,0.3],["cow",0.662,0.55,0.3]]]]},{"id":"b10","title":"一家人","after":"bluey4","pages":[["这是爷爷。",[["@grandpa",0.5,0.58,0.8]]],["这是奶奶。",[["grandma",0.5,0.55,0.8]]],["这是妹妹。",[["@bingo",0.5,0.58,0.8]]],["爷爷坐下。",[["@grandpa",0.5,0.58,0.8]]],["奶奶坐下。",[["grandma",0.5,0.55,0.8]]],["我们一家人！",[["@grandpa",0.18,0.6,0.5],["grandma",0.4,0.6,0.5],["person",0.62,0.64,0.44],["@bingo",0.83,0.68,0.36]]]]}],"scrolls":[{"id":"r1","kind":"rhyme","title":"金木水火土","after":"ultra4","pic":[["sun",0.28,0.3,0.3],["moon",0.72,0.3,0.3],["mountain",0.5,0.7,0.56]],"lines":["一二三四五，","金木水火土。","天地分上下，","日月照今古。"]},{"id":"r2","kind":"rhyme","title":"五官歌","after":"peppa4","pic":[["head",0.5,0.45,0.6],["heart",0.82,0.78,0.26]],"lines":["头，点点头。","耳，听一听。","牙，白又白。","足，走一走。","心，好开心！"]},{"id":"r3","kind":"rhyme","title":"站如松","after":"pj4","pic":[["stand",0.3,0.55,0.56],["sit",0.72,0.6,0.5]],"lines":["站如松，","坐如钟。","行如风，","卧如弓。"]},{"id":"r4","kind":"rhyme","title":"对韵歌","after":"xiyou4","pic":[["cloud",0.25,0.25,0.3],["rain",0.72,0.25,0.3],["snow",0.25,0.7,0.28],["insect",0.72,0.7,0.26]],"lines":["云对雨，","雪对风。","花对树，","鸟对虫。","山清对水秀，","柳绿对桃红。"]},{"id":"r5","kind":"rhyme","title":"大小多少","after":"huluwa4","pic":[["cow",0.3,0.52,0.46],["duck",0.74,0.6,0.3]],"lines":["一个大，","一个小，","一头黄牛一只猫。","一边多，","一边少，","一群鸭子一只鸟。"]},{"id":"r6","kind":"rhyme","title":"影子","after":"paw4","pic":[["walk",0.38,0.55,0.6],["dog",0.74,0.66,0.34]],"lines":["影子在前，","影子在后，","影子常常跟着我，","就像一条小黑狗。","影子在左，","影子在右，","影子常常陪着我，","它是我的好朋友。"]},{"id":"r7","kind":"rhyme","title":"一家人","after":"bluey4","pic":[["@grandpa",0.16,0.6,0.46],["grandma",0.38,0.6,0.46],["@daddy_pig",0.62,0.6,0.46],["@mummy_pig",0.84,0.6,0.46]],"lines":["爷爷奶奶，","爸爸妈妈，","哥哥姐姐，","弟弟妹妹，","我们是一家。"]},{"id":"p1","kind":"poem","title":"咏鹅","after":"pj4","pic":[["river",0.5,0.6,0.9],["goose",0.5,0.46,0.46]],"lines":["鹅，鹅，鹅，","曲项向天歌。","白毛浮绿水，","红掌拨清波。"]},{"id":"p2","kind":"poem","title":"画","after":"huluwa4","pic":[["mountain",0.3,0.4,0.46],["river",0.7,0.66,0.5],["flower",0.22,0.78,0.26],["bird",0.74,0.28,0.24]],"lines":["远看山有色，","近听水无声。","春去花还在，","人来鸟不惊。"]},{"id":"p3","kind":"poem","title":"静夜思","after":"bluey4","pic":[["bed",0.5,0.7,0.6],["moon",0.72,0.24,0.3]],"lines":["床前明月光，","疑是地上霜。","举头望明月，","低头思故乡。"]},{"id":"r8","kind":"rhyme","title":"好朋友","after":"avengers4","pic":[["@spiderman",0.3,0.55,0.5],["@hulk",0.72,0.58,0.56]],"lines":["我有大力，","你会高飞。","大家一起，","好朋友！"]},{"id":"r9","kind":"rhyme","title":"小汽车","after":"robot4","pic":[["factory",0.3,0.46,0.48],["car",0.72,0.68,0.36]],"lines":["工厂里，","变变变。","小汽车，","上马路。","嘀嘀嘀，","出发喽！"]}],"scrollKind":{"rhyme":"儿歌卷","poem":"古诗卷"},"words":[["cat","cat",1],["hat","hat",1],["bat","bat",1],["mat","mat",1],["rat","rat",1],["fan","fan",1],["pan","pan",1],["van","van",1],["man","man",1],["can","tincan",0],["map","map",1],["cap","cap",1],["pig","pig",1],["wig","wig",1],["fig","fig",0],["bug","insect",1],["rug","rug",1],["mug","mug",1],["jug","jug",0],["mop","mop",1],["top","top",0],["hop","hop",0],["pen","pen",1],["hen","hen",1],["ten","num10",0],["net","net",0],["jet","jet",1],["sun","sun",1],["bun","bun",0],["run","run",0],["box","box",1],["fox","fox",1],["dog","dog",1],["log","log",1],["bed","bed",1]],"sight":["I","a","the","see","my","is","it","in","on","up","go","can","look","me","we","and","you","big","little","down","come","not","one","two","three","red","blue","yellow","here","said","play","at","under","by"],"bridge":[["big","大","big"],["little","小","small"],["up","上","up"],["down","下","down"],["go","去","goaway"],["come","来","come"],["look","看","look"],["I","我",null],["you","你",null],["is","是",null],["not","不",null],["one","一","num1"],["two","二","num2"],["three","三","num3"],["red","红","strawberry"],["blue","蓝","whale"],["yellow","黄","banana"]],"esent":[["I see.",[["look",0.5,0.55,0.8]]],["I can hop.",[["hop",0.5,0.55,0.7]]],["I can run.",[["run",0.5,0.55,0.7]]],["Look up!",[["look",0.4,0.62,0.66],["sun",0.78,0.2,0.3]]],["A big pig.",[["pig",0.5,0.55,0.86]]],["A red hat.",[["hat",0.5,0.55,0.7]]],["Come and play!",[["come",0.5,0.55,0.8]]],["A little rat.",[["rat",0.5,0.64,0.34]]],["I see a cat.",[["look",0.3,0.6,0.6],["cat",0.75,0.62,0.4]]],["The pig is big.",[["pig",0.5,0.55,0.86]]],["The sun is up.",[["mountain",0.5,0.66,0.6],["sun",0.5,0.24,0.3]]],["My hat is red.",[["hat",0.5,0.55,0.7]]],["Look at the hen.",[["hen",0.5,0.55,0.7]]],["The cup is blue.",[["cup",0.5,0.55,0.7]]],["Here is my cap.",[["cap",0.5,0.55,0.7]]],["I see a big jet.",[["look",0.28,0.62,0.56],["jet",0.72,0.34,0.5]]],["A bug is on the rug.",[["rug",0.5,0.66,0.6],["insect",0.5,0.24,0.3]]],["The cat is on the box.",[["box",0.5,0.66,0.6],["cat",0.5,0.24,0.3]]],["I can see a man.",[["look",0.3,0.62,0.56],["man",0.72,0.6,0.5]]],["It is on the box.",[["box",0.5,0.66,0.6],["fox",0.5,0.24,0.3]]],["Is it a hen?",[["hen",0.5,0.55,0.7]]],["The rat is little.",[["rat",0.5,0.64,0.34]]],["A cat can hop.",[["cat",0.5,0.55,0.7]]],["Go, dog, go!",[["dog",0.5,0.55,0.7]]],["Run, man, run!",[["man",0.5,0.55,0.7]]],["Hop, hop, hop!",[["hop",0.5,0.55,0.7]]],["A pig and a hen.",[["pig",0.28,0.58,0.5],["hen",0.72,0.6,0.5]]],["The cat and the dog.",[["cat",0.28,0.58,0.5],["dog",0.72,0.6,0.5]]],["We can play in the sun.",[["sun",0.5,0.55,0.7]]],["My mug is on the mat.",[["mat",0.5,0.66,0.6],["mug",0.5,0.24,0.3]]],["I see three red hats.",[["hat",0.198,0.55,0.28],["hat",0.5,0.55,0.28],["hat",0.802,0.55,0.28]]],["Look, a fox on a box!",[["box",0.5,0.66,0.6],["fox",0.5,0.24,0.3]]],["The hen is not big.",[["hen",0.5,0.64,0.34]]],["Two cats and a dog.",[["cat",0.2,0.6,0.32],["cat",0.45,0.6,0.32],["dog",0.76,0.6,0.38]]],["Come and see my map.",[["map",0.5,0.55,0.7]]],["The jet is up, up, up!",[["jet",0.5,0.55,0.7]]]],"tf":[{"lv":1,"pic":[["pig",0.5,0.55,0.86]],"s":[["A big pig.",1],["I see a pig.",1],["A little pig.",0],["A blue pig.",0]]},{"lv":1,"pic":[["cat",0.5,0.64,0.34]],"s":[["A little cat.",1],["I see a cat.",1],["A big cat.",0],["A red cat.",0]]},{"lv":1,"pic":[["hat",0.5,0.55,0.7]],"s":[["A red hat.",1],["I see a hat.",1],["A blue hat.",0],["A yellow hat.",0]]},{"lv":1,"pic":[["cup",0.5,0.55,0.7]],"s":[["A blue cup.",1],["I see a cup.",1],["A red cup.",0],["A yellow cup.",0]]},{"lv":1,"pic":[["dog",0.5,0.55,0.86]],"s":[["A big dog.",1],["I see a dog.",1],["A little dog.",0],["A big hen.",0]]},{"lv":2,"pic":[["pig",0.5,0.55,0.86]],"s":[["The pig is big.",1],["It is a pig.",1],["The pig is little.",0],["It is a dog.",0]]},{"lv":2,"pic":[["sun",0.5,0.55,0.7]],"s":[["The sun is yellow.",1],["It is the sun.",1],["The sun is blue.",0],["It is a bun.",0]]},{"lv":2,"pic":[["cup",0.5,0.55,0.7]],"s":[["The cup is blue.",1],["It is a cup.",1],["The cup is red.",0],["It is a cap.",0]]},{"lv":2,"pic":[["hen",0.5,0.64,0.34]],"s":[["The hen is little.",1],["It is a hen.",1],["The hen is big.",0],["It is a pen.",0]]},{"lv":3,"pic":[["cat",0.198,0.55,0.28],["cat",0.5,0.55,0.28],["cat",0.802,0.55,0.28]],"s":[["I see three cats.",1],["I see cats.",1],["I see two cats.",0],["I see one cat.",0]]},{"lv":3,"pic":[["hat",0.338,0.55,0.3],["hat",0.662,0.55,0.3]],"s":[["I see two hats.",1],["I see hats.",1],["I see three hats.",0],["I see one hat.",0]]},{"lv":3,"pic":[["dog",0.5,0.55,0.3]],"s":[["I see one dog.",1],["I see a dog.",1],["I see two dogs.",0],["I see three dogs.",0]]},{"lv":3,"pic":[["cup",0.198,0.55,0.28],["cup",0.5,0.55,0.28],["cup",0.802,0.55,0.28]],"s":[["I see three cups.",1],["I see cups.",1],["I see one cup.",0],["I see two cups.",0]]},{"lv":4,"pic":[["cat",0.5,0.64,0.34]],"s":[["The cat is not big.",1],["It is not a dog.",1],["The cat is not little.",0],["It is not a cat.",0]]},{"lv":4,"pic":[["pig",0.5,0.55,0.86]],"s":[["The pig is not little.",1],["It is not a hen.",1],["The pig is not big.",0],["It is not a pig.",0]]},{"lv":4,"pic":[["hat",0.5,0.55,0.7]],"s":[["The hat is not blue.",1],["It is not a cap.",1],["The hat is not red.",0],["It is not a hat.",0]]},{"lv":4,"pic":[["cup",0.5,0.55,0.7]],"s":[["The cup is not red.",1],["It is not a mug.",1],["The cup is not blue.",0],["It is not a cup.",0]]},{"lv":5,"pic":[["box",0.5,0.66,0.6],["cat",0.5,0.24,0.3]],"s":[["The cat is on the box.",1],["The cat is not in the box.",1],["The cat is in the box.",0],["The cat is under the box.",0]]},{"lv":5,"pic":[["cat",0.28,0.58,0.44],["box",0.72,0.6,0.5]],"s":[["The cat is by the box.",1],["The cat is not on the box.",1],["The cat is on the box.",0],["The cat is in the box.",0]]},{"lv":5,"pic":[["bed",0.5,0.66,0.6],["hat",0.5,0.24,0.3]],"s":[["The hat is on the bed.",1],["The hat is not under the bed.",1],["The hat is under the bed.",0],["The hat is in the box.",0]]},{"lv":5,"pic":[["bed",0.5,0.4,0.6],["dog",0.5,0.84,0.28]],"s":[["The dog is under the bed.",1],["The dog is not on the bed.",1],["The dog is on the bed.",0],["The dog is in the box.",0]]}],"placeThings":[["cat","cat"],["dog","dog"],["hat","hat"],["cup","cup"],["bug","insect"]],"placeSpots":[["in","box"],["on","bed"],["on","box"],["on","mat"],["under","bed"],["by","bed"],["by","box"],["by","mat"]],"place":["The cat is in the box.","The cat is on the bed.","The cat is on the box.","The cat is on the mat.","The cat is under the bed.","The cat is by the bed.","The cat is by the box.","The cat is by the mat.","The dog is in the box.","The dog is on the bed.","The dog is on the box.","The dog is on the mat.","The dog is under the bed.","The dog is by the bed.","The dog is by the box.","The dog is by the mat.","The hat is in the box.","The hat is on the bed.","The hat is on the box.","The hat is on the mat.","The hat is under the bed.","The hat is by the bed.","The hat is by the box.","The hat is by the mat.","The cup is in the box.","The cup is on the bed.","The cup is on the box.","The cup is on the mat.","The cup is under the bed.","The cup is by the bed.","The cup is by the box.","The cup is by the mat.","The bug is in the box.","The bug is on the bed.","The bug is on the box.","The bug is on the mat.","The bug is under the bed.","The bug is by the bed.","The bug is by the box.","The bug is by the mat."],"wordsZh":[["天上",""],["地上",""],["天下",""],["地下",""],["山上",""],["山下",""],["上天",""],["大地",""],["土地","soil"],["天地",""],["山川",""],["金鱼","fish"],["大鱼",""],["小鱼",""],["鱼头",""],["小虫","insect"],["草地","grass"],["小草",""],["雪地",""],["大雪","snow"],["小雪",""],["雪山","mountain"],["水草",""],["火山","volcano"],["山水",""],["大火","fire"],["门口",""],["石头","stone"],["木头","log"],["牛头",""],["马头",""],["大头","head"],["手心","hand"],["小心",""],["月牙","moon"],["坐下","sit"],["听说",""],["上下",""],["大小",""],["日月","bright"],["大人",""],["多少",""],["开关",""],["开门","door_open"],["关门","door"],["大门",""],["小门",""],["左手",""],["右手",""],["左右",""],["前后",""],["爷爷","@grandpa"],["奶奶","grandma"],["妹妹","@bingo"],["下山",""],["上山",""],["不对",""],["对了","check"]],"wordsZh3":[["小金鱼","fish"],["大金鱼",""],["大雪山","mountain"],["小雪山",""],["小草地","grass"],["大草地",""],["大火山","volcano"],["小火山",""],["大石头","stone"],["小石头",""],["大木头","log"],["小木头",""]],"sense":[{"pre":"鱼","ok":"下水。","no":["上山。","下雪。","开车。","关门。"],"subj":"fish"},{"pre":"天","ok":"下雪。","no":["开车。","关门。","上山。","下水。"],"subj":"sky"},{"pre":"羊","ok":"上山。","no":["开车。","开门。","关门。","下雪。"],"subj":"sheep"},{"pre":"鱼","ok":"去水中。","no":["站地上。","去田中。","站木上。","去草地。"],"subj":"fish"},{"pre":"牛","ok":"去田中。","no":["坐车上。","飞上天。","坐伞上。","站木上。"],"subj":"cow"},{"pre":"马","ok":"去山上。","no":["坐石上。","飞上天。","站云上。","坐车上。"],"subj":"horse"},{"pre":"车","ok":"去山上。","no":["在看书。","站木上。","在杯中。","坐床上。"],"subj":"car"},{"pre":"小金鱼","ok":"去水中。","no":["去草地。","去山上。","站门口。","站地上。"],"subj":"fish"},{"pre":"门","ok":"关上。","no":["下雪。","上山。","开车。","坐下。"],"subj":"door"},{"pre":"牛","ok":"站地上。","no":["坐石上。","站云上。","站木上。","坐车上。"],"subj":"cow"},{"pre":"马","ok":"去草地。","no":["坐车上。","坐石上。","站木上。","飞上天。"],"subj":"horse"},{"pre":"牛","ok":"吃草。","no":["下雨。","开车。","看书。","喝汤。"],"subj":"cow"},{"pre":"兔子","ok":"吃草。","no":["喝汤。","关门。","下雪。","看书。"],"subj":"rabbit"},{"pre":"马","ok":"喝水。","no":["下雨。","下雪。","看书。","喝汤。"],"subj":"horse"},{"pre":"小狗","ok":"喝水。","no":["下雪。","开车。","下雨。","看书。"],"subj":"dog"},{"pre":"小鸡","ok":"吃米。","no":["关门。","下雨。","开车。","看书。"],"subj":"chicken"},{"pre":"小鸟","ok":"吃虫。","no":["下雪。","开车。","关门。","喝汤。"],"subj":"bird"},{"pre":"我","ok":"看书。","no":["开车。","下雨。","吃虫。","吃草。"],"subj":"look"},{"pre":"爸爸","ok":"开车。","no":["吃草。","下雨。","吃虫。","下雪。"],"subj":"@daddy_pig"},{"pre":"妈妈","ok":"吃饭。","no":["下雨。","吃草。","吃虫。","下雪。"],"subj":"@mummy_pig"},{"pre":"奶奶","ok":"喝汤。","no":["吃草。","下雨。","下雪。","吃虫。"],"subj":"grandma"},{"pre":"天","ok":"下雨。","no":["吃米。","上山。","关门。","下水。"],"subj":"sky"},{"pre":"妹妹","ok":"开门。","no":["下雨。","下雪。","吃草。","开车。"],"subj":"@bingo"},{"pre":"爷爷","ok":"坐下。","no":["下雨。","吃虫。","吃草。","下雪。"],"subj":"@grandpa"},{"pre":"小鸟","ok":"飞上天。","no":["在喝汤。","站云上。","在开车。","在看书。"],"subj":"bird"},{"pre":"妹妹","ok":"坐车上。","no":["站云上。","在杯中。","在吃草。","在开车。"],"subj":"@bingo"},{"pre":"牛","ok":"在吃草。","no":["在杯中。","飞上天。","在开车。","在看书。"],"subj":"cow"},{"pre":"小狗","ok":"站门口。","no":["飞上天。","站云上。","在看书。","在开车。"],"subj":"dog"},{"pre":"爸爸","ok":"在开车。","no":["在杯中。","坐伞上。","站云上。","在吃草。"],"subj":"@daddy_pig"},{"pre":"羊","ok":"去草地。","no":["站木上。","坐车上。","飞上天。","站云上。"],"subj":"sheep"},{"pre":"爷爷","ok":"在看书。","no":["站云上。","在吃草。","在杯中。","坐伞上。"],"subj":"@grandpa"},{"pre":"水","ok":"在杯中。","no":["站木上。","在看书。","去山上。","在吃草。"],"subj":"water"},{"pre":"月","ok":"在天上。","no":["坐车上。","在喝水。","在开车。","去田中。"],"subj":"moon"},{"pre":"奶奶","ok":"在喝汤。","no":["在杯中。","在吃草。","站云上。","坐伞上。"],"subj":"grandma"},{"pre":"我","ok":"坐石上。","no":["站云上。","在开车。","坐伞上。","在杯中。"],"subj":"sit"},{"pre":"小虫","ok":"站木上。","no":["在看书。","站云上。","在开车。","在喝汤。"],"subj":"insect"},{"pre":"小白兔","ok":"去草地。","no":["站木上。","站云上。","飞上天。","在喝汤。"],"subj":"rabbit"},{"pre":"小黄狗","ok":"在喝水。","no":["飞上天。","在看书。","在开车。","站云上。"],"subj":"dog"},{"pre":"小妹妹","ok":"坐床上。","no":["站云上。","坐伞上。","在吃草。","在开车。"],"subj":"@bingo"},{"pre":"大黄牛","ok":"在吃草。","no":["站木上。","在喝汤。","在开车。","坐车上。"],"subj":"cow"},{"pre":"小金鱼","ok":"在杯中。","no":["站木上。","在看书。","在开车。","去山上。"],"subj":"fish"}],"endPic":{"杯":"cup","床":"bed","雨":"rain","雪":"snow","虫":"insect","云":"cloud","田":"field","伞":"umbrella","灯":"lamp","天":"sky","火":"fire","牙":"tooth","耳":"ear","石":"stone","日":"sun","月":"moon","金":"gold","山":"mountain","水":"river","地":"soil","草":"grass","车":"car","门":"door","木":"tree","书":"book","饭":"ricebowl","汤":"soup","米":"rice"},"orderRules":["先横后竖","从上到下","先撇后捺","从左到右","先中间后两边","先外后内","先进去后关门"],"orderPairs":[["十",1,2,"先横后竖",1],["土",1,2,"先横后竖",1],["木",1,2,"先横后竖",1],["耳",1,2,"先横后竖",1],["草",1,2,"先横后竖",1],["地",1,2,"先横后竖",1],["去",1,2,"先横后竖",1],["禾",2,3,"先横后竖",1],["车",3,4,"先横后竖",1],["米",3,4,"先横后竖",1],["手",3,4,"先横后竖",1],["坐",5,6,"先横后竖",1],["林",1,2,"先横后竖",1],["来",4,5,"先横后竖",1],["走",1,2,"先横后竖",1],["在",4,5,"先横后竖",1],["天",1,2,"从上到下",1],["开",1,2,"从上到下",1],["云",1,2,"从上到下",1],["二",1,2,"从上到下",1],["三",2,3,"从上到下",1],["上",2,3,"从上到下",1],["羊",3,4,"从上到下",1],["牛",2,3,"从上到下",1],["手",2,3,"从上到下",1],["关",3,4,"从上到下",1],["耳",4,5,"从上到下",1],["人",1,2,"先撇后捺",2],["大",2,3,"先撇后捺",2],["天",3,4,"先撇后捺",2],["木",3,4,"先撇后捺",2],["禾",4,5,"先撇后捺",2],["米",5,6,"先撇后捺",2],["火",3,4,"先撇后捺",2],["关",5,6,"先撇后捺",2],["足",6,7,"先撇后捺",2],["八",1,2,"先撇后捺",2],["从",3,4,"先撇后捺",2],["走",6,7,"先撇后捺",2],["川",1,2,"从左到右",2],["小",2,3,"从左到右",2],["火",1,2,"从左到右",2],["坐",2,3,"从左到右",2],["林",4,5,"从左到右",2],["从",2,3,"从左到右",2],["小",1,2,"先中间后两边",3],["水",1,2,"先中间后两边",3],["少",1,2,"先中间后两边",3],["山",1,2,"先中间后两边",3],["光",1,2,"先中间后两边",3],["月",2,3,"先外后内",3],["目",2,3,"先外后内",3],["田",2,3,"先外后内",3],["日",2,3,"先外后内",3],["肉",2,3,"先外后内",3],["风",2,3,"先外后内",3],["四",2,3,"先外后内",3],["白",3,4,"先外后内",3],["日",3,4,"先进去后关门",4],["目",4,5,"先进去后关门",4],["田",4,5,"先进去后关门",4],["四",4,5,"先进去后关门",4],["白",4,5,"先进去后关门",4],["牛",2,4,"先横后竖",4],["车",1,4,"先横后竖",4],["羊",3,6,"先横后竖",4],["土",1,3,"从上到下",4],["羊",3,5,"从上到下",4],["耳",1,4,"从上到下",4],["目",3,5,"先进去后关门",4],["田",3,5,"先进去后关门",4],["川",2,3,"从左到右",5],["耳",2,3,"从左到右",5],["草",2,3,"从左到右",5],["心",3,4,"从左到右",5],["坐",1,3,"从左到右",5],["多",1,4,"从上到下",5],["林",1,5,"从左到右",5],["竹",1,4,"从左到右",5],["雪",5,7,"从左到右",5],["雪",5,6,"从上到下",5]],"kind":{"天上":"天日月云雨电雪","地上":"地土山石田草川禾木竹","动物":"牛羊马鸟鱼虫龙兔狗鸡","身体":"口目手耳足头牙心","动作":"坐站飞说听吃喝看走来去","家人":"爸妈哥姐弟爷奶妹"},"kindLine":{"天上":"这是天上的","地上":"这是地上的","动物":"这是动物","身体":"这是身体","动作":"这是动作","家人":"这是家人"},"kindWords":[["金鱼","动物"],["小鸟","动物"],["小虫","动物"],["雪山","地上"],["草地","地上"],["石头","地上"],["大雪","天上"],["月牙","天上"],["手心","身体"],["大头","身体"],["坐下","动作"],["听说","动作"],["爷爷","家人"],["奶奶","家人"],["妹妹","家人"],["爸爸","家人"]],"body":[["听","耳","listen"],["说","口","talk"],["站","足","stand"],["看","目","look"],["吃","口","eat"],["喝","口","drink"],["走","足","walk"]],"opp":["大小","上下","多少","开关","来去","左右","前后","天地"],"oppWords":[["上山","下山"],["开门","关门"],["大门","小门"],["天上","地下"],["左手","右手"]],"look":{"天":"大开","地":"他","土":"上工","川":"三小","耳":"目","足":"走是","心":"小","飞":"风","听":"吃","雪":"雨","虫":"中电","少":"小","开":"天关","关":"开天","去":"云","左":"右在","右":"左有石","中":"虫","爷":"爸","奶":"妈","妹":"姐妈","子":"了","王":"土三玉","工":"土干","厂":"广","力":"九","出":"山","好":"女妈","路":"跳","变":"亦"},"lookBack":{"大":"天","上":"土","小":"少","风":"飞","雨":"雪","云":"去","在":"左","有":"右","石":"右","了":"子","走":"足","是":"足","目":"耳","爸":"爷","妈":"奶妹","姐":"妹","电":"虫","吃":"听","他":"地","三":"王","九":"力","山":"出"},"holds":{"大":"天","土":"地在坐去王","口":"足听中右后高路","人":"坐金","小":"少","日":"草","雨":"雪","中":"虫","天":"关","女":"奶妹妈姐好","田":"鱼","子":"好","工":"左红","足":"路","月":"能"},"samePic":{"川":"水","水":"川","变":"车","车":"变","好":"手","手":"好"},"motion":{"sky":"up","soil":"hop","ear":"sway","head":"sway","sit":"down","stand":"up","plane":"fly","insect":"fly","check":"grow","chest_open":"grow","chest_shut":"shrink","leftsign":"left","rightsign":"right","front":"grow","back":"shrink","girl":"sway","baby":"sway","earth":"spin","gold":"grow","river":"sway","snow":"down","grass":"sway","goaway":"shrink","heart":"grow","tooth":"hop","foot":"hop","talk":"sway","listen":"sway","grandma":"sway","middle":"hop","many":"hop","few":"hop","thumbsup":"hop","mouseout":"up","crown":"grow","tower":"up","change":"spin","cube":"grow","toolbox":"hop","factory":"grow","road":"sway"},"naiMilk":["奶，牛奶的奶！","milk"],"dict":["bad","bag","ban","bat","bed","beg","bet","bib","bid","big","bin","bit","bog","bop","box","bud","bug","bun","bus","but","cab","can","cap","cat","cob","cod","cog","cop","cot","cub","cup","cut","dad","dam","den","did","dig","dim","din","dip","dog","dot","dug","fad","fan","fat","fed","fen","fig","fin","fit","fix","fog","fox","fun","fur","gap","gas","get","gig","gum","gun","gut","had","ham","has","hat","hen","hid","him","hip","his","hit","hog","hop","hot","hug","hum","hut","jab","jam","jet","jig","job","jog","jot","jug","jut","kid","kin","kit","lab","lad","lag","lap","led","leg","let","lid","lip","lit","log","lot","mad","man","map","mat","men","met","mid","mix","mob","mom","mop","mud","mug","nab","nag","nap","net","nip","nod","not","nun","nut","pad","pal","pan","pat","peg","pen","pet","pig","pin","pit","pod","pop","pot","pub","pug","pun","pup","put","rag","ram","ran","rap","rat","red","rib","rid","rig","rim","rip","rob","rod","rot","rub","rug","rum","run","rut","sad","sag","sap","sat","set","sip","sit","sob","sod","sun","tab","tag","tan","tap","ten","tin","tip","top","tub","tug","van","vat","vet","wag","web","wet","wig","win","wit","yak","yam","yap","yet","zap","zip"],"lessons":[["识字 1 天地人","① 天 地"],["识字 2 金木水火土","① 金 土；① 儿歌卷《金木水火土》"],["识字 3 口耳目手足、站如松","② 耳 足；③ 站 坐；③ 儿歌卷《站如松》"],["识字 4 日月山川（图配古字）","① 川；① 挑战\"古字变今字\""],["语文园地一 书写提示、《咏鹅》","② 挑战\"笔顺小老师\"；古诗卷《咏鹅》"],["语文园地二《画》（旧版识字 6）","③ 听；古诗卷《画》"],["第三单元 鱼鸭乌鸦","④ 鱼"],["第四单元 开雪夜色美、蓝云草原、去年","⑤ 开 去；④ 雪 草"],["第五单元 秋天、雪地里的小画家、四季","③ 飞 说；② 牙"],["语文园地五 男女关正反先后","⑦ 女；⑤ 关；⑥ 后"],["识字 5 对韵歌","④ 对 虫；④ 儿歌卷《对韵歌》"],["识字 6 日月明","② 心；① 金"],["识字 7 小书包 / 旧版 大小多少","⑤ 少 多；⑤ 儿歌卷《大小多少》；⑤ 挑战\"跷跷板\""],["识字 8 升国旗","⑥ 中"],["课文 影子","⑥ 前 左 右；⑥ 儿歌卷《影子》；⑥ 挑战\"看路牌开车\""],["课文 两件宝","② 头"],["语文园地七 爷奶叔姐妹","⑦ 爷 奶 妹；⑦ 儿歌卷《一家人》"],["字词句子","⑦ 子"],["第二单元 大马路土","⑨ 路"],["语文园地六 工厂","⑨ 工 厂；⑨ 儿歌卷《小汽车》"],["第七单元 影子 / 两件宝","⑧ 好；⑨ 能；⑧ 儿歌卷《好朋友》"],["第八单元","⑧ 出 高"]],"sent8":[["王","王坐车去山上。",""],["王","王说：开大门！",""],["王","王去土山上。",""],["王","大王坐下，牛去田中。","大王"],["王","大王出门，去土山上。","大王"],["王","大王坐车上山。","大王"],["王","王有三头牛。",""],["王","王坐在土地上。",""],["出","鱼出水，鸟上天。",""],["出","牛出门，去田中。","出门"],["出","爷爷出门去山上。","出门"],["出","妹妹出门去山上。","出门"],["出","车出大门，上山去。",""],["出","小马出门了。","出门"],["出","日出，山上白了。","日出"],["出","王出门，去山中。","出门"],["出","小草出土了。",""],["高","山好高！鸟飞上天。",""],["高","高山上有雪。","高山"],["高","天好高，山好大。",""],["高","鸟飞上高山。","高山"],["高","爷爷站高山上。","高山"],["高","大马高，小马小。",""],["高","王坐在高山上。","高山"],["好","天好大，山高。",""],["好","好大力！王坐下。",""],["好","女子去山上，好高！",""],["好","田中牛马好多。",""],["好","妈妈说：你好！","你好"],["好","女子说：你好，大王！","你好"],["好","妹妹坐好，车开了。","坐好"],["好","下雪了，好大的雪！",""],["力","好大力！王坐下。","大力"],["力","大牛好有力！","有力"],["力","大力王坐车上山。","大力"],["力","小马有力，去山上。","有力"],["力","爷爷力大，开大门。",""],["力","九头牛好有力！","有力"],["力","力大的牛去田中。",""],["力","大力王出门了。","大力"]],"story8":[{"s":["门开。","牛出门。","牛去田中。"],"pic":[[["door_open",0.5,0.55,0.7]],[["door_open",0.24,0.5,0.5],["cow",0.72,0.64,0.44]],[["field",0.5,0.64,0.86],["cow",0.5,0.46,0.42]]],"why":["","门开了，牛才能出门","出了门，牛才能去田里"],"think":0},{"s":["爷爷开门。","爷爷出门。","爷爷去山上。"],"pic":[[["door_open",0.62,0.52,0.6],["@grandpa",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["@grandpa",0.72,0.64,0.44]],[["mountain",0.5,0.66,0.6],["@grandpa",0.5,0.24,0.3]]],"why":["","门开了才能出门","出了门才能去山上"],"think":0},{"s":["妹妹开门。","妹妹出门。","妹妹去草地。"],"pic":[[["door_open",0.62,0.52,0.6],["@bingo",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["@bingo",0.72,0.64,0.44]],[["grass",0.5,0.72,0.66],["@bingo",0.5,0.42,0.44]]],"why":["","门开了才能出门","出了门才能去草地"],"think":0},{"s":["奶奶开门。","奶奶出门。","奶奶坐上车。"],"pic":[[["door_open",0.62,0.52,0.6],["grandma",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["grandma",0.72,0.64,0.44]],[["grandma",0.28,0.6,0.48],["car",0.72,0.66,0.42]]],"why":["","门开了才能出门","车在门外：出了门才能坐上车"],"think":0},{"s":["爷爷出门。","爷爷坐上车。","爷爷坐车去山上。"],"pic":[[["door_open",0.24,0.5,0.5],["@grandpa",0.72,0.64,0.44]],[["@grandpa",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["mountain",0.62,0.42,0.62],["car",0.26,0.74,0.34]]],"why":["","车在门外：出了门才能坐上车","坐上车才能坐车去山上"],"think":0},{"s":["妹妹说：开门！","门开。","妹妹出门。"],"pic":[[["@bingo",0.28,0.6,0.5],["door",0.7,0.52,0.6]],[["door_open",0.5,0.55,0.7]],[["door_open",0.24,0.5,0.5],["@bingo",0.72,0.64,0.44]]],"why":["","她说了\"开门\"，门才开（门开着时不用说）","门开了才能出门"],"think":1},{"s":["爷爷开大门。","车出大门。","车去山下。"],"pic":[[["door_open",0.62,0.52,0.6],["@grandpa",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["car",0.72,0.64,0.44]],[["mountain",0.5,0.4,0.6],["car",0.5,0.84,0.28]]],"why":["","大门开了，车才能出大门","出了大门，车才能去山下"],"think":1},{"s":["奶奶开门。","小马出门。","小马去草地。"],"pic":[[["door_open",0.62,0.52,0.6],["grandma",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["horse",0.72,0.64,0.44]],[["grass",0.5,0.72,0.66],["horse",0.5,0.42,0.44]]],"why":["","奶奶开了门，小马才能出门","出了门才能去草地"],"think":1},{"s":["爷爷开门。","爷爷出门。","爷爷坐上车。","爷爷坐车去山上。"],"pic":[[["door_open",0.62,0.52,0.6],["@grandpa",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["@grandpa",0.72,0.64,0.44]],[["@grandpa",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["mountain",0.62,0.42,0.62],["car",0.26,0.74,0.34]]],"why":["","门开了才能出门","车在门外：出了门才能坐上车","坐上车才能坐车去山上"],"think":0},{"s":["妹妹开门。","妹妹出门。","妹妹坐上车。","妹妹坐车去草地。"],"pic":[[["door_open",0.62,0.52,0.6],["@bingo",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["@bingo",0.72,0.64,0.44]],[["@bingo",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["grass",0.7,0.74,0.5],["car",0.32,0.66,0.4]]],"why":["","门开了才能出门","车在门外：出了门才能坐上车","坐上车才能坐车去草地"],"think":0},{"s":["妹妹说：开门！","门开。","妹妹出门。","妹妹去山上。"],"pic":[[["@bingo",0.28,0.6,0.5],["door",0.7,0.52,0.6]],[["door_open",0.5,0.55,0.7]],[["door_open",0.24,0.5,0.5],["@bingo",0.72,0.64,0.44]],[["mountain",0.5,0.66,0.6],["@bingo",0.5,0.24,0.3]]],"why":["","她说了\"开门\"，门才开","门开了才能出门","出了门才能去山上"],"think":1},{"s":["妹妹说：开门！","爷爷开门。","妹妹出门。","妹妹去草地。"],"pic":[[["@bingo",0.28,0.6,0.5],["door",0.7,0.52,0.6]],[["door_open",0.62,0.52,0.6],["@grandpa",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["@bingo",0.72,0.64,0.44]],[["grass",0.5,0.72,0.66],["@bingo",0.5,0.42,0.44]]],"why":["","妹妹说了，爷爷才去开门","门开了妹妹才能出门","出了门才能去草地"],"think":1},{"s":["天下雪了。","山上白了。","我去看雪山。"],"pic":[[["snow",0.5,0.55,0.7]],[["mountain",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[["look",0.3,0.62,0.56],["mountain",0.72,0.44,0.5],["snow",0.72,0.2,0.2]]],"why":["","下了雪，山上才白","山上白了，才有雪山可看"],"think":1},{"s":["云来了。","下雨了。","地上有水了。"],"pic":[[["cloud",0.5,0.55,0.7]],[["rain",0.5,0.55,0.7]],[["water",0.5,0.55,0.7]]],"why":["","云来了才下雨","下了雨，地上才有水"],"think":1},{"s":["我下床。","我开门。","我出门。"],"pic":[[["bed",0.36,0.62,0.62],["stand",0.8,0.6,0.5]],[["door_open",0.62,0.52,0.6],["stand",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["walk",0.72,0.64,0.44]]],"why":["","下了床才能去开门","门开了才能出门"],"think":0},{"s":["门开了。","小狗出门了。","小狗在草地上。"],"pic":[[["door_open",0.5,0.55,0.7]],[["door_open",0.24,0.5,0.5],["dog",0.72,0.64,0.44]],[["grass",0.5,0.72,0.66],["dog",0.5,0.42,0.44]]],"why":["","门开了小狗才能出门","出了门才能到草地上"],"think":0},{"s":["杯中有水。","我喝水。","杯中的水少了。"],"pic":[[["cup",0.5,0.55,0.7]],[["drink",0.5,0.55,0.7]],[["cup",0.5,0.64,0.34]]],"why":["","杯中有水才能喝","喝了水，水才少"],"think":1},{"s":["饭来了。","我吃饭。","饭少了。"],"pic":[[["ricebowl",0.5,0.55,0.7]],[["eat",0.5,0.55,0.7]],[["ricebowl",0.5,0.64,0.34]]],"why":["","饭来了才能吃","吃了饭，饭才少"],"think":1},{"s":["鸟来了。","鸟在木头上。","鸟飞走了。"],"pic":[[["sky",0.5,0.5,0.96],["bird",0.5,0.4,0.42]],[["log",0.5,0.66,0.6],["bird",0.5,0.24,0.3]],[["log",0.5,0.74,0.5],["bird",0.8,0.2,0.2]]],"why":["","鸟来了才能在木头上","在木头上才能从那里飞走"],"think":1},{"s":["爸爸开车门。","我坐上车。","车开走了。"],"pic":[[["@daddy_pig",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["sit",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["car",0.78,0.62,0.3]]],"why":["","车门开了我才能坐上车","我坐上了车，车才开走（车走了就坐不上了）"],"think":1},{"s":["我开门。","我出门。","我坐上车。","车开走了。"],"pic":[[["door_open",0.62,0.52,0.6],["stand",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["walk",0.72,0.64,0.44]],[["sit",0.28,0.6,0.48],["car",0.72,0.66,0.42]],[["car",0.78,0.62,0.3]]],"why":["","门开了才能出门","车在门外：出了门才能坐上车","我坐上了车，车才开走"],"think":0},{"s":["我下床。","我开门。","我出门。","我去山上。"],"pic":[[["bed",0.36,0.62,0.62],["stand",0.8,0.6,0.5]],[["door_open",0.62,0.52,0.6],["stand",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["walk",0.72,0.64,0.44]],[["mountain",0.5,0.66,0.6],["walk",0.5,0.24,0.3]]],"why":["","下了床才能去开门","门开了才能出门","出了门才能去山上"],"think":0},{"s":["天下雪了。","山上白了。","我出门看雪山。","我去雪山上。"],"pic":[[["snow",0.5,0.55,0.7]],[["mountain",0.5,0.66,0.6],["snow",0.5,0.24,0.3]],[["look",0.3,0.62,0.56],["mountain",0.72,0.44,0.5],["snow",0.72,0.2,0.2]],[["mountain",0.5,0.66,0.6],["walk",0.5,0.24,0.3]]],"why":["","下了雪，山上才白","山上白了才有雪山看","出了门才能去雪山上（在山上就不用再出门）"],"think":1},{"s":["妈妈说：下床了！","我下床。","我开门。","我出门。"],"pic":[[["@mummy_pig",0.28,0.58,0.56],["bed",0.72,0.64,0.5]],[["bed",0.36,0.62,0.62],["stand",0.8,0.6,0.5]],[["door_open",0.62,0.52,0.6],["stand",0.26,0.62,0.46]],[["door_open",0.24,0.5,0.5],["walk",0.72,0.64,0.44]]],"why":["","妈妈叫了，我才下床","下了床才能去开门","门开了才能出门"],"think":1}],"beats8":[["cat","cat","cat"],["dog","dog","dog"],["sun","sun","sun"],["bus","bus","bus"],["cup","cup","cup"],["hat","hat","hat"],["box","box","box"],["pig","pig","pig"],["fox","fox","fox"],["bat","bat","bat"],["fan","fan","fan"],["map","map","map"],["bug","insect","bug"],["jet","jet","jet"],["egg","egg","egg"],["ball","ball","ball"],["kite","kite","kite"],["fish","fish","fish"],["juice","juice","juice"],["apple","apple","ap-ple"],["rabbit","rabbit","rab-bit"],["zebra","zebra","ze-bra"],["lion","lion","li-on"],["orange","orange","or-ange"],["window","window","win-dow"],["jacket","jacket","jack-et"],["insect","insect","in-sect"],["yogurt","yogurt","yo-gurt"],["pumpkin","pumpkin","pump-kin"],["turtle","turtle","tur-tle"],["carrot","carrot","car-rot"],["donut","donut","do-nut"],["sandwich","sandwich","sand-wich"],["banana","banana","ba-na-na"],["elephant","elephant","el-e-phant"],["umbrella","umbrella","um-brel-la"],["unicorn","unicorn","u-ni-corn"],["strawberry","strawberry","straw-ber-ry"],["xylophone","xylophone","xy-lo-phone"],["tomato","tomato","to-ma-to"],["watermelon","watermelon","wa-ter-mel-on"],["helicopter","helicopter","hel-i-cop-ter"]],"beats8ph":[["big banana","big-ba-na-na",[["banana",0.5,0.55,0.86]]],["red apple","red-ap-ple",[["apple",0.5,0.55,0.7]]],["little cat","lit-tle-cat",[["cat",0.5,0.64,0.34]]],["big dog","big-dog",[["dog",0.5,0.55,0.86]]],["yellow bus","yel-low-bus",[["bus",0.5,0.55,0.7]]],["blue cup","blue-cup",[["cup",0.5,0.55,0.7]]],["little fish","lit-tle-fish",[["fish",0.5,0.64,0.34]]],["big elephant","big-el-e-phant",[["elephant",0.5,0.55,0.86]]],["little rabbit","lit-tle-rab-bit",[["rabbit",0.5,0.64,0.34]]],["big pumpkin","big-pump-kin",[["pumpkin",0.5,0.55,0.86]]],["red strawberry","red-straw-ber-ry",[["strawberry",0.5,0.55,0.7]]],["little pig","lit-tle-pig",[["pig",0.5,0.64,0.34]]],["red tomato","red-to-ma-to",[["tomato",0.5,0.55,0.7]]],["big lion","big-li-on",[["lion",0.5,0.55,0.86]]],["little turtle","lit-tle-tur-tle",[["turtle",0.5,0.64,0.34]]]],"sight9":["jump","help","to","find","make","funny","where","away"],"esent9":[["I can run.",[["run",0.5,0.55,0.7]],""],["I can jump.",[["jump",0.5,0.55,0.7]],""],["We can play.",[["jump",0.28,0.58,0.56],["girl",0.72,0.6,0.56]],""],["You can jump.",[["jump",0.5,0.55,0.7]],""],["Look at me!",[["stand",0.5,0.55,0.7]],""],["Help me up!",[["sit",0.28,0.58,0.5],["man",0.72,0.6,0.6]],""],["I see you.",[["look",0.28,0.58,0.56],["girl",0.72,0.6,0.56]],""],["Help the dog!",[["dog",0.5,0.55,0.7]],""],["Find the bug.",[["look",0.3,0.6,0.56],["insect",0.76,0.7,0.22]],""],["Make a hat.",[["hat",0.5,0.55,0.7]],""],["I see the sun.",[["look",0.3,0.62,0.56],["sun",0.78,0.2,0.3]],""],["The sun is up.",[["mountain",0.5,0.66,0.6],["sun",0.5,0.24,0.3]],""],["The man can jump.",[["man",0.5,0.55,0.7]],""],["My dog can jump.",[["dog",0.5,0.55,0.7]],""],["I go to bed.",[["walk",0.28,0.58,0.56],["bed",0.72,0.6,0.5]],""],["Find my blue cap.",[["cap",0.5,0.55,0.7]],""],["Look at the jet.",[["look",0.3,0.62,0.56],["jet",0.72,0.3,0.44]],""],["The fox is funny.",[["fox",0.5,0.55,0.7]],""],["Where is my mug?",[["bed",0.5,0.4,0.6],["mug",0.5,0.84,0.28]],""],["I can help you.",[["stand",0.28,0.58,0.56],["girl",0.72,0.6,0.56]],""],["My cat can jump.",[["cat",0.5,0.55,0.7]],""],["I see two cats.",[["cat",0.338,0.55,0.3],["cat",0.662,0.55,0.3]],""],["The cup is blue.",[["cup",0.5,0.55,0.7]],""],["It is a big box.",[["box",0.5,0.55,0.86]],"run"],["I can see a jet.",[["look",0.28,0.62,0.56],["jet",0.72,0.34,0.5]],"up"],["I can find the cat.",[["look",0.3,0.62,0.56],["cat",0.75,0.64,0.36]],"is"],["We can make a map.",[["stand",0.28,0.58,0.56],["map",0.72,0.6,0.44]],"red"],["Where is the red hat?",[["bed",0.5,0.4,0.6],["hat",0.5,0.84,0.28]],"can"],["Look at the funny pig.",[["pig",0.5,0.55,0.7]],"is"],["The funny dog can run.",[["dog",0.5,0.55,0.7]],"at"],["The man can help me.",[["man",0.28,0.58,0.6],["sit",0.72,0.6,0.5]],"big"],["The hen can run away.",[["hen",0.5,0.55,0.7]],"to"],["Where is the funny cat?",[["bed",0.5,0.4,0.6],["cat",0.5,0.84,0.28]],"run"],["I can find my hat.",[["look",0.3,0.62,0.56],["hat",0.75,0.66,0.34]],"is"],["The big dog can jump.",[["dog",0.5,0.55,0.86]],"at"],["I see a big dog.",[["look",0.28,0.62,0.5],["dog",0.72,0.6,0.56]],"can"]],"add1":[{"a":"一","b":"二","keep":[1],"add":0,"say":"一加一横变成二！"},{"a":"二","b":"三","keep":[0,2],"add":1,"say":"二加一横变成三！"},{"a":"一","b":"十","keep":[0],"add":1,"say":"一加一竖变成十！"},{"a":"十","b":"土","keep":[0,1],"add":2,"say":"十加一横变成土！"},{"a":"二","b":"土","keep":[0,2],"add":1,"say":"二加一竖变成土！"},{"a":"人","b":"大","keep":[1,2],"add":0,"say":"人加一横变成大！"},{"a":"大","b":"天","keep":[1,2,3],"add":0,"say":"大加一横变成天！"},{"a":"口","b":"日","keep":[0,1,3],"add":2,"say":"口加一横变成日！"},{"a":"日","b":"目","keep":[0,1,2,4],"add":3,"say":"日加一横变成目！"},{"a":"日","b":"田","keep":[0,1,2,4],"add":3,"say":"日加一竖变成田！"},{"a":"日","b":"白","keep":[1,2,3,4],"add":0,"say":"日加一撇变成白！"},{"a":"日","b":"电","keep":[0,1,2,3],"add":4,"say":"日加一笔变成电！"},{"a":"口","b":"中","keep":[0,1,2],"add":3,"say":"口加一竖变成中！"},{"a":"木","b":"本","keep":[0,1,2,3],"add":4,"say":"木加一横变成本！"},{"a":"木","b":"禾","keep":[1,2,3,4],"add":0,"say":"木加一撇变成禾！"},{"a":"米","b":"来","keep":[1,2,3,4,5,6],"add":0,"say":"米加一横变成来！"},{"a":"了","b":"子","keep":[0,1],"add":2,"say":"了加一横变成子！"},{"a":"下","b":"不","keep":[0,2,3],"add":1,"say":"下加一撇变成不！"},{"a":"左","b":"在","keep":[0,1,3,4,5],"add":2,"say":"左加一竖变成在！"},{"a":"云","b":"去","keep":[0,2,3,4],"add":1,"say":"云加一竖变成去！"},{"a":"三","b":"王","keep":[0,1,3],"add":2,"say":"三加一竖变成王！"},{"a":"土","b":"王","keep":[1,2,3],"add":0,"say":"土加一横变成王！"},{"a":"工","b":"王","keep":[0,2,3],"add":1,"say":"工加一横变成王！"},{"a":"二","b":"工","keep":[0,2],"add":1,"say":"二加一竖变成工！"}],"near1":["一七","一二","一十","一厂","三王","上日","下不","下木","中叶","中田","九勺","了子","了山","了巾","二三","二上","二土","二工","云去","五右","五石","人勺","人大","人小","人飞","八勺","八大","八小","八飞","六头","力女","力飞","勺风","十下","十土","十工","厂大","口中","口五","口日","右有","土五","土王","大不","大六","大天","大尺","大木","小少","小木","小水","山中","工五","工王","左在","巾中","日叶","日田","日电","日白","日目","月白","木本","木禾","果是","王左","田虫","电吃","白有","石有","禾休","禾米","米床","米来","虫足","风龙","飞尺","飞水","飞风","龙衣"],"all":[{"id":"ultra4","name":"天地岛","host":"ultraman","color":"#E23B3B","chars":"天地金土川","write":"天土"},{"id":"peppa4","name":"小医院","host":"peppa","color":"#FF8DB3","chars":"耳足头牙心","write":"耳头"},{"id":"pj4","name":"月光乐园","host":"catboy","color":"#3A5CC0","chars":"坐站飞说听","write":"坐飞"},{"id":"xiyou4","name":"水帘洞","host":"wukong","color":"#F5B324","chars":"对雪虫鱼草","write":"虫对"},{"id":"huluwa4","name":"葫芦洞","host":"gourd2","color":"#46C27A","chars":"多少开关去","write":"开关"},{"id":"paw4","name":"十字路口","host":"chase","color":"#E8554A","chars":"左右中前后","write":"左右"},{"id":"bluey4","name":"大家庭","host":"bluey","color":"#6BB9F2","chars":"爷奶妹女子","write":"女子"},{"id":"avengers4","name":"英雄训练场","host":"spiderman","color":"#D63B2F","chars":"好力出王高","write":"好力"},{"id":"robot4","name":"汽车人工厂","host":"optimus","color":"#FFC93C","chars":"变能工厂路","write":"工厂"}],"have":["ant","apple","baby","back","ball","bamboo","banana","bat","bed","big","bird","book","box","bright","bun","bus","cap","car","carrot","cat","change","check","chest_open","chest_shut","chicken","cloud","come","cow","crown","cube","cup","dino","dog","donut","door","door_open","down","dragon","drink","duck","ear","earth","eat","egg","elephant","eye","factory","fan","few","field","fig","fire","fish","flower","follow","foot","fox","frog","front","fruit","girl","glove","goaway","gold","goose","grandma","grapes","grass","hand","hat","head","heart","helicopter","hen","hop","horse","house","icecream","insect","jacket","jam","jet","jug","juice","jump","key","kite","lamp","leaf","leftsign","light","lightning","lion","listen","log","look","man","many","map","mat","meat","melon","middle","milk","moon","moonlight","mop","mountain","mouseout","mouth","mug","net","nose","notebook","nut","orange","owl","pan","pen","person","pig","pinwheel","plane","polarbear","pumpkin","queen","quilt","rabbit","rain","raincoat","rat","rest","rice","ricebowl","riceplant","rightsign","ring","river","road","rockinghorse","rug","ruler","run","sandwich","schoolbag","sheep","shirt","sit","sky","small","snow","soil","soup","spoon","stand","star","stone","strawberry","sun","talk","tent","thumbsup","tincan","tomato","toolbox","tooth","top","towel","tower","train","tree","turtle","umbrella","unicorn","up","van","vase","volcano","walk","watch","water","watermelon","web","whale","wig","wind","window","woods","xylophone","yellowcar","yogurt","yoyo","zebra","zip","@bajie","@bandit","@bingo","@bluey","@bumblebee","@captain","@catboy","@chase","@chilli","@daddy_pig","@dragon_horse","@gekko","@george","@gourd1","@gourd2","@gourd3","@gourd4","@gourd5","@gourd6","@gourd7","@grandpa","@hawkeye","@hulk","@ironman","@kaiju1","@kaiju2","@luna_girl","@marshall","@miles","@mummy_pig","@optimus","@owlette","@panther","@peppa","@pj_robot","@rocky","@romeo","@rubble","@ryder","@scorpion","@shaseng","@skye","@snake","@spiderman","@tangseng","@thor","@ultraman","@widow","@wukong","@zero","@zuma"]};
 /* ---------------- src/w4/core.js */
 /* ================================================================ 字字岛 · 神笔海 (world 4) · core - in the LAZY file assets/js/w4.js
    (tools/build.py: the tables W4D, then this file, ancient.js and one file an island). The island files copy the conventions
@@ -97,9 +97,9 @@ W4X.Write = Object.assign({}, W3Write);
    ISL[id].games (find, write, en, quiz). bgs: the island's backgrounds (new art, or the fallback tools/build.py chose) */
 function w4Island(id, plays) {
   const W = ISL[id]; if (!W) return;               /* not live */
-  const cast = W.cast, host = cast[0], [find, en, quiz] = plays, bg = W.bgs;
+  const cast = W.cast, host = cast[0], [find, en, quiz, wx] = plays, bg = W.bgs;      /* wx (optional): members over W4X.Write for this island (⑧ ⑨'s finishing shows) */
   zGame(Object.assign({}, W4X.Base, find), { id: id + ':find', world: id, bg: bg[0], chars: cast, host, title: '认字', iconNode: find.iconNode || (() => Glyph.zh(W.chars[0].c, 60)) });
-  writeGame(Object.assign({}, W4X.Write, { id: id + ':write', world: id, lang: 'zh', bg: bg[1], chars: cast.slice(0, 1), host, title: '写字', intro: '写一写！', iconNode: () => Glyph.zh(W.write[0], 60, '#E8414B'), decor: writeDecor }));
+  writeGame(Object.assign({}, W4X.Write, { id: id + ':write', world: id, lang: 'zh', bg: bg[1], chars: cast.slice(0, 1), host, title: '写字', intro: '写一写！', iconNode: () => Glyph.zh(W.write[0], 60, '#E8414B'), decor: writeDecor }, wx || {}));
   zGame(Object.assign({}, W4X.Base, { kind0: 'en', verb: 'ABC' }, en), { id: id + ':en', world: id, bg: bg[2], chars: cast.slice(0, 1), host, title: '英文' });
   zGame(Object.assign({}, W4X.Base, { kind0: 'quiz', verb: '想！' }, quiz), { id: id + ':quiz', world: id, bg: bg[3], chars: cast, host, title: '挑战' });
 }
@@ -135,7 +135,7 @@ Object.assign(W4X, {
       row._cells = Array.from(line).map(c => {
         if (/[。！？，]/.test(c)) { const p = el('span', '', row); p.textContent = c; Object.assign(p.style, { font: '900 ' + Math.round(h * 0.6) + 'px system-ui,sans-serif', color: INK }); return null; }
         const cell = el('div', '', row); Object.assign(cell.style, { width: h + 'px', height: h + 'px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' });
-        cell.appendChild(Glyph.zh(c, h * 0.92, this.knownChar(c) ? INK : '#BDB3A0')); cell.dataset.ch = c;
+        cell.appendChild(Glyph.zh(c, h * 0.92, this.knownChar(c) ? INK : '#8A8070')); cell.dataset.ch = c;
         tapify(cell, () => { const it = ITEM[c]; Voice.sayNow(it ? it.line : c, { tag: 'story' }); cell.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 300 }); });
         return cell;
       }).filter(Boolean);
@@ -160,6 +160,134 @@ Object.assign(W4X, {
     Voice.sayNow(s.title, { tag: 'story' });
     Voice.say(W4D.scrollKind[s.kind], { tag: 'story' });
   },
+});
+
+/* ---------------------------------------------------------------- 卡片进空格 (docs/W4-DESIGN.md §12.11): ⑧-4 故事排排队 and ⑨-3 拼出一句话
+   put their cards into slots the same way. The play draws its board, its slots and its cards (ZX.thing); W4X.slots does the
+   moving, and the play listens:
+     a TAP on a card below flies it into the first empty slot; a tap on a card in a slot sends it back down;
+     a DRAG drops it into any slot (onto a full one: that card goes back down; dropped anywhere else it springs back);
+     a HOLD (0.65 s) on a card calls o.hear(i): the play says it, and that question earns no star (§12.5 "卡不念");
+     every slot full: o.full(order), order[s] = the card in slot s - the play submits it (Session.submit(st, order.join(','))).
+   const S = st.slots = W4X.slots(st, { cards, n, slot: s => rect, tray: i => rect, full(order) {}, hear(i) {}, look(i, s) {}, changed() {} })
+   (rects in stage px for the current orientation; look: a card's style in a slot (s >= 0) or below (-1)).
+   place(st): S.layout()   onGesture: const r = S.gesture(name, p); if (r) return r;   explain: await S.back(i, ms), await S.put(i, s, ms)
+   next(st, strat) (the tests): return S.next(want, strat) - want[s] = the right card of slot s. Card ids: 'card0'...'card9'. */
+Object.assign(W4X, {
+  slots(st, o) {
+    const cards = o.cards, N = o.n, at = new Array(N).fill(-1), where = cards.map(() => -1), slotIds = () => Array.from({ length: N }, (_, s) => ({ id: 'slot' + s, rect: () => o.slot(s) }));
+    const S = {
+      at, where, n: N, cards, locked: false,
+      rect(i) { return where[i] >= 0 ? o.slot(where[i]) : o.tray(i); },
+      /* a card to r - from where it is seen now (a drag leaves a transform on it) */
+      go(i, r, ms) {
+        const e = cards[i], b = box(e), m = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(e.style.transform || ''), ox = b.x + (m ? Number(m[1]) : 0), oy = b.y + (m ? Number(m[2]) : 0);
+        e.getAnimations().forEach(a => a.cancel()); e.style.transform = ''; place(e, r.x, r.y, r.w, r.h); e.style.zIndex = where[i] >= 0 ? 14 : 12;
+        if (o.look) o.look(i, where[i]);
+        if (!ms || st.scope.dead) return Promise.resolve();
+        return st.scope.anim(e, [{ transform: 'translate(' + (ox - r.x) + 'px,' + (oy - r.y) + 'px)' }, { transform: 'translate(0,0)' }], { duration: ms, easing: EASE.glide, fill: 'none' });
+      },
+      layout() { cards.forEach((e, i) => { e.getAnimations().forEach(a => a.cancel()); e.style.transform = ''; const r = this.rect(i); place(e, r.x, r.y, r.w, r.h); e.style.zIndex = where[i] >= 0 ? 14 : 12; if (o.look) o.look(i, where[i]); }); },
+      firstEmpty() { return at.indexOf(-1); },
+      isFull() { return at.every(i => i >= 0); },
+      order() { return at.slice(); },
+      put(i, s, ms) {
+        const j = at[s];
+        if (j !== i) {
+          if (where[i] >= 0) at[where[i]] = -1;
+          if (j >= 0) { where[j] = -1; this.go(j, o.tray(j), 260); }
+          at[s] = i; where[i] = s;
+        }
+        return this.go(i, o.slot(s), ms == null ? 260 : ms);
+      },
+      back(i, ms) { if (where[i] >= 0) { at[where[i]] = -1; where[i] = -1; } return this.go(i, o.tray(i), ms == null ? 240 : ms); },
+      check() { if (!this.locked && this.isFull()) { this.locked = true; o.full(this.order()); } },
+      gesture(name, p) {
+        const i = K.cardIndex(p && p.id);
+        if (this.locked || st.submitted || i < 0 || i >= cards.length) return false;
+        if (name === 'hold') { if (o.hear) o.hear(i); K.hop(st, cards[i], 12); return 'free'; }
+        if (name === 'tap' && where[i] >= 0) { Sfx.tap(); this.back(i); if (o.changed) o.changed(); return 'free'; }
+        let s = -1;
+        if (name === 'tap') s = this.firstEmpty();
+        else if (name === 'drop') { const m = /^slot(\d)$/.exec(p.to || ''); s = m ? Number(m[1]) : -1; }
+        if (s < 0 || s >= N) { if (name === 'drop') this.go(i, this.rect(i), 200); return false; }
+        Sfx.place(); this.put(i, s); if (o.changed) o.changed(); this.check();
+        return 'ok';
+      },
+      /* the tests: right - the right card of the first slot that is not right yet (a wrong card there goes back first);
+         wrong - a card that is not the right one for the first empty slot (the order made is then wrong) */
+      next(want, strat) {
+        if (this.locked || st.submitted) return null;
+        if (strat === 'wrong') {
+          const s = this.firstEmpty(); if (s < 0) return null;
+          const i = cards.findIndex((e, k) => where[k] < 0 && k !== want[s]);
+          return { g: 'tap', p: { id: 'card' + (i >= 0 ? i : want[s]) } };
+        }
+        const s = at.findIndex((k, j) => k !== want[j]); if (s < 0) return null;
+        if (at[s] >= 0) return { g: 'tap', p: { id: 'card' + at[s] } };
+        const i = want[s];
+        if (where[i] >= 0 || s === this.firstEmpty()) return { g: 'tap', p: { id: 'card' + i } };
+        const r = o.slot(s);
+        return { g: 'drop', p: { id: 'card' + i, to: 'slot' + s }, to: { x: r.x + r.w / 2, y: r.y + r.h / 2 } };
+      },
+    };
+    cards.forEach((e, i) => K.reg(st, 'card' + i, e, { drag: true, hold: 650, tapOk: true, drops: slotIds }));
+    st.cards = cards;
+    return S;
+  },
+});
+
+/* ---------------------------------------------------------------- ⑧ ⑨ on the map (docs/W4-DESIGN.md §12.9; boot.js W4X.news asks):
+   on another sea, once: the brush says that 神笔海 has a new island (a tap flies there, where its cloud flies away); on 神笔海, a
+   child who saw the finale before ⑧ ⑨ were done gets it once more now that both have their flags - the photo with the new friends */
+Object.assign(W4X, {
+  async news2(MV, live) {
+    const S = Store.s;
+    if (MV.set !== 'w4') {
+      S.w4x = 2; Store.save();
+      Sfx.fanfare(); Voice.say('神笔海有新岛！', { tag: 'unlock' }); MV.pointAt('brush');
+      await new Promise(r => setTimeout(r, T(1800)));
+      return true;
+    }
+    S.fin.w4x = 'seen'; Store.save();
+    const F = MV.isl.fest; if (!F) return false;
+    F.glow.style.opacity = 1;
+    F.land.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: 'translate(-50%,-50%) scale(1.2)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: T(800) + 1, easing: EASE.pop });
+    Sfx.fanfare(); Voice.say('大家都到齐啦！', { tag: 'unlock' }); MV.pointAt('fest');
+    await new Promise(r => setTimeout(r, T(2400)));
+    if (live()) Finale.play('w4');
+    return true;
+  },
+});
+
+/* ---------------------------------------------------------------- the parent panel's 神笔海 section (§10.6; boot.js W4X.parent puts
+   its heading and asks for this): the lesson table (W4D.lessons: LESSONS4 + the rows of ⑧ ⑨ once live) and "go there now" */
+Object.assign(W4X, {
+  parent2(sh) {
+    el('div', 'mut', sh, { text: '神笔海的字和顺序跟的是统编版一年级上册（2024 新版）；每周的形式（汉字儿歌 + 古诗 + 故事书）照学而思小猴语文 L1。下表：课本这一课在神笔海的哪个岛、哪个游戏。拿到真正的学而思课表时，只改这张表的数据。'
+      + (WORLDS_INFO.w4.partial ? '（神笔海的岛做好一个上线一个：现在上线 ' + ORDER.w4.length + ' 个，其余在地图上是云。）' : '') });
+    const t = el('table', '', sh); t.innerHTML = '<tr><th>统编一上（2024）的课</th><th>神笔海</th></tr>';
+    W4D.lessons.forEach(([a, b]) => { const tr = el('tr', '', t); el('td', '', tr, { text: a }); el('td', '', tr, { text: b }); });
+    const open = this.open(), go = el('button', 'pbtn', sh, { text: open ? '现在就去神笔海' : '神笔海还没开（晨光海七面旗插满后开）' });
+    go.dataset.w4go = 1;
+    if (!open) go.disabled = true;
+    go.addEventListener('click', () => {
+      if (!this.open()) return;
+      Parent.close();
+      if (Session.G) Session.home();
+      Screens.show('map'); Voice.enter('map'); MapView.build();
+      if (MapView.set === 'w4') { MapView.update(); return; }
+      MapView.update(); MapView.sail('w4');
+    });
+    el('div', 'mut', sh, { text: '“现在就去神笔海”只是带孩子飞过去，不改任何进度。平时每片海地图上同一个位置都有一支发光的毛笔，点它就去神笔海；神笔海中间的月亮门回到来的那片海。' });
+  }
+});
+
+/* ---------------------------------------------------------------- English word pictures (W4R1N-10): of WORDS3 / WORDS4 entries
+   ([word, picture, clear]) only those a 4-year-old names by that very word (clear = 1) and whose picture we have. Every play that
+   shows a word's picture WITHOUT saying the word takes its words from here (bun is a 包子, can a blank tin: clear 0) */
+Object.assign(W4X, {
+  picWords(list) { return list.filter(v => v[2] && W4X.hasPic(v[1])); },
 });
 
 /* ---------------- src/w4/ancient.js */
@@ -361,7 +489,9 @@ W4X.ANCIENT = {
   const LOOKL = { b: 'd', d: 'b', p: 'q', q: 'p', m: 'n', n: 'mh', h: 'n', u: 'n' };
   const CONS = 'bcdfghjklmnprstvwz';
   const picOf = w => { const x = W4D.words.find(v => v[0] === w) || WORDS3.find(v => v[0] === w); return x ? x[1] : null; };
-  const W4WORDS = () => Array.from(new Set(W4D.words.map(v => v[0]).concat(WORDS3.map(v => v[0])))).filter(w => W4X.hasPic(picOf(w)));
+  /* the words whose picture is shown as the word to make: only pictures named by that very word (W4X.picWords, W4R1N-10) */
+  const CLEAR = () => W4X.picWords(W4D.words.concat(WORDS3)).map(v => v[0]);
+  const W4WORDS = () => Array.from(new Set(CLEAR()));
   const diffAt = (a, b) => [0, 1, 2].filter(i => a[i] !== b[i]);
   const Change = {
     rule: 'change-one-letter', kind0: 'en', verb: '变！', intro: '变身换字母！', softHint: true, props: [],
@@ -383,10 +513,10 @@ W4X.ANCIENT = {
         const to = bagFrom(G, 'to' + lv, tos.length ? tos : cand), from = G.rng.pick(cand.filter(x => x !== to && x.slice(1) === to.slice(1)));
         steps = [{ from, to, slot: 0 }];
       } else if (lv === 4) {
-        const ok = PAIRS4.filter(([a, b]) => W4X.hasPic(picOf(b)) && b !== last), [from, to] = bagFrom(G, 'p4', ok.length ? ok : PAIRS4);
+        const ok = PAIRS4.filter(([a, b]) => CLEAR().includes(b) && b !== last), [from, to] = bagFrom(G, 'p4', ok.length ? ok : PAIRS4);
         steps = [{ from, to, slot: diffAt(from, to)[0] }];
       } else {
-        const ok = CHAINS5.filter(c => c.slice(1).every(w => W4X.hasPic(picOf(w))) && c[2] !== last), c = bagFrom(G, 'c5', ok.length ? ok : CHAINS5);
+        const ok = CHAINS5.filter(c => c.slice(1).every(w => CLEAR().includes(w)) && c[2] !== last), c = bagFrom(G, 'c5', ok.length ? ok : CHAINS5);
         steps = [{ from: c[0], to: c[1], slot: diffAt(c[0], c[1])[0] }, { from: c[1], to: c[2], slot: diffAt(c[1], c[2])[0] }];
       }
       steps.forEach(s => { s.opts = this.letters(G, s.from, s.to, s.slot, lv >= 3); });
@@ -798,14 +928,16 @@ W4X.ANCIENT = {
      said. Tap the one that is not of the family. Levels: 1 a picture on every card, the odd one differs in vowel and end; 2 no
      pictures; 3 the odd one has the family's vowel, another end (bun); 4 the family's last letter, another vowel (bag); 5 two
      rows, one odd one in each (one of each kind) - both found. George reads them for whoever taps his speaker: that question
-     earns no star. A random tap is right 1 time in 5 (two rows: 1 in 25). */
-  const EASYW = 'big dig hop pop men ten fun run hit sit bit fit hot pot dot not wet pet sad dad bad mad bag tag rag wag lip hip tip zip red fed hug tug pin win tin bin fog hog jog cut hut nut';
+     earns no star. A random tap is right 1 time in 5 (two rows: 1 in 20-25).
+     Only words the child was taught - the CVC words of 彩虹海 (WORDS3) and 神笔海 (WORDS4) whose picture names them clearly
+     (W4X.picWords: clear and drawn; W4R1N-02, review item 10). A row of five needs a family of four of them (-at -an); a row of
+     level 5 may be a family of three and one outsider (-ug). */
   let FAMS = null;
   const fams = () => {
     if (FAMS) return FAMS;
     const pic = {};
-    W4D.words.concat(WORDS3).forEach(([w, o]) => { if (/^[a-z]{3}$/.test(w) && !pic[w] && W4X.hasPic(o)) pic[w] = o; });
-    const all = Array.from(new Set(Object.keys(pic).concat(EASYW.split(' ')))).filter(w => /^[a-z]{3}$/.test(w) && W4D.dict.includes(w));
+    W4X.picWords(W4D.words.concat(WORDS3)).forEach(([w, o]) => { if (/^[a-z]{3}$/.test(w) && !pic[w]) pic[w] = o; });
+    const all = Object.keys(pic);
     const by = {}; all.forEach(w => (by[w.slice(1)] = by[w.slice(1)] || []).push(w));
     return (FAMS = { pic, all, by });
   };
@@ -814,21 +946,28 @@ W4X.ANCIENT = {
   const GOLDT = '#E39B00';
   const OddOne = {
     rule: 'odd-one-out', kind0: 'en', verb: '找！', intro: '谁不是一家？', props: [],
-    row(G, F, kind, pic, used) {
-      const words = (pic ? F.all.filter(w => F.pic[w]) : F.all).filter(w => !used.has(w));
-      const odds = r => words.filter(w => w.slice(1) !== r && oddOk[kind](w, r));
-      const ok = Object.keys(F.by).filter(r => F.by[r].filter(w => words.includes(w)).length >= 4 && odds(r).length && !used.has('-' + r));
-      const r = bagFrom(G, 'fam' + kind + (pic ? 'p' : ''), ok), fam = G.rng.shuffle(F.by[r].filter(w => words.includes(w))).slice(0, 4), odd = G.rng.pick(odds(r));
+    /* one row: a family (four of it; level 5 may take a family of three) and the odd one of this kind - no word twice in a question */
+    row(G, F, kind, used, three) {
+      const words = F.all.filter(w => !used.has(w)), size = r => F.by[r].filter(w => words.includes(w)).length;
+      const odds = (r, kd) => words.filter(w => w.slice(1) !== r && oddOk[kd](w, r));
+      let r = null, kd = kind;
+      for (const [k2, min] of [[kind, three ? 3 : 4], ['both', 4], ['both', 3]]) {
+        const ok = Object.keys(F.by).filter(x => size(x) >= min && odds(x, k2).length && !used.has('-' + x));
+        if (ok.length) { r = bagFrom(G, 'fam' + k2 + (three ? '3' : ''), ok); kd = k2; break; }
+      }
+      const fam = G.rng.shuffle(F.by[r].filter(w => words.includes(w))).slice(0, 4), odd = G.rng.pick(odds(r, kd));
       fam.concat([odd, '-' + r]).forEach(w => used.add(w));
-      return { rime: r, fam, odd, kind, opts: W4X.put(G, fam, odd) };
+      return { rime: r, fam, odd, kind: kd, opts: W4X.put(G, fam, odd) };
     },
     gen(G, o) {
-      const lv = o.level, F = fams(), used = new Set(), pic = lv <= 1;
-      const kinds = lv >= 5 ? G.rng.shuffle(['vowel', 'end']) : [lv <= 2 ? 'both' : lv === 3 ? 'vowel' : 'end'];
-      const rows = kinds.map(kind => this.row(G, F, kind, pic, used)), two = rows.length > 1;
+      const lv = o.level, F = fams(), used = new Set(), pic = lv <= 1, two = lv >= 5;
+      const kinds = two ? G.rng.shuffle(['vowel', 'end']) : [lv <= 2 ? 'both' : lv === 3 ? 'vowel' : 'end'];
+      const rows = kinds.map(kind => this.row(G, F, kind, used, two));
       return { k: rows.map(r => r.opts.join(',')), rows, opts: [].concat(...rows.map(r => r.opts)), answer: two ? 'all' : rows[0].odd, seq: two ? rows.map(r => r.odd) : null,
         pic: pic ? 1 : 0, two: two ? 1 : 0, vow: rows.filter(r => r.kind === 'vowel').length, end: rows.filter(r => r.kind === 'end').length };
     },
+    /* the row of card i */
+    rowOf(st, i) { let n = 0; for (let r = 0; r < st.q.rows.length; r++) { n += st.q.rows[r].opts.length; if (i < n) return r; } return -1; },
     itemOf() { return null; },
     hard(q) { return (1 - q.pic) + q.vow * 1.5 + q.end * 2 + q.two * 3; },
     build(G) { ZBase.build.call(this, G); if (!G.actors.george) K.actor(G, 'george', 170); },
@@ -863,10 +1002,19 @@ W4X.ANCIENT = {
     },
     place(st) {
       if (!st.readEl) return;
-      K.cardsPlace(st, this.cardSpot(st));
+      const sp = this.cardSpot(st);
+      if (!st.q.two) K.cardsPlace(st, sp);
+      else {                                  /* two rows (four or five cards each), each centred */
+        const S = st.cardSize || 124, n0 = st.q.rows[0].opts.length;
+        st.q.rows.forEach((row, r) => {
+          const n = row.opts.length, x0 = sp.cx - (n * S + (n - 1) * sp.gap) / 2, y = sp.cy - (S + sp.rowGap) / 2 + r * (S + sp.rowGap) - S / 2;
+          for (let j = 0; j < n; j++) place(st.cards[(r ? n0 : 0) + j], Math.round(x0 + j * (S + sp.gap)), Math.round(y), S, S);
+        });
+      }
       place(st.readEl, L() ? 34 : 34, L() ? 400 : 770, 100, 100);
+      let at = 0;
       (st.panels || []).forEach((d, r) => {
-        const a = box(st.cards[r * 5]), b = box(st.cards[r * 5 + 4]);
+        const n = st.q.rows[r].opts.length, a = box(st.cards[at]), b = box(st.cards[at + n - 1]); at += n;
         place(d, a.x - 14, a.y - 14, b.x + b.w - a.x + 28, a.h + 28);
       });
     },
@@ -894,7 +1042,7 @@ W4X.ANCIENT = {
       if (name !== 'tap' || st.submitted) return false;
       if (p.id === 'read') { this.readOut(st); return 'ok'; }
       const i = K.cardIndex(p.id); if (i < 0) return false;
-      const q = st.q, r = Math.floor(i / 5); if (st.found[r]) return false;
+      const q = st.q, r = this.rowOf(st, i); if (r < 0 || st.found[r]) return false;
       const w = st.opts[i];
       st.tapped = i; st.row = r; Sfx.tap();
       if (w !== q.rows[r].odd) { Session.submit(st, w); return 'ok'; }
@@ -937,7 +1085,7 @@ W4X.ANCIENT = {
       const row = st.q.rows[r], i = strat === 'wrong' ? st.opts.indexOf(row.fam[0]) : st.opts.indexOf(row.odd);
       return { g: 'tap', p: { id: 'card' + i } };
     },
-    workEls(st) { return (st.cards || []).filter((c, i) => st.found && !st.found[Math.floor(i / 5)]); },
+    workEls(st) { return (st.cards || []).filter((c, i) => st.found && !st.found[this.rowOf(st, i)]); },
     snap(st) { return { opts: st.opts || null, found: (st.found || []).filter(Boolean).length, peeked: !!st.peeked }; },
     iconNode() {
       const d = el('div'); Object.assign(d.style, { display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '0' });
@@ -1972,8 +2120,8 @@ W4X.ANCIENT = {
   };
 
   /* ---------------------------------------------------------------- ④-4 挑战 「归！」 送字回家 (sort by meaning)
-     Five little houses, a kind of thing on each door: the sky (a cloud), the ground (a hill and grass), animals (paw prints),
-     the body (a little person), doing (a runner), the family (three heads: only once the child knows a family character). A card
+     Five little houses, a big round sign over each door: the sky (a cloud), the ground (a hill and grass), animals (a puppy),
+     the body (a hand and an eye), doing (a running boy), the family (three heads: only once the child knows a family character). A card
      in the middle (read, not said: a tap says it and that question earns no star). Drag it into its house, or tap the house.
      Every character has one kind (KIND4); the disputable ones are not asked. Levels: 1 the card's picture beside it; 2 the
      character alone; 3 a character with a look-alike of another kind (日/目, 手/牛, 田/日): read it carefully; 4 a word of two
@@ -1985,21 +2133,38 @@ W4X.ANCIENT = {
   const kindLine = k => W4D.kindLine[KZ[k]];
   const charPic = c => { const o = ITEM[c] && ITEM[c].obj; return o && (o[0] === '@' || W4X.hasPic(o)) ? o : null; };
   const itemPic = t => (t.length === 1 ? charPic(t) : zhPic(t));
+  /* the signs on the doors (W4R1N-08): >= 100 px, pictures a 4-year-old names at once - the sky (a cloud in the blue) and the
+     ground (a hill on the grass) drawn; animals = a puppy's face, the body = a hand and an eye, doing = the running boy (the
+     app's own pictures); the family = three heads (only once a family character is known) */
   const KIND_ICON = {
-    sky: '<circle cx="30" cy="30" r="27" fill="#BFE6FF" stroke="#2B2118" stroke-width="2.5"/><path d="M15 41C9 41 7 35 10 31C12 28 16 27 19 29C20 22 26 18 32 19C38 19 42 23 43 28C48 27 53 31 52 36C52 39 49 41 46 41Z" fill="#fff" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/>',
-    ground: '<circle cx="30" cy="30" r="27" fill="#E4F4D2" stroke="#2B2118" stroke-width="2.5"/><path d="M9 44L24 17L33 31L39 23L52 44Z" fill="#9AA4B0" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/><path d="M19 26L24 17L29 25Z" fill="#fff"/><path d="M5 44C14 37 46 37 55 44V50C46 56 14 56 5 50Z" fill="#5CC46E" stroke="#2B2118" stroke-width="3"/>',
-    animal: '<circle cx="30" cy="30" r="27" fill="#FFE9CC" stroke="#2B2118" stroke-width="2.5"/><g fill="#8B5E3C"><ellipse cx="21" cy="38" rx="7.5" ry="6.5"/><circle cx="13" cy="29" r="3.4"/><circle cx="18" cy="24" r="3.4"/><circle cx="25" cy="24" r="3.4"/><circle cx="29.5" cy="29" r="3.4"/><ellipse cx="40" cy="24" rx="6" ry="5.2"/><circle cx="33.5" cy="17" r="2.7"/><circle cx="37.5" cy="13" r="2.7"/><circle cx="43" cy="13" r="2.7"/><circle cx="46.5" cy="17" r="2.7"/></g>',
-    body: '<circle cx="30" cy="30" r="27" fill="#FFE3EA" stroke="#2B2118" stroke-width="2.5"/><circle cx="30" cy="17" r="7" fill="#fff" stroke="#2B2118" stroke-width="3.5"/><path d="M30 25V40M18 31H42M30 40L22 52M30 40L38 52" stroke="#2B2118" stroke-width="4" stroke-linecap="round" fill="none"/>',
-    action: '<circle cx="30" cy="30" r="27" fill="#E8E2FF" stroke="#2B2118" stroke-width="2.5"/><circle cx="36" cy="14" r="5.5" fill="#2B2118"/><path d="M34 22L27 35L36 41L31 51M27 35L18 44M32 26L43 31M32 26L21 24" stroke="#2B2118" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-    family: '<circle cx="30" cy="30" r="27" fill="#FFF1C4" stroke="#2B2118" stroke-width="2.5"/><g fill="#2B2118"><circle cx="18" cy="20" r="6"/><path d="M9 47C9 31 27 31 27 47Z"/><circle cx="42" cy="20" r="6"/><path d="M33 47C33 31 51 31 51 47Z"/><circle cx="30" cy="32" r="4.5"/><path d="M23.5 49C23.5 38 36.5 38 36.5 49Z"/></g>',
+    sky: '<circle cx="30" cy="30" r="27" fill="#BFE6FF"/><path d="M15 41C9 41 7 35 10 31C12 28 16 27 19 29C20 22 26 18 32 19C38 19 42 23 43 28C48 27 53 31 52 36C52 39 49 41 46 41Z" fill="#fff" stroke="#2B2118" stroke-width="2.6" stroke-linejoin="round"/>',
+    ground: '<circle cx="30" cy="30" r="27" fill="#E4F4D2"/><path d="M9 44L24 17L33 31L39 23L52 44Z" fill="#9AA4B0" stroke="#2B2118" stroke-width="2.6" stroke-linejoin="round"/><path d="M19 26L24 17L29 25Z" fill="#fff"/><path d="M3 44C14 37 46 37 57 44V58H3Z" fill="#5CC46E" stroke="#2B2118" stroke-width="2.6"/>',
+    family: '<circle cx="30" cy="30" r="27" fill="#FFF1C4"/><g fill="#2B2118"><circle cx="18" cy="20" r="6"/><path d="M9 47C9 31 27 31 27 47Z"/><circle cx="42" cy="20" r="6"/><path d="M33 47C33 31 51 31 51 47Z"/><circle cx="30" cy="32" r="4.5"/><path d="M23.5 49C23.5 38 36.5 38 36.5 49Z"/></g>',
+  };
+  const SIGN_BG = { sky: '#BFE6FF', ground: '#E4F4D2', animal: '#FFE9CC', body: '#FFE3EA', action: '#E8E2FF', family: '#FFF1C4' };
+  /* a round sign: size in px, or null to fill its parent */
+  const signNode = (k, size) => {
+    const d = el('div', ''), wh = size ? size + 'px' : '100%';
+    Object.assign(d.style, { position: 'relative', width: wh, height: wh, borderRadius: '50%', overflow: 'hidden', background: SIGN_BG[k], pointerEvents: 'none', flex: 'none' });
+    const pic = (o, css) => { const i = img(OBJURL(o), '', d); Object.assign(i.style, { position: 'absolute', objectFit: 'contain', pointerEvents: 'none' }, css); return i; };
+    if (KIND_ICON[k]) d.innerHTML = '<svg viewBox="3 3 54 54" width="100%" height="100%" style="display:block">' + KIND_ICON[k] + '</svg>';
+    else if (k === 'animal') pic('dog', { width: '128%', height: '160%', left: '-14%', top: '4%', objectFit: 'cover', objectPosition: '50% 0' });
+    else if (k === 'body') { pic('hand', { width: '60%', height: '60%', left: '6%', top: '34%' }); pic('eye', { width: '58%', height: '58%', left: '38%', top: '10%' }); }
+    else if (k === 'action') pic('run', { width: '88%', height: '88%', left: '6%', top: '6%' });
+    const rim = el('div', '', d); Object.assign(rim.style, { position: 'absolute', inset: '0', borderRadius: '50%', boxShadow: 'inset 0 0 0 ' + (size && size < 70 ? 3 : 5) + 'px #2B2118', pointerEvents: 'none' });
+    return d;
   };
   const HOUSE_COL = { sky: ['#4FA3E8', '#EAF6FF'], ground: ['#3FAE4A', '#F1F8E4'], animal: ['#C8743A', '#FFF3E2'], body: ['#E86A8E', '#FFF0F4'], action: ['#7A5CD6', '#F2EEFF'], family: ['#F59A23', '#FFF7E2'] };
-  const houseSvg = k => '<svg viewBox="0 0 170 190" width="100%" height="100%"><path d="M8 84L85 10L162 84Z" fill="' + HOUSE_COL[k][0] + '" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>'
-    + '<rect x="20" y="78" width="130" height="106" rx="10" fill="' + HOUSE_COL[k][1] + '" stroke="#2B2118" stroke-width="6"/><path d="M36 184V124C36 96 134 96 134 124V184Z" fill="#B07A45" stroke="#2B2118" stroke-width="5"/>'
-    + '<g transform="translate(46,102) scale(1.3)">' + KIND_ICON[k] + '</g></svg>';
-  const iconSvg = (k, size) => { const d = el('div', ''); d.innerHTML = '<svg viewBox="0 0 60 60" width="' + size + '" height="' + size + '">' + KIND_ICON[k] + '</svg>'; return d.firstChild; };
-  const HW = () => (L() ? 168 : 180), HH = () => (L() ? 186 : 198);
-  const HOUSES = () => (L() ? [0, 1, 2, 3, 4].map(i => [512 + (i - 2) * 182, 393]) : [[130, 540], [352, 540], [574, 540], [241, 768], [463, 768]]);
+  /* a house: roof, wall, a little door - and the big sign over the door (62 % of the house's width: >= 105 px) */
+  const house = (d, k) => {
+    d.innerHTML = '<svg viewBox="0 0 170 210" width="100%" height="100%" style="position:absolute;inset:0"><path d="M6 86L85 8L164 86Z" fill="' + HOUSE_COL[k][0] + '" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>'
+      + '<rect x="16" y="78" width="138" height="126" rx="10" fill="' + HOUSE_COL[k][1] + '" stroke="#2B2118" stroke-width="6"/><path d="M68 204V190C68 178 102 178 102 190V204Z" fill="#B07A45" stroke="#2B2118" stroke-width="5"/></svg>';
+    const w = el('div', '', d); Object.assign(w.style, { position: 'absolute', left: '50%', top: '57%', width: '62%', aspectRatio: '1', transform: 'translate(-50%,-50%)', pointerEvents: 'none' });
+    w.appendChild(signNode(k, null));
+    return d;
+  };
+  const HW = () => (L() ? 168 : 180), HH = () => Math.round(HW() * 210 / 170);
+  const HOUSES = () => (L() ? [0, 1, 2, 3, 4].map(i => [512 + (i - 2) * 182, 388]) : [[130, 530], [352, 530], [574, 530], [241, 776], [463, 776]]);
   const Sort = {
     rule: 'sort-by-meaning', kind0: 'quiz', verb: '归！', intro: '送字回家！', props: [],
     gen(G, o) {
@@ -2044,7 +2209,7 @@ W4X.ANCIENT = {
       const q = st.q;
       st.ix = 0; st.done = [];
       st.opts = q.opts.slice();
-      st.cards = q.opts.map((k, i) => { const d = ZX.thing(st, HW(), HH(), 5, 'item'); d.innerHTML = houseSvg(k); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 60 * i); return d; });
+      st.cards = q.opts.map((k, i) => { const d = house(ZX.thing(st, HW(), HH(), 5, 'item'), k); K.reg(st, 'card' + i, d, {}); K.pop(st, d, 60 * i); return d; });
       st.reads = q.items.map((t, j) => this.readCard(st, t, j));
       st.readEl = st.reads[0]; st.readText = q.items[0];
       if (q.pic) st.pics = [this.picCard(st, 0)];
@@ -2143,7 +2308,7 @@ W4X.ANCIENT = {
     },
     pairAdd(st, d, want) {
       const s = d._s, eq = el('div', ''); eq.innerHTML = '<svg viewBox="0 0 40 40" width="40" height="40"><path d="M8 20H32M24 12L32 20L24 28" fill="none" stroke="#B07800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      const ic = iconSvg(want, s);
+      const ic = signNode(want, s);
       if (d._left) { eq.firstChild.style.transform = 'scaleX(-1)'; d.insertBefore(eq, d.firstChild); d.insertBefore(ic, d.firstChild); place(d, parseFloat(d.style.left) - s - 50 - 10, parseFloat(d.style.top)); d.style.width = d.style.height = 'auto'; }
       else { d.appendChild(eq); d.appendChild(ic); }
       d.dataset.ex = 'pair'; d.style.boxShadow = '0 0 0 4px ' + EX_GOLD + ', 0 6px 0 rgba(43,33,24,.2)';
@@ -2164,7 +2329,7 @@ W4X.ANCIENT = {
     },
     workEls(st) { return (st.cards || []).concat((st.reads || []).filter((_, j) => !(st.done || []).includes(j))); },
     snap(st) { return { opts: st.opts || null, ix: st.ix || 0 }; },
-    iconNode() { const d = el('div'); d.innerHTML = houseSvg('animal'); Object.assign(d.style, { width: '76%', height: '76%' }); return d; },
+    iconNode() { const d = house(el('div'), 'animal'); Object.assign(d.style, { position: 'relative', width: '64%', height: '79%' }); return d; },
   };
 
   w4Island('xiyou4', [Peach, Flash, Sort]);
@@ -2982,7 +3147,6 @@ W4X.ANCIENT = {
         K.reg(st, i ? 'read1' : 'read', card, {});
         const yes = ZX.thing(st, 104, 104, 7, 'card'), no = ZX.thing(st, 104, 104, 7, 'card');
         yes.innerHTML = PUP(true); no.innerHTML = PUP(false);
-        const ck = el('div', '', yes); ck.innerHTML = ICONS.check; Object.assign(ck.style, { position: 'absolute', right: '-10px', top: '-10px', width: '38px', height: '38px', borderRadius: '50%', background: '#5CC46E', boxShadow: '0 0 0 3px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }); ck.firstChild.setAttribute('width', '26'); ck.firstChild.setAttribute('height', '26');
         Object.assign(yes.style, { background: '#E2F6E4', borderColor: '#8FD39A' }); Object.assign(no.style, { background: '#E6EBF8', borderColor: '#A9B8DE' });
         Loops.run(yes.firstChild, [{ transform: 'translateY(0)' }, { transform: 'translateY(5px)' }, { transform: 'translateY(0)' }], { duration: 900, easing: 'ease-in-out' });
         Loops.run(no.firstChild, [{ transform: 'rotate(0)' }, { transform: 'rotate(-7deg)' }, { transform: 'rotate(7deg)' }, { transform: 'rotate(0)' }], { duration: 1100, easing: 'ease-in-out' });
@@ -3243,13 +3407,15 @@ W4X.ANCIENT = {
   const GOLD = '#FFB400';
 
   /* ---------------------------------------------------------------- ⑦-1 认字 「牵！」 顺着线找一找
-     Five kites in the sky, a character on each; five of the family on the grass below - Bluey, Bingo, Bandit, Chilli and 葫芦爷爷
-     (the client's pictures) - each holding a string. The strings run from the kites down to the hands and cross. Tap the one who
+     Five kites in the sky, a character on each; five friends on the grass below - Bluey, Bandit, Chilli, Skye and Marshall (the
+     client's pictures; never 葫芦爷爷 or Bingo, who are the pictures of 爷 and 妹) - each holding a string. The strings run from the kites down to the hands and cross. Tap the one who
      holds X's kite (a tap on a kite only says how: "点拉线的人！"). Levels: 1 the strings run straight down, the picture on the
      task card; 2 heard only, X's string crosses one other; 3 every string crosses another, look-alikes and an old character on
      the kites; 4 every string bends twice and they cross more; 5 every string the same colour (1-4: five colours). A random tap
      is right 1 time in 5. Its 2nd hint lights the top of X's string (real help: no star). */
-  const HOLD = ['bluey', 'bingo', 'bandit', 'chilli', 'grandpa'];
+  /* who holds the strings: never anyone whose picture is a character's picture (W4R1N-01: 葫芦爷爷 is 爷, Bingo is 妹, 猪爸爸 is 爸,
+     猪妈妈 is 妈 - a child would tap the picture, not follow the string): Bluey, Bandit, Chilli and two pups who visit */
+  const HOLD = () => ['bluey', 'bandit', 'chilli', 'skye', 'marshall', 'rocky', 'zuma', 'owlette'].filter(id => !ITEMS.some(x => x.obj === '@' + id)).slice(0, 5);
   const LINE_C = ['#E8554A', '#2E6FD8', '#3FAE4A', '#F59A4A', '#8E6CFF'], SAME_C = '#7A5A3A', KITE_C = ['#FFD23C', '#7BC8F6', '#FF8DB3', '#9BE07A', '#FFB37A'];
   const inversions = kp => { let n = 0; for (let i = 0; i < kp.length; i++) for (let j = i + 1; j < kp.length; j++) if (kp[i] > kp[j]) n++; return n; };
   const crossOf = (kp, i) => kp.filter((x, j) => (j < i && x > kp[i]) || (j > i && x < kp[i])).length;
@@ -3288,7 +3454,7 @@ W4X.ANCIENT = {
     gen(G, o) {
       const lv = o.level, pool = poolOf(G, 'zh', false), answer = W4X.pick(G, pool), opts = known5(G, lv, answer), a = opts.indexOf(answer), lk = LOOK[answer] || '';
       const kp = strings(G, lv, a), wig = lv >= 4 ? opts.map(() => [G.rng.int(34, 62) * (G.rng() < 0.5 ? -1 : 1), G.rng.int(34, 62) * (G.rng() < 0.5 ? -1 : 1)]) : null;
-      return { k: [answer, opts.join(''), kp.join('')], answer, opts, kp, wig, who: G.rng.shuffle(HOLD.slice()), pic: lv <= 1 ? 1 : 0, same: lv >= 5 ? 1 : 0,
+      return { k: [answer, opts.join(''), kp.join('')], answer, opts, kp, wig, who: G.rng.shuffle(HOLD()), pic: lv <= 1 ? 1 : 0, same: lv >= 5 ? 1 : 0,
         cross: inversions(kp), mine: crossOf(kp, a), look: opts.filter(k => k !== answer && lk.includes(k)).length, rev: opts.filter(k => !pool.includes(k)).length };
     },
     /* the picture gone, crossings (X's own counts double), look-alikes and old characters, strings that bend, one colour for all */
@@ -3736,6 +3902,977 @@ W4X.ANCIENT = {
   };
 
   w4Island('bluey4', [Kites, Place, Sense]);
+})();
+
+/* ---------------- src/w4/avengers4.js */
+/* ================================================================ 神笔海 ⑧ 复仇者 · 英雄训练场 (avengers4): 好 力 出 王 高 (docs/W4-DESIGN.md §12)
+   认字 「圈！」句子里圈字 (char-in-sentence) · 写字 好 力 (W4X.Write + the finishing shows, `wx`) · 英文 「拍！」拍拍节拍
+   (count-the-beats) · 挑战 「排！」故事排排队 (story-order, W4X.slots). Built like the template src/w4/ultra4.js (src/w4/README.md). */
+(() => {
+  const L = () => K.L();
+  /* lines said through a variable (tools/voice_lines.py records them) */
+  W4X.lines(['拍了一下', '拍了两下', '拍了三下', '拍了四下', '拍了五下', '拍了六下', '一拍', '两拍', '三拍', '四拍', '先是这一句']);
+  const PUNCT = /[。！？，：、]/;
+  const cjk = s => Array.from(s).filter(c => !PUNCT.test(c));
+  const charPic = c => { const o = ITEM[c] && ITEM[c].obj; return o && (o[0] === '@' || W4X.hasPic(o)) ? o : null; };
+  const vbox = e => { const r = e.getBoundingClientRect(), s = Stage.s || 1, a = Stage.toStage(r.left, r.top); return { x: a.x, y: a.y, w: r.width / s, h: r.height / s }; };
+  const R = (G, a) => G.rng.shuffle(a.slice());
+  const glyphRow = (t, h) => {
+    const d = el('div', ''); Object.assign(d.style, { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: Math.round(h * 0.04) + 'px', pointerEvents: 'none' });
+    Array.from(t).forEach(c => { if (PUNCT.test(c)) { const p = el('span', '', d); p.textContent = c; Object.assign(p.style, { font: '900 ' + Math.round(h * 0.7) + 'px system-ui,sans-serif', color: INK, lineHeight: 1 }); } else d.appendChild(Glyph.zh(c, h)); });
+    return d;
+  };
+
+  /* ---------------------------------------------------------------- ⑧-1 认字 「圈！」 句子里圈字 (a character inside a sentence)
+     Iron Man's big screen shows a sentence (SENT8), a character a cell; "圈王！" - tap that character in it: a gold circle goes
+     round it. Every cell is an option (5 to 8, only one is X). Levels: 1 X's picture on the task card, five characters, no
+     look-alike of X in the sentence; 2 heard only, 5-6 characters; 3 a look-alike of X in the sentence (王: 土 三, 出: 山); 4 seven
+     or eight characters on two lines; 5 X inside a word of two (大王, 出门, 高山), look-alikes too. kind0 'find': a review question
+     (an old character due) comes in this frame as { k, answer, opts } only - it is asked in a sentence that holds it once
+     (SENT8, then 读一读's), or, with none known, in the row of its five options. A random tap is right 1 time in 5 or less. */
+  const lookIn = (X, s) => cjk(s).some(c => c !== X && (LOOK[X] || '').includes(c));
+  const once = (X, s) => cjk(s).filter(c => c === X).length === 1;
+  const TIERS = {
+    1: [(X, r, n, lk) => n === 5 && !lk, (X, r, n, lk) => n <= 6 && !lk, (X, r, n, lk) => !lk, () => true],
+    2: [(X, r, n) => n >= 5 && n <= 6, (X, r, n) => n <= 6, () => true],
+    3: [(X, r, n, lk) => lk && n <= 6, (X, r, n, lk) => lk, () => true],
+    4: [(X, r, n) => n >= 7, (X, r, n) => n >= 6, () => true],
+    5: [(X, r, n, lk) => n >= 7 && r[0] === X && !!r[2] && lk, (X, r, n) => n >= 7 && r[0] === X && !!r[2], (X, r) => r[0] === X && !!r[2], (X, r, n) => n >= 7, () => true],
+  };
+  const SCREEN_RIM = '0 0 0 6px #B71C1C, 0 0 0 12px #F5B324, 0 12px 0 12px rgba(43,33,24,.18)';
+  const Circle = {
+    rule: 'char-in-sentence', kind0: 'find', verb: '圈！', intro: '句子里找字！', props: [],
+    gen(G, o) {
+      const lv = o.level, mine = poolOf(G, 'zh', false);
+      const rows = W4D.sent8.filter(r => W4X.knowsAll(G, r[1]) && new Set(cjk(r[1])).size >= 5);
+      const cands = (X, t) => rows.filter(r => once(X, r[1]) && t(X, r, cjk(r[1]).length, lookIn(X, r[1])));
+      let X = null, list = [];
+      for (const t of TIERS[lv]) { const pool = mine.filter(k => cands(k, t).length); if (pool.length) { X = W4X.pick(G, pool); list = cands(X, t); break; } }
+      if (!X) { X = W4X.pick(G, mine); list = rows.filter(r => once(X, r[1])); }
+      const r = list.length ? bagFrom(G, 's8' + X, list) : null;
+      return r ? this.make(G, X, r[1], r[0] === X ? r[2] : '', lv) : this.make(G, X, null, '', lv, W4X.opts(G, lv, X, 5));
+    },
+    /* the question for X in a sentence (or, a review with no sentence known, in its option row) */
+    make(G, X, sent, word, lv, row) {
+      const cells = sent ? cjk(sent) : row, distinct = Array.from(new Set(cells)), others = distinct.filter(c => c !== X);
+      const n = cells.length, look = sent ? (lookIn(X, sent) ? 1 : 0) : 0;
+      return { k: [X, sent || row.join('')], answer: X, item: X, sent: sent || null, row: sent ? null : row, opts: W4X.put(G, others, X), n, look,
+        pic: lv <= 1 && charPic(X) ? 1 : 0, lines: lv >= 4 ? 2 : 1, word: lv >= 5 && word && sent && sent.includes(word) ? word : '' };
+    },
+    /* tests/w4_levels.js: the picture gone, a look-alike, longer, two lines, X inside a word */
+    hard(q) { return (1 - q.pic) * 1.5 + q.look * 1.5 + (q.n - 5) * 0.5 + (q.lines - 1) * 1.5 + (q.word ? 1.5 : 0); },
+    itemOf(st) { return st.q.answer; },
+    /* a review question (an old character due): a sentence that holds it once and is known all through */
+    review(st) {
+      const G = st.G, q = st.q, X = q.answer, ok = s => W4X.knowsAll(G, s) && once(X, s) && new Set(cjk(s)).size >= 5 && cjk(s).length <= 8;
+      const pool = W4D.sent8.map(r => r[1]).concat(READ.map(r => r[0])).filter(ok);
+      const s = pool.length ? G.rng.pick(pool) : null, m = this.make(G, X, s, '', Math.max(2, st.level), s ? null : (q.opts || [X]).slice());
+      Object.assign(q, { sent: m.sent, row: m.row, n: m.n, look: m.look, pic: 0, lines: m.n > 8 ? 2 : 1, word: '' });
+    },
+    async present(st) {
+      const q = st.q;
+      if (q.n == null) this.review(st);
+      await ZX.meet(st, q.answer);
+      if (!Session.alive(st)) return;
+      const toks = Array.from(q.sent || q.row.join('')).map(c => ({ c, p: !!q.sent && PUNCT.test(c) }));
+      st.screen = ZX.thing(st, 10, 10, 4, 'item'); Object.assign(st.screen.style, { borderRadius: '26px', background: 'linear-gradient(#F4FAFF,#D6E8F8)', boxShadow: SCREEN_RIM, pointerEvents: 'none' });
+      st.toks = toks; st.opts = []; st.cards = [];
+      toks.forEach(t => {
+        if (t.p) { t.el = ZX.thing(st, 30, 60, 6, 'item'); t.el.appendChild(glyphRow(t.c, 60)); t.el.style.pointerEvents = 'none'; return; }
+        const d = el('div', 'card', Stage.el); d.style.position = 'absolute'; st.els.push(d); d.appendChild(Glyph.zh(t.c, 76));
+        t.el = d; t.i = st.cards.length; K.reg(st, 'card' + t.i, d, {}); st.cards.push(d); st.opts.push(t.c);
+      });
+      this.place(st);
+      st.cards.forEach((d, i) => K.pop(st, d, 40 * i)); K.pop(st, st.screen);
+      st.taskEl = K.task(st, [q.pic ? [OBJURL(charPic(q.answer)), 'q'] : ['speaker', 'q']]);
+      K.say(st, '圈' + q.answer + '！');
+    },
+    /* the lines: one (landscape <= 8, portrait <= 6 cells) or two (levels 4-5, or longer); a break after a comma near the middle */
+    lines(st) {
+      const toks = st.toks, n = st.cards.length, M = L() ? 8 : 6, two = st.q.lines > 1 || n > M;
+      if (!two) return [toks];
+      let best = -1, bd = 1e9;
+      toks.forEach((t, j) => { if (t.p && j < toks.length - 1) { const before = toks.slice(0, j + 1).filter(x => !x.p).length, d = Math.abs(before - n / 2); if (before <= M && n - before <= M && d < bd) { bd = d; best = j + 1; } } });
+      if (best < 0) { let c = 0; best = toks.findIndex(t => !t.p && ++c > Math.ceil(n / 2)); }
+      return [toks.slice(0, best), toks.slice(best)];
+    },
+    place(st) {
+      if (!st.toks) return;
+      const rows = this.lines(st), PW = L() ? 30 : 24, g = L() ? 8 : 6, maxW = (L() ? Stage.W - 140 : Stage.W - 64);
+      /* cells as big as the widest line allows (100 / 92), never below 88 */
+      const fit = rows.map(row => { const nc = row.filter(t => !t.p).length, np = row.length - nc; return Math.floor((maxW - np * PW - g * (row.length - 1)) / Math.max(1, nc)); });
+      const CW = Math.max(88, Math.min(L() ? 100 : 92, ...fit)), RH = CW + 16;
+      const cy = L() ? 300 : (rows.length > 1 ? 340 : 330), y0 = cy - (rows.length * RH - 16) / 2;
+      let x0 = 1e9, x1 = -1e9;
+      rows.forEach((row, ri) => {
+        const w = row.reduce((a, t) => a + (t.p ? PW : CW), 0) + g * (row.length - 1);
+        let x = (L() ? 512 : 352) - w / 2; x0 = Math.min(x0, x); x1 = Math.max(x1, x + w);
+        row.forEach(t => { const tw = t.p ? PW : CW; if (t.p) place(t.el, x, y0 + ri * RH + CW - 64, PW, 60); else { place(t.el, x, y0 + ri * RH, CW, CW); const gl = t.el.firstChild; if (gl) { gl.setAttribute('width', Math.round(CW * 0.76)); gl.setAttribute('height', Math.round(CW * 0.76)); } } t.row = ri; x += tw + g; });
+      });
+      const pad = L() ? 30 : 18;
+      place(st.screen, x0 - pad, y0 - 26, x1 - x0 + 2 * pad, rows.length * RH - 16 + 52);
+      if (st.ring) this.ringAt(st);
+    },
+    onGesture(st, name, p) {
+      if (name !== 'tap' || st.submitted) return false;
+      const i = K.cardIndex(p.id); if (i < 0 || i >= st.cards.length) return false;
+      st.tapped = i; Sfx.tap();
+      Session.submit(st, st.opts[i]);
+      return 'ok';
+    },
+    /* the gold circle drawn round the character found */
+    ringAt(st) { const b = box(st.cards[st.opts.indexOf(st.q.answer)]); place(st.ring, b.x - 22, b.y - 18, b.w + 44, b.h + 36); },
+    async reveal(st) {
+      const q = st.q, e = st.cards[st.opts.indexOf(q.answer)];
+      const r = st.ring = ZX.thing(st, 10, 10, 16, 'item'); r.style.pointerEvents = 'none';
+      r.innerHTML = '<svg viewBox="0 0 140 140" width="100%" height="100%" preserveAspectRatio="none"><ellipse cx="70" cy="70" rx="64" ry="62" fill="none" stroke="' + EX_GOLD + '" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>';
+      this.ringAt(st);
+      Sfx.sparkle(); K.hop(st, e, 22);
+      await st.scope.anim(r.querySelector('ellipse'), [{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }], { duration: 520, easing: EASE.out, fill: 'forwards' });
+      const sp = st.G.actors.spiderman; if (sp) sp.react();
+      sayItem(q.answer); this.cheerAll(st);
+      await st.scope.guard(Voice.afterSay(200));
+    },
+    /* explain: 1 his cell in blue with its picture ("这是土" was just said); 2 the sentence read from the start, each character
+       lighting up as it is read (a beat - this sentence's own recording); 3 X in gold with its picture: "这个是王" */
+    async explain(st, ans) {
+      const q = st.q, eC = st.cards[st.tapped], eR = st.cards[st.opts.indexOf(q.answer)];
+      W4X.exChosen(st, eC, ans);
+      await EX.wait(st, 650);
+      await W4X.exBeat(st, async () => {
+        if (q.sent) Voice.say(q.sent, { tag: 'explain' });
+        const each = Math.min(300, Math.max(180, 2000 / st.cards.length));
+        for (const c of st.cards) { if (st.scope.dead) return; c.style.background = '#FFF1BF'; await EX.tick(st, each); c.style.background = ''; }
+        await st.scope.guard(Voice.afterSay(60));
+      }, 150);
+      await W4X.exRight(st, eR, q.answer, [W4X.thatIs(q.answer)]);
+    },
+    /* the 2nd hint (real help): X's line (two lines) or X's half of the sentence (one line) lights up - the star goes */
+    gestureHint(st, reteach) {
+      if (reteach) { (st.cards || []).forEach((c, i) => st.scope.timeout(() => K.hop(st, c, 14), 60 * i)); return; }
+      const q = st.q, toks = st.toks, tx = toks.find(t => !t.p && t.c === q.answer), rows = this.lines(st);
+      let grp;
+      if (rows.length > 1) grp = toks.filter(t => !t.p && t.row === tx.row);
+      else { const cells = toks.filter(t => !t.p), half = Math.ceil(cells.length / 2); grp = tx.i < half ? cells.slice(0, half) : cells.slice(half); }
+      K.flash(st, grp.map(t => t.el)); Sfx.sparkle();
+    },
+    next(st, strat) {
+      if (!st.cards || !st.cards.length) return null;
+      const i = strat === 'wrong' ? st.opts.findIndex(c => c !== st.q.answer) : st.opts.indexOf(st.q.answer);
+      return { g: 'tap', p: { id: 'card' + i } };
+    },
+    workEls(st) { return st.cards || []; },
+    snap(st) { return { opts: st.opts || null, sent: st.q.sent || null }; },
+    iconNode() { const d = el('div'); Object.assign(d.style, { position: 'relative', display: 'flex', gap: '2px' }); ['王', '坐', '下'].forEach((c, i) => { const b = el('div', '', d); Object.assign(b.style, { width: '26px', height: '26px', borderRadius: '6px', background: '#fff', boxShadow: '0 0 0 2px #2B2118' + (i ? '' : ', 0 0 0 5px ' + EX_GOLD) }); b.appendChild(Glyph.zh(c, 26)); }); return d; },
+  };
+
+  /* ---------------------------------------------------------------- ⑧-3 英文 「拍！」 拍拍节拍 (how many beats has a word)
+     Jenny says a word (its picture on top); beat the drum once a beat, then press 好了. A tap on the last lit dot takes a beat
+     back (a change of mind is no answer). Two words a question (the two-ask form: 1-4 beats each, random beating 1 in 16).
+     Levels: 1 words of 1-2 beats, said slowly, twice; 2 1-3 beats, slowly; 3 1-3 beats, at normal speed, once; 4 1-4 beats; 5
+     two-word phrases (big banana = 4) - the picture shows the colour or the size. The 2nd hint says it slowly again (only the
+     question again: softHint, the star stays). Hulk claps along. */
+  const nBeats = s => s.split('-').length;
+  const COUNT = ['', '一', '两', '三', '四', '五', '六'];
+  const beatLine = n => ['拍了', COUNT[n], '下'].join('');           /* 拍了两下 (listed in W4X.lines above) */
+  const DRUM_SVG = '<svg viewBox="0 0 250 210" width="100%" height="100%"><path d="M22 70V160C22 190 228 190 228 160V70" fill="#D63B2F" stroke="#2B2118" stroke-width="7"/>'
+    + '<path d="M22 100C22 128 228 128 228 100M22 130C22 158 228 158 228 130" fill="none" stroke="#F5B324" stroke-width="7"/><g stroke="#2B2118" stroke-width="5"><path d="M48 92L66 176M108 104L108 186M168 104L168 186M202 92L184 176" stroke="#F5B324" stroke-width="5"/></g>'
+    + '<ellipse cx="125" cy="70" rx="103" ry="36" fill="#FFF6E0" stroke="#2B2118" stroke-width="7"/><ellipse cx="125" cy="70" rx="70" ry="22" fill="none" stroke="#E8D9B5" stroke-width="4"/></svg>';
+  const STICKS = '<svg viewBox="0 0 120 70" width="100%" height="100%"><path d="M8 62L70 16M112 62L50 16" stroke="#9A6433" stroke-width="9" stroke-linecap="round"/><circle cx="72" cy="14" r="10" fill="#F5B324" stroke="#2B2118" stroke-width="4"/><circle cx="48" cy="14" r="10" fill="#F5B324" stroke="#2B2118" stroke-width="4"/></svg>';
+  const DOT = 88, MAXDOTS = 6;
+  const Beats = {
+    rule: 'count-the-beats', kind0: 'en', verb: '拍！', intro: '拍拍节拍！', softHint: true, props: [],
+    gen(G, o) {
+      const lv = o.level, items = [];
+      if (lv >= 5) {
+        const P = W4D.beats8ph;
+        while (items.length < 2) { const p = bagFrom(G, 'bp', P); if (!items.some(x => x.t === p[0])) items.push({ t: p[0], n: nBeats(p[1]), scene: p[2] }); }
+      } else {
+        const maxB = [0, 2, 3, 3, 4][lv], W = W4D.beats8.filter(w => W4X.hasPic(w[1]));
+        while (items.length < 2) {
+          const n = bagFrom(G, 'bn' + lv, Array.from({ length: maxB }, (_, i) => i + 1)), pool = W.filter(w => nBeats(w[2]) === n && !items.some(x => x.t === w[0]));
+          const w = bagFrom(G, 'bw' + n, pool.length ? pool : W.filter(x => !items.some(y => y.t === x[0])));
+          items.push({ t: w[0], n: nBeats(w[2]), pic: w[1] });
+        }
+      }
+      const seq = items.map(x => x.n);
+      return { k: items.map(x => x.t), items, answer: 'all', seq, opts: null, asks: seq.map(n => ({ opts: [1, 2, 3, 4], answer: n })), chance: 1 / 16,
+        slow: lv <= 2 ? 1 : 0, twice: lv <= 1 ? 1 : 0, phrase: lv >= 5 ? 1 : 0, item: null };
+    },
+    /* tests/w4_levels.js: more beats, normal speed, said once, two words */
+    hard(q) { return (q.seq[0] + q.seq[1]) / 2 * 0.8 + (1 - q.slow) + (1 - q.twice) * 0.5 + q.phrase; },
+    itemOf() { return null; },
+    evaluate(st, ans) { return ans === 'all'; },
+    build(G) { ZBase.build.call(this, G); if (!G.actors.hulk) K.actor(G, 'hulk', 180); },          /* Hulk claps along (§12.5) */
+    decor(G) {
+      const Lx = L(), s = G.actors[this.chars[0]], h = G.actors.hulk;
+      Object.keys(G.actors).forEach(id => hideActor(G.actors[id]));
+      if (s) showActor(s, Lx ? 86 : 76, Lx ? 698 : 1016, Lx ? 190 : 150);
+      if (h) showActor(h, Lx ? 262 : 230, Lx ? 698 : 1016, Lx ? 200 : 160);
+    },
+    async present(st) {
+      const q = st.q;
+      st.ix = 0; st.taps = 0; st.got = [];
+      st.pics = q.items.map((it, j) => {
+        const d = ZX.thing(st, 160, 160, 6, 'card'); d.classList.add('pic'); d.style.pointerEvents = 'none';
+        d.appendChild(it.scene ? Scene.node(it.scene, 140) : W4X.pic(it.pic, 140));
+        const m = el('div', '', d); Object.assign(m.style, { position: 'absolute', left: '50%', bottom: '-30px', transform: 'translateX(-50%)', display: 'flex', gap: '4px' }); d._mini = m;
+        K.pop(st, d, 100 * j); return d;
+      });
+      st.dotsEl = ZX.thing(st, 10, DOT, 7, 'item'); st.dotsEl.style.pointerEvents = 'none'; st.dotsEl.dataset.ex = 'beats';
+      st.dots = Array.from({ length: MAXDOTS }, (_, i) => { const d = ZX.thing(st, DOT, DOT, 8, 'item'); d.innerHTML = '<div style="position:absolute;left:14px;top:14px;width:60px;height:60px;border-radius:50%;box-sizing:border-box"></div>'; K.reg(st, 'dot' + i, d, {}); return d; });
+      st.drum = ZX.thing(st, 250, 210, 6, 'item'); st.drum.innerHTML = DRUM_SVG; K.reg(st, 'drum', st.drum, {});
+      const sk = el('div', '', st.drum); Object.assign(sk.style, { position: 'absolute', left: '30%', top: '-24%', width: '40%', height: '30%', pointerEvents: 'none' }); sk.innerHTML = STICKS;
+      st.done = ZX.thing(st, 120, 120, 6, 'item'); K.reg(st, 'done', st.done, {});
+      st.done.innerHTML = '<svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="54" fill="#46C27A" stroke="#2B2118" stroke-width="7"/><path d="M34 62L52 80L88 40" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      this.showDots(st); this.mark(st); this.place(st);
+      K.pop(st, st.drum); K.pop(st, st.done, 150);
+      Voice.say('听，拍几下？', { tag: 'prompt' });
+      this.sayWord(st);
+    },
+    word(st) { return st.q.items[st.ix].t; },
+    sayWord(st, slow) {
+      const q = st.q, t = (slow || q.slow ? '~' : '') + this.word(st);
+      st.prompt = t;
+      Voice.say(t, { tag: 'prompt' }); if (q.twice) Voice.say(t, { tag: 'prompt' });
+    },
+    mark(st) { st.pics.forEach((d, j) => { d.style.boxShadow = j === st.ix ? '0 0 0 5px #2B2118, 0 0 0 11px #FFE14A' : ''; d.style.opacity = j === st.ix || st.got.includes(j) ? '1' : '.6'; }); },
+    /* the dots: one lit a beat; four always shown (five, six when beaten more) */
+    showDots(st, n, color) {
+      n = n == null ? st.taps : n;
+      const shown = Math.max(4, Math.min(MAXDOTS, n));
+      st.dots.forEach((d, i) => {
+        d.style.visibility = i < shown ? '' : 'hidden';
+        Object.assign(d.firstChild.style, i < n ? { background: color || '#FFC93C', boxShadow: '0 0 0 5px #2B2118, 0 0 14px 4px rgba(255,201,60,.8)' } : { background: 'rgba(255,255,255,.55)', boxShadow: 'inset 0 0 0 5px rgba(43,33,24,.45)' });
+      });
+      st.shownDots = shown; this.placeDots(st);
+    },
+    placeDots(st) {
+      const n = st.shownDots || 4, g = 12, W = n * DOT + (n - 1) * g, cx = L() ? 512 : 352, y = L() ? 232 : 368;
+      st.dots.forEach((d, i) => place(d, Math.round(cx - W / 2 + i * (DOT + g)), y, DOT, DOT));
+      place(st.dotsEl, Math.round(cx - W / 2), y, W, DOT);
+    },
+    place(st) {
+      if (!st.drum) return;
+      const Lx = L();
+      st.pics.forEach((d, j) => place(d, (Lx ? 512 : 352) + (j ? 1 : -1) * 96 - 80, Lx ? 28 : 150, 160, 160));
+      this.placeDots(st);
+      place(st.drum, (Lx ? 512 : 352) - 125, Lx ? 382 : 520, 250, 210);
+      place(st.done, Lx ? 790 : 530, Lx ? 430 : 790, 120, 120);
+    },
+    onGesture(st, name, p) {
+      if (name !== 'tap' || st.submitted || st.busy) return false;
+      const q = st.q;
+      if (p.id === 'drum') {
+        if (st.taps >= MAXDOTS) { K.wiggle(st, st.drum); return 'free'; }
+        st.taps++; this.showDots(st); Sfx.thud();
+        st.scope.anim(st.drum, [{ transform: 'scale(1,1)' }, { transform: 'scale(1.06,.92)' }, { transform: 'scale(1,1)' }], { duration: 180, fill: 'none' });
+        const h = st.G.actors.hulk; if (h) h.hop();
+        return 'ok';
+      }
+      const m = /^dot(\d)$/.exec(p.id || '');
+      if (m) { if (Number(m[1]) !== st.taps - 1) return false; st.taps--; this.showDots(st); Sfx.back(); return 'free'; }      /* a change of mind: no answer */
+      if (p.id !== 'done') return false;
+      if (!st.taps) { K.hop(st, st.drum, 16); return 'free'; }                       /* nothing beaten yet: the drum shows where */
+      Sfx.tap();
+      if (st.taps !== q.seq[st.ix]) { st.made = st.taps; Session.submit(st, st.taps); return 'ok'; }
+      if (st.ix + 1 < q.items.length) {                     /* the first word right: its dots go under its picture, the second word comes */
+        st.got.push(st.ix); this.mini(st, st.ix, st.taps);
+        st.ix++; st.taps = 0; this.showDots(st); this.mark(st);
+        st.busy = true; Sfx.place();
+        st.scope.timeout(() => { st.busy = false; if (Session.alive(st) && !st.submitted) this.sayWord(st); }, 350);
+        return 'ok';
+      }
+      Session.submit(st, 'all');
+      return 'ok';
+    },
+    mini(st, j, n) { const m = st.pics[j]._mini; m.innerHTML = ''; for (let i = 0; i < n; i++) { const b = el('div', '', m); Object.assign(b.style, { width: '18px', height: '18px', borderRadius: '50%', background: '#FFC93C', boxShadow: '0 0 0 3px #2B2118' }); } },
+    async reveal(st) {
+      this.mini(st, st.ix, st.taps); st.got.push(st.ix); this.mark(st);
+      Sfx.reveal(); K.hop(st, st.drum, 20); st.dots.forEach((d, i) => { if (i < st.taps) st.scope.timeout(() => K.hop(st, d, 16), 90 * i); });
+      const h = st.G.actors.hulk; if (h) h.react();
+      Voice.say(this.word(st), { tag: 'summary' }); this.cheerAll(st);      /* every beat word is recorded as it is (not with '!') */
+      await st.scope.guard(Voice.afterSay(200));
+    },
+    /* the factual line: how many he beat - "拍了两下" */
+    async feedback(st, ans) { K.wiggle(st, st.drum); Voice.say(beatLine(ans), { tag: 'wrong' }); await st.scope.wait(800); },
+    /* explain: 1 his dots in blue; 2 the word said slowly, a dot lighting up a beat and Hulk clapping (a beat); 3 the right
+       number of dots in gold: "三拍" */
+    async explain(st) {
+      const q = st.q, n = q.seq[st.ix], w = this.word(st), h = st.G.actors.hulk;
+      EX.ring(st, st.dotsEl, 'chosen');
+      await EX.wait(st, 650);
+      await W4X.exBeat(st, async () => {
+        this.showDots(st, 0);
+        Voice.say('~' + w, { tag: 'explain' });
+        for (let i = 1; i <= n; i++) { await EX.tick(st, i === 1 ? 250 : 420); if (st.scope.dead) return; this.showDots(st, i); Sfx.thud(); if (h) h.hop(); }
+        await st.scope.guard(Voice.afterSay(60));
+      }, 200);
+      this.showDots(st, n);
+      await W4X.exRight(st, st.dotsEl, null, [COUNT[n] + '拍'], false);
+    },
+    /* the 2nd hint: the word once more, slowly (only the question again - softHint: the star stays) */
+    gestureHint(st, reteach) {
+      if (reteach) { K.hop(st, st.drum, 18); st.scope.timeout(() => K.hop(st, st.done, 18), 400); return; }
+      K.hop(st, st.pics[st.ix], 18); this.sayWord(st, true);
+    },
+    next(st, strat) {
+      if (!st.drum || st.busy) return null;
+      const need = st.q.seq[st.ix], want = strat === 'wrong' ? (need === 1 ? 2 : need - 1) : need;
+      if (st.taps < want) return { g: 'tap', p: { id: 'drum' } };
+      if (st.taps > want) return { g: 'tap', p: { id: 'dot' + (st.taps - 1) } };
+      return { g: 'tap', p: { id: 'done' } };
+    },
+    workEls(st) { return st.drum ? [st.drum, st.done] : []; },
+    snap(st) { return { ix: st.ix || 0, taps: st.taps || 0 }; },
+    iconNode() { const d = el('div'); d.innerHTML = DRUM_SVG; Object.assign(d.style, { width: '82%', height: '70%' }); return d; },
+  };
+
+  /* ---------------------------------------------------------------- ⑧-4 挑战 「排！」 故事排排队 (put a little story in order)
+     The mission board has slots ①②③(④); below, the story's sentence cards, shuffled (read, not said: HOLD a card to hear it -
+     that question earns no star). Tap a card: it flies into the next empty slot (tap it there: back down); or drag it into any
+     slot. Every slot full: judged - the order must be the story's (STORY8: exactly one order is possible). Levels: 1 three
+     sentences, a little picture by every slot in the right order (put them as the pictures go); 2 three, no pictures, the link
+     is plain (开门 -> 出门 -> 去田里); 3 three, the link has to be thought (下雪 -> 山上白了); 4 four sentences; 5 four, thought
+     out. Random: 1 in 6 (four: 1 in 24). */
+  const fact = n => (n <= 1 ? 1 : n * fact(n - 1));
+  const BADGE = ['①', '②', '③', '④'];
+  const CARD_W = 340, CARD_H = 96, BADGE_W = 96;
+  const Story = {
+    rule: 'story-order', kind0: 'quiz', verb: '排！', intro: '故事排排队！', props: [],
+    gen(G, o) {
+      const lv = o.level, known = s => s.s.every(t => W4X.knowsAll(G, t));
+      let n = lv >= 4 ? 4 : 3, all = W4D.story8.map((s, i) => Object.assign({ i }, s)).filter(s => s.s.length === n && known(s));
+      if (!all.length) { n = 3; all = W4D.story8.map((s, i) => Object.assign({ i }, s)).filter(s => s.s.length === 3 && known(s)); }
+      const want = lv === 3 || lv === 5 ? 1 : 0, tier = all.filter(s => s.think === want), list = tier.length ? tier : all;
+      const s = bagFrom(G, 'st' + lv, list);
+      let perm = R(G, s.s.map((_, j) => j));
+      for (let t = 0; t < 6 && perm.every((v, j) => v === j); t++) perm = R(G, perm);
+      if (perm.every((v, j) => v === j)) perm.push(perm.shift());                    /* never already in order */
+      const seq = s.s.map((_, j) => perm.indexOf(j)), mine = poolOf(G, 'zh', false), item = Array.from(s.s.join('')).find(c => mine.includes(c)) || null;
+      return { k: [s.i, perm.join('')], story: s.i, s: s.s.slice(), pics: s.pic, perm, seq, answer: seq.join(','), build: 1, opts: null, chance: 1 / fact(n), words: s.s.slice(),
+        n, think: s.think, pic: lv <= 1 ? 1 : 0, item };
+    },
+    /* tests/w4_levels.js: the pictures gone, a link to think out, four sentences */
+    hard(q) { return (1 - q.pic) * 1.5 + q.think * 1.5 + (q.n - 3) * 2; },
+    itemOf(st) { return st.q.item ? W4X.own(st, st.q.item) : null; },
+    itemsOf(st) { const mine = poolOf(st.G, 'zh', false); return Array.from(new Set(st.q.s.join(''))).filter(c => c !== st.q.item && mine.includes(c)); },
+    async present(st) {
+      const q = st.q, n = q.n;
+      st.board = ZX.thing(st, 10, 10, 3, 'item'); Object.assign(st.board.style, { borderRadius: '24px', background: 'rgba(240,247,255,.92)', boxShadow: '0 0 0 6px #2E6FD8, 0 0 0 12px #D63B2F, 0 10px 0 12px rgba(43,33,24,.18)', pointerEvents: 'none' });
+      st.slotEls = q.s.map((_, s) => {
+        const b = ZX.thing(st, BADGE_W, CARD_H, 5, 'item'); b.style.pointerEvents = 'none';
+        Object.assign(b.style, { borderRadius: '18px', background: '#FFE9A8', boxShadow: '0 0 0 4px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center' });
+        if (q.pic) b.appendChild(Scene.node(q.pics[s], 84)); else { const t = el('div', '', b); t.textContent = BADGE[s]; Object.assign(t.style, { font: '900 56px system-ui,sans-serif', color: INK, lineHeight: 1 }); }
+        const z = ZX.thing(st, CARD_W, CARD_H, 4, 'item'); z.style.pointerEvents = 'none';
+        Object.assign(z.style, { borderRadius: '18px', border: '5px dashed rgba(43,33,24,.55)', boxSizing: 'border-box', background: 'rgba(255,255,255,.45)' });
+        return { b, z };
+      });
+      const cards = q.perm.map(j => { const d = ZX.thing(st, CARD_W, CARD_H, 12, 'card'); d.appendChild(glyphRow(q.s[j], 40)); d._t = q.s[j]; return d; });
+      st.slots = W4X.slots(st, {
+        cards, n,
+        slot: s => this.slotRect(st, s), tray: i => this.trayRect(st, i),
+        full: order => { if (Session.alive(st)) Session.submit(st, order.join(',')); },
+        hear: i => { st.peeked = true; st.noStar = true; Voice.sayNow(cards[i]._t, { tag: 'peek' }); },
+        look: (i, s) => { cards[i].style.boxShadow = s >= 0 ? '0 0 0 4px #2B2118, 0 0 0 9px #FFC93C' : ''; },
+      });
+      this.place(st);
+      cards.forEach((d, i) => K.pop(st, d, 80 * i));
+      K.say(st, '按顺序排好！');
+    },
+    rows(st) { const n = st.q.n; return L() ? { y0: n > 3 ? 100 : 140, gap: 12 } : { y0: n > 3 ? 120 : 150, gap: 12 }; },
+    slotRect(st, s) { const r = this.rows(st), y = r.y0 + s * (CARD_H + r.gap); return L() ? { x: 640, y, w: CARD_W, h: CARD_H } : { x: 234, y, w: CARD_W, h: CARD_H }; },
+    trayRect(st, i) { const r = this.rows(st), n = st.q.n; if (L()) return { x: 174, y: r.y0 + i * (CARD_H + r.gap), w: CARD_W, h: CARD_H }; const y0 = r.y0 + n * (CARD_H + r.gap) + 34; return { x: 182, y: y0 + i * (CARD_H + r.gap), w: CARD_W, h: CARD_H }; },
+    place(st) {
+      if (!st.slots) return;
+      const n = st.q.n;
+      st.slotEls.forEach((e, s) => { const r = this.slotRect(st, s); place(e.z, r.x, r.y, r.w, r.h); place(e.b, r.x - BADGE_W - 8, r.y, BADGE_W, CARD_H); });
+      const a = this.slotRect(st, 0), z = this.slotRect(st, n - 1);
+      place(st.board, a.x - BADGE_W - 26, a.y - 18, CARD_W + BADGE_W + 44, z.y + z.h - a.y + 36);
+      st.slots.layout();
+    },
+    /* Spider-Man on the left; Hulk on the right, a little smaller - under the board of four */
+    decor(G) {
+      const Lx = L(), a = G.actors[this.chars[0]], b = G.actors[this.chars[1]];
+      this.chars.forEach(id => hideActor(G.actors[id]));
+      if (a) showActor(a, Lx ? 90 : 76, Lx ? 698 : 1016, Lx ? 190 : 150);
+      if (b) showActor(b, Lx ? 950 : 630, Lx ? 698 : 1016, Lx ? 140 : 150);
+    },
+    onGesture(st, name, p) { if (st.submitted) return false; return st.slots ? st.slots.gesture(name, p) : false; },
+    async reveal(st) {
+      const q = st.q;
+      Sfx.reveal();
+      const sp = st.G.actors.spiderman; if (sp) sp.react();
+      this.cheerAll(st);
+      for (let s = 0; s < q.n; s++) { K.hop(st, st.slots.cards[q.seq[s]], 16); Voice.say(q.s[s], { tag: 'summary' }); await st.scope.guard(Voice.afterSay(60)); }
+    },
+    /* the factual line: the first card out of place belongs further on - "这一句在后面" */
+    async feedback(st) { const at = st.slots.at, s = at.findIndex((i, j) => i !== st.q.seq[j]), i = at[s]; if (i >= 0) K.wiggle(st, st.slots.cards[i]); Voice.say('这一句在后面', { tag: 'wrong' }); await st.scope.wait(800); },
+    /* explain: 1 the first card out of place in blue; 2 every card to its right slot, then the story read a sentence a beat, each
+       with its little picture; 3 the first card in gold: "先是这一句" (a story of four: the gold ring comes with its first sentence,
+       no line more - the explanation stays within 5 s) */
+    async explain(st) {
+      const q = st.q, S = st.slots, s0 = S.at.findIndex((i, j) => i !== q.seq[j]), eC = S.cards[S.at[s0]];
+      if (eC) EX.ring(st, eC, 'chosen');
+      await EX.wait(st, 300);
+      Stage.el.querySelectorAll('.exring.chosen').forEach(r => r.remove());          /* the cards move: the ring would mark an empty place */
+      S.at.fill(-1); S.where.fill(-1); q.seq.forEach((i, s) => { S.at[s] = i; S.where[i] = s; });
+      await Promise.all(q.seq.map((i, s) => S.go(i, this.slotRect(st, s), 200)));
+      for (let s = 0; s < q.n; s++) {
+        const c = S.cards[q.seq[s]], b = st.slotEls[s].b;
+        b.innerHTML = ''; b.appendChild(Scene.node(q.pics[s], 84)); K.pop(st, b);
+        c.style.background = '#FFF1BF';
+        if (!s && q.n > 3) { EX.ring(st, c, 'right'); K.hop(st, c, 16); }      /* four sentences: the first one's gold ring comes with it (the whole story in 5 s) */
+        if (st.step) await EX.say(st, [q.s[s]]);                          /* 一步一步: a sentence a beat */
+        else { Voice.say(q.s[s], { tag: 'explain' }); await st.scope.guard(Voice.afterSay(40)); }      /* auto: the story told without gaps (2-5 s) */
+        st.stepDirty = true;
+        await EX.wait(st, 0);
+        c.style.background = '';
+      }
+      if (q.n <= 3) { const e1 = S.cards[q.seq[0]]; EX.ring(st, e1, 'right'); K.hop(st, e1, 16); await EX.say(st, ['先是这一句']); }
+      await EX.wait(st, 80);
+    },
+    /* the 2nd hint (real help): the first sentence's card lights up - the star goes */
+    gestureHint(st, reteach) {
+      if (reteach) { st.slots.cards.forEach((c, i) => { if (st.slots.where[i] < 0) st.scope.timeout(() => K.hop(st, c, 14), 90 * i); }); return; }
+      const c = st.slots.cards[st.q.seq[0]]; K.flash(st, [c]); K.hop(st, c, 18); Sfx.sparkle();
+    },
+    next(st, strat) { return st.slots ? st.slots.next(st.q.seq, strat) : null; },
+    workEls(st) { return st.slots ? st.slots.cards : []; },
+    snap(st) { return { at: st.slots ? st.slots.order() : null }; },
+    iconNode() { const d = el('div'); Object.assign(d.style, { display: 'flex', flexDirection: 'column', gap: '3px' }); ['①', '②', '③'].forEach(t => { const r = el('div', '', d); Object.assign(r.style, { width: '54px', height: '15px', borderRadius: '5px', background: '#fff', boxShadow: '0 0 0 2px #2B2118', font: '900 12px system-ui', lineHeight: '15px', paddingLeft: '3px' }); r.textContent = t; }); return d; },
+  };
+
+  /* ---------------------------------------------------------------- ⑧-2 写字 好 力: the finishing shows (§12.5, over W4X.Write)
+     好: 女 and 子 stand apart, then come together (女加子变成好！) and the thumbs-up sticker hops; 力: Hulk flexes */
+  const WX = {
+    async reveal(st) {
+      await WriteBase.reveal.call(this, st);
+      if (!Session.alive(st) || !st.w) return;
+      const k = st.q.answer, c = st.w.center(), pic = st.alivePic;
+      if (k === '好') {
+        const sz = L() ? 120 : 130, parts = ['女', '子'].map((p, j) => { const d = ZX.thing(st, sz, sz, 40, 'card'); d.appendChild(Glyph.zh(p, sz * 0.82)); d.style.pointerEvents = 'none'; place(d, c.x - sz / 2 + (j ? 1 : -1) * (sz + 40), c.y + (L() ? 90 : 120) - sz / 2, sz, sz); K.pop(st, d, 120 * j); return d; });
+        Voice.say('女加子变成好！', { tag: 'summary' });
+        await st.scope.wait(650);
+        await Promise.all(parts.map((d, j) => st.scope.anim(d, [{ transform: 'translateX(0) scale(1)', opacity: 1 }, { transform: 'translateX(' + ((j ? -1 : 1) * (sz / 2 + 20)) + 'px) scale(.9)', opacity: 1, offset: 0.7 }, { transform: 'translateX(' + ((j ? -1 : 1) * (sz / 2 + 40)) + 'px) scale(.4)', opacity: 0 }], { duration: 600, easing: EASE.glide, fill: 'forwards' })));
+        Sfx.sparkle(); Fx.burst(c.x, c.y + (L() ? 90 : 120), { n: 16, dist: 100 });
+        if (pic) { K.hop(st, pic, 40); st.scope.timeout(() => K.hop(st, pic, 26), 320); }
+        await st.scope.guard(Voice.afterSay(150));
+      } else if (k === '力' && pic) {
+        Sfx.boing();
+        await st.scope.anim(pic, [{ transform: 'scale(1,1)' }, { transform: 'scale(1.16,.88)' }, { transform: 'scale(.92,1.12)' }, { transform: 'scale(1.14,.92)' }, { transform: 'scale(1,1)' }], { duration: 900, easing: EASE.glide, fill: 'none' });
+        const b = box(pic); Fx.burst(b.x + b.w / 2, b.y + b.h / 2, { n: 14, dist: 110 });
+      }
+    },
+  };
+
+  w4Island('avengers4', [Circle, Beats, Story, WX]);
+})();
+
+/* ---------------- src/w4/robot4.js */
+/* ================================================================ 神笔海 ⑨ 变形金刚 · 汽车人工厂 (robot4): 变 能 工 厂 路 (docs/W4-DESIGN.md §12.5)
+   认字 「跟！」变成车，跟住它 (track-after-transform) · 写字 工 厂 (W4X.Write + wx: the toolbox's wrench, the factory's gear) ·
+   英文 「装！」拼出一句话 (build-the-sentence, W4X.slots) · 挑战 「变！」加一笔，变一变 (add-one-stroke).
+   The shape of src/w4/ultra4.js (src/w4/README.md, the ⑧ ⑨ section). Never st.step (the engine's 一步一步 flag). */
+(() => {
+  const L = () => K.L();
+  W4X.lines(['变形！', '这个词在后面', '这个词用不上', '加一笔，变成什么？', '减一笔，变成什么？']);
+
+  /* ---------------------------------------------------------------- ⑨-1 认字 「跟！」 变成车，跟住它 (find, then track)
+     Five little robots (six at level 5), a character on every chest: "找变！" - he finds it while they stand. Then "变形！": they
+     all turn into little cars (the signs go away), the cars swap places, and "变在哪辆车里？" - a tap on a car turns it back into
+     its robot. Right: the car of the robot that held X. Levels: 1 the picture on the task card, the robots stand 4 s, the cars do
+     not move; 2 heard only, 3.5 s, one slow swap; 3 look-alikes (工/土/王, 变/亦, 路/跳) and an old character, two swaps; 4 three
+     swaps, every car the same colour; 5 six robots, four swaps. A random tap is right 1 time in 5 (6). The cars swap one over
+     the parked row and one under it: a car never runs over another one. */
+  const BOTCOL = ['#E8414B', '#2E86DE', '#3FAE4A', '#F28C1E', '#8E6CFF', '#16A3A3'];
+  const robotSVG = c => '<svg viewBox="0 0 120 170" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">'
+    + '<path d="M60 4V16" stroke="#2B2118" stroke-width="4"/><circle cx="60" cy="5" r="5" fill="#FFE14A" stroke="#2B2118" stroke-width="2.5"/>'
+    + '<rect x="28" y="14" width="64" height="46" rx="12" fill="' + c + '" stroke="#2B2118" stroke-width="4"/>'
+    + '<circle cx="46" cy="35" r="8" fill="#fff" stroke="#2B2118" stroke-width="3"/><circle cx="74" cy="35" r="8" fill="#fff" stroke="#2B2118" stroke-width="3"/><circle cx="47" cy="36" r="3.5" fill="#2B2118"/><circle cx="75" cy="36" r="3.5" fill="#2B2118"/>'
+    + '<rect x="48" y="47" width="24" height="5" rx="2.5" fill="#2B2118"/><rect x="52" y="58" width="16" height="8" fill="#9AA7B8" stroke="#2B2118" stroke-width="3"/>'
+    + '<rect x="3" y="70" width="14" height="44" rx="7" fill="' + c + '" stroke="#2B2118" stroke-width="4"/><rect x="103" y="70" width="14" height="44" rx="7" fill="' + c + '" stroke="#2B2118" stroke-width="4"/>'
+    + '<rect x="32" y="124" width="20" height="32" rx="6" fill="#9AA7B8" stroke="#2B2118" stroke-width="4"/><rect x="68" y="124" width="20" height="32" rx="6" fill="#9AA7B8" stroke="#2B2118" stroke-width="4"/>'
+    + '<rect x="16" y="64" width="88" height="64" rx="14" fill="' + c + '" stroke="#2B2118" stroke-width="4"/>'
+    + '<rect x="25" y="154" width="31" height="13" rx="5" fill="' + c + '" stroke="#2B2118" stroke-width="3"/><rect x="64" y="154" width="31" height="13" rx="5" fill="' + c + '" stroke="#2B2118" stroke-width="3"/></svg>';
+  const carSVG = c => '<svg viewBox="0 0 140 96" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">'
+    + '<path d="M8 72V54Q8 40 22 38L40 36L54 16Q58 10 66 10H98Q106 10 110 18L122 36Q134 38 134 52V72Z" fill="' + c + '" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/>'
+    + '<path d="M47 36L59 19H76V36Z" fill="#CFE8FF" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/><path d="M82 19H96Q100 19 102 23L110 36H82Z" fill="#CFE8FF" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/>'
+    + '<circle class="lamp" cx="125" cy="50" r="6" fill="#FFE14A" stroke="#2B2118" stroke-width="2.5"/><rect x="10" y="48" width="10" height="7" rx="3" fill="#FF8A7A" stroke="#2B2118" stroke-width="2"/>'
+    + '<circle cx="38" cy="74" r="15" fill="#2B2118"/><circle cx="38" cy="74" r="6" fill="#BFC6D0"/><circle cx="104" cy="74" r="15" fill="#2B2118"/><circle cx="104" cy="74" r="6" fill="#BFC6D0"/></svg>';
+  const Track = {
+    rule: 'track-after-transform', verb: '跟！', intro: '看好，跟住它！', props: [],
+    gen(G, o) {
+      const lv = o.level, pool = poolOf(G, 'zh', false), n = lv >= 5 ? 6 : 5, answer = W4X.pick(G, pool), opts = W4X.opts(G, lv, answer, n);
+      const nsw = [0, 0, 1, 2, 3, 4][lv], swaps = [], lk = LOOK[answer] || '';
+      let at = opts.indexOf(answer);                          /* the slot of X's car (the cars start where their robots stood) */
+      for (let k = 0; k < nsw; k++) {                         /* X's car swaps in the first one and in most of the others */
+        const a = k === 0 || G.rng() < 0.65 ? at : G.rng.int(0, n - 1), prev = swaps[k - 1] || [];
+        let b;
+        do { b = G.rng.int(0, n - 2); if (b >= a) b++; } while (prev.includes(a) && prev.includes(b));      /* never straight back */
+        swaps.push([a, b]);
+        if (a === at) at = b; else if (b === at) at = a;
+      }
+      return { k: [answer, opts.join(''), swaps.map(s => s.join('')).join()], answer, opts, swaps, n, nsw, pic: lv <= 1 ? 1 : 0, same: lv >= 4 ? 1 : 0,
+        stand: [0, 4000, 3500, 3500, 3200, 3000][lv], swapMs: [0, 0, 1400, 1050, 950, 850][lv],
+        look: opts.filter(k => k !== answer && lk.includes(k)).length, rev: opts.filter(k => !pool.includes(k)).length };
+    },
+    /* tests/w4_levels.js: the picture gone, look-alikes, old characters, more swaps, one colour, a sixth car */
+    hard(q) { return (1 - q.pic) + q.look + q.rev * 0.8 + q.nsw * 1.2 + q.same * 1.5 + (q.n - 5) * 1.5; },
+    geo(st) {
+      const n = st.q.n, Lx = L();
+      const cw = Lx ? (n > 5 ? 128 : 140) : (n > 5 ? 104 : 120), gap = Lx ? (n > 5 ? 18 : 24) : (n > 5 ? 10 : 14), cx = Lx ? 590 : 352;
+      const x0 = cx - (n * cw + (n - 1) * gap) / 2, park = Lx ? 470 : 700, ch = 92, rw = Math.min(cw - 6, 120), rh = Math.round(rw * 170 / 120);
+      return { n, cw, gap, x0, park, ch, rw, rh, up: park - ch - 124, down: park + 26, sx: s => x0 + s * (cw + gap) + cw / 2 };
+    },
+    async present(st) {
+      const q = st.q;
+      await ZX.meet(st, q.answer);
+      if (!Session.alive(st)) return;
+      st.opts = q.opts.slice(); st.slotOf = q.opts.map((_, i) => i); st.isCar = q.opts.map(() => false); st.asking = false;
+      st.lines = ZX.thing(st, 10, 10, 3, 'item'); st.lines.style.pointerEvents = 'none';
+      st.cards = st.bots = q.opts.map((k, i) => {
+        const d = el('div', '', Stage.el); Object.assign(d.style, { position: 'absolute', zIndex: 8 }); st.els.push(d);
+        const r = d._robot = el('div', '', d); Object.assign(r.style, { position: 'absolute', inset: 0, pointerEvents: 'none' }); r.innerHTML = robotSVG(BOTCOL[i % BOTCOL.length]);
+        const sg = el('div', '', r); Object.assign(sg.style, { position: 'absolute', left: '24%', bottom: '25.5%', width: '52%', aspectRatio: '1', borderRadius: '50%', background: '#FFFDF4', boxShadow: '0 0 0 3px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center' });
+        const g = Glyph.zh(k, 60); g.setAttribute('width', '80%'); g.setAttribute('height', '80%'); sg.appendChild(g);
+        const c = d._car = el('div', '', d); Object.assign(c.style, { position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0 }); c.innerHTML = carSVG(q.same ? '#2E86DE' : BOTCOL[i % BOTCOL.length]);
+        d._lamp = c.querySelector('.lamp');
+        K.pop(st, d, 80 * i);
+        return d;
+      });
+      this.place(st);
+      st.taskEl = K.task(st, [q.pic ? [OBJURL(ITEM[q.answer].obj), 'q'] : ['speaker', 'q']]);
+      K.say(st, '找' + q.answer + '！');
+      this.run(st);
+    },
+    /* the bots where they are now: a robot standing on its line, or a car parked on it */
+    botRect(st, i, s) { const G = this.geo(st), x = G.sx(s == null ? st.slotOf[i] : s); return st.isCar[i] ? { x: x - (G.cw - 4) / 2, y: G.park - G.ch, w: G.cw - 4, h: G.ch } : { x: x - G.rw / 2, y: G.park - G.rh, w: G.rw, h: G.rh }; },
+    place(st) {
+      if (!st.bots) return;
+      const G = this.geo(st);
+      st.bots.forEach((d, i) => { const r = this.botRect(st, i); place(d, Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h)); });
+      const w = G.n * G.cw + (G.n - 1) * G.gap + G.gap; place(st.lines, Math.round(G.x0 - G.gap / 2), G.park - 104, Math.round(w), 118);
+      let s = '<svg viewBox="0 0 ' + Math.round(w) + ' 118" width="100%" height="100%">';
+      for (let k = 0; k <= G.n; k++) { const x = k * (G.cw + G.gap); s += '<path d="M' + x + ' 8V108" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".9"/>'; }
+      st.lines.innerHTML = s + '<path d="M0 108H' + Math.round(w) + '" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".9"/></svg>';
+    },
+    decor(G) { const a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L() ? 90 : 80, L() ? 698 : 1016, L() ? 200 : 150); },
+    /* a pause the tests' 'wait' gesture may cut short */
+    hold(st, ms) { return new Promise(res => { st.skip = res; W4X.tick(st, ms).then(res); }); },
+    /* robot <-> car, in place (the sign goes away with the robot) */
+    morph(st, i, car, ms) {
+      const d = st.bots[i]; if (!d || st.isCar[i] === car) return Promise.resolve();
+      st.isCar[i] = car; const r = this.botRect(st, i); place(d, Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h));
+      const a = car ? d._robot : d._car, b = car ? d._car : d._robot;
+      a.style.opacity = 0; b.style.opacity = 1;
+      st.scope.anim(b, [{ transform: 'scale(.4,.2)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'scale(1)', opacity: 1 }], { duration: ms == null ? 360 : ms, easing: EASE.pop, fill: 'none' });
+      return st.scope.wait(ms == null ? 360 : ms);
+    },
+    /* two cars change places: one over the row, one under it */
+    async swap(st, a, b, ms) {
+      const G = this.geo(st), ia = st.slotOf.indexOf(a), ib = st.slotOf.indexOf(b); if (ia < 0 || ib < 0) return;
+      const ra = this.botRect(st, ia, a), rb = this.botRect(st, ib, b), go = (i, pts) => st.scope.anim(st.bots[i], pts.map(([x, y]) => ({ left: x + 'px', top: y + 'px' })), { duration: ms, easing: 'ease-in-out' });
+      st.slotOf[ia] = b; st.slotOf[ib] = a;
+      Sfx.whoosh(0.3);
+      st.bots[ia].style.zIndex = 9; st.bots[ib].style.zIndex = 9;
+      await Promise.all([go(ia, [[ra.x, ra.y], [ra.x, G.up], [rb.x, G.up], [rb.x, rb.y]]), go(ib, [[rb.x, rb.y], [rb.x, G.down], [ra.x, G.down], [ra.x, ra.y]])]);
+      if (!Session.alive(st)) return;
+      [ia, ib].forEach(i => { st.bots[i].getAnimations().forEach(x => x.cancel()); st.bots[i].style.zIndex = 8; const r = this.botRect(st, i); place(st.bots[i], Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h)); });
+    },
+    /* the show: they stand (find X), turn into cars, drive and swap - then the question (not awaited: the hints and the tests'
+       'wait' gesture go on meanwhile) */
+    async run(st) {
+      try {
+        const q = st.q;
+        await this.hold(st, q.stand);
+        if (!Session.alive(st)) return;
+        const op = st.G.actors[this.chars[0]]; if (op) op.react('hop');
+        Voice.say('变形！', { tag: 'prompt' }); Sfx.zap();
+        st.bots.forEach((d, i) => this.morph(st, i, true));
+        await this.hold(st, 800);
+        for (const [a, b] of q.swaps) { if (!Session.alive(st)) return; await this.swap(st, a, b, q.swapMs); await this.hold(st, 180); }
+        if (!Session.alive(st) || st.submitted) return;
+        st.asking = true; st.bots.forEach((d, i) => K.reg(st, 'card' + i, d, {}));
+        Hints.reset(st);
+        K.say(st, `${q.answer}在哪辆车里？`);
+      } catch (e) { /* the show never ends a question */ }
+    },
+    onGesture(st, name, p) {
+      if (st.submitted) return false;
+      if (name === 'wait') { if (st.skip) st.skip(); return 'free'; }
+      if (name !== 'tap' || !st.asking) return false;
+      const i = K.cardIndex(p.id); if (i < 0 || i >= st.bots.length) return false;
+      st.tapped = i; Sfx.tap(); this.morph(st, i, false);                  /* the car turns back into its robot: the sign shows */
+      Session.submit(st, st.opts[i]);
+      return 'ok';
+    },
+    async reveal(st) {
+      const i = st.opts.indexOf(st.q.answer), d = st.bots[i], r = box(d);
+      Sfx.reveal(); K.hop(st, d, 30);
+      const op = st.G.actors[this.chars[0]]; if (op) op.react('hop');
+      await ZX.alive(st, st.q.answer, r.x + r.w / 2, Math.max(140, r.y - 70), 140);
+      sayItem(st.q.answer); this.cheerAll(st);
+      await st.scope.guard(Voice.afterSay(200));
+    },
+    /* explain: 1 his car is a robot again, in blue with its picture ("这是工" was just said); 2 the swaps once more, quickly, X's
+       car with a gold edge all the way (a beat); 3 X's car turns back into its robot, gold, "这个是变" */
+    async explain(st, ans) {
+      const q = st.q, iC = st.tapped, iR = st.opts.indexOf(q.answer);
+      const ring = EX.ring(st, st.bots[iC], 'chosen'), pic = EX.picOver(st, st.bots[iC], ans, 'chosen');
+      await EX.wait(st, 700);
+      [ring, pic].forEach(e => e && e.remove());
+      await W4X.exBeat(st, async () => {
+        st.bots.forEach((d, i) => { st.slotOf[i] = i; st.isCar[i] = false; this.morph(st, i, true, 0); });
+        this.place(st);
+        st.bots[iR].style.filter = 'drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 3px ' + EX_GOLD + ') drop-shadow(0 0 8px rgba(255,190,40,.9))';
+        await EX.tick(st, 250);
+        for (const [a, b] of q.swaps) { await this.swap(st, a, b, 380); await EX.tick(st, 60); }
+      }, 250);
+      st.bots[iR].style.filter = '';
+      await this.morph(st, iR, false);
+      await W4X.exRight(st, st.bots[iR], q.answer, [W4X.thatIs(q.answer)]);
+    },
+    /* the 2nd hint (real help, no star after it): X's car blinks its headlight (before the swaps: its robot glows) */
+    gestureHint(st, reteach) {
+      if (!st.bots) return;
+      if (reteach) { st.bots.forEach((d, i) => st.scope.timeout(() => K.hop(st, d, 16), 100 * i)); return; }
+      const d = st.bots[st.opts.indexOf(st.q.answer)];
+      if (d._lamp) st.scope.anim(d._lamp, [{ fill: '#FFE14A' }, { fill: '#FFFFFF' }, { fill: '#FFE14A' }], { duration: 500, iterations: 3, fill: 'none' });
+      st.scope.anim(d, [{ filter: 'none' }, { filter: 'drop-shadow(0 0 12px #FFE14A) drop-shadow(0 0 4px #fff)' }, { filter: 'none' }], { duration: 500, iterations: 3, fill: 'none' });
+    },
+    next(st, strat) {
+      if (!st.bots) return null;
+      if (!st.asking) return W4X.WAIT;
+      const ai = st.opts.indexOf(st.q.answer), i = strat === 'wrong' ? (ai + 1) % st.bots.length : ai;
+      return { g: 'tap', p: { id: 'card' + i } };
+    },
+    find(st, id) { return id === 'wait' ? st.lines : (st.map && st.map[id]) || null; },
+    workEls(st) { return st.asking ? st.bots : []; },
+    snap(st) { return { opts: st.opts || null, asking: !!st.asking }; },
+    iconNode() { return W4X.svgIcon('<g transform="translate(2 4) scale(.4)">' + robotSVG('#E8414B').replace(/<\/?svg[^>]*>/g, '') + '</g><path d="M50 22H58M54 18L58 22L54 26" stroke="#2B2118" stroke-width="3" fill="none" stroke-linecap="round"/><g transform="translate(60 36) scale(.36)">' + carSVG('#2E86DE').replace(/<\/?svg[^>]*>/g, '') + '</g>', '0 0 112 72'); },
+  };
+
+  /* ---------------------------------------------------------------- ⑨-3 英文 「装！」 拼出一句话 (word order, a whole sentence)
+     A picture; under it a robot's body with empty part slots (the end mark is the last cell, fixed); below, the words of a
+     sentence on cards, mixed up - read, not said (HOLD a card to hear it: that question earns no star). Tap a card: it flies into
+     the next empty slot (tap it in a slot: back down), or drag it to a slot. All slots full: the order is the answer. Levels:
+     1 three words, the first one with its capital (where it starts); 2 three or four words; 3 four words, all lower case (but I);
+     4 five words; 5 five words and one card that belongs nowhere (six cards, five slots). A build: random cards are right 1 time
+     in 6 (3 words), 24, 120, 720. Sentences: ESENT9 (one possible order, known words only). */
+  const WRD = t => t.match(/[A-Za-z]+/g) || [];
+  let S9 = null;
+  const sents9 = () => S9 || (S9 = W4D.esent9.map(([t, sc, extra]) => ({ t, sc, extra, w: WRD(t), end: (/[.!?]\s*$/.exec(t) || ['.'])[0].trim() })));
+  const OK9 = [null, s => s.w.length === 3, s => s.w.length <= 4, s => s.w.length === 4, s => s.w.length === 5, s => s.w.length === 5 && !!s.extra];
+  const Build = {
+    rule: 'build-the-sentence', kind0: 'en', verb: '装！', intro: '拼出一句话！', props: [],
+    gen(G, o) {
+      const lv = o.level, all = sents9(), ok = all.filter(OK9[lv]), P = ok.length ? ok : all, t = bagFrom(G, 's9' + lv, P.map(s => s.t)), s = P.find(x => x.t === t);
+      const lower = lv >= 3, show = w => (lower && w !== 'I' ? w.toLowerCase() : w), words = s.w.map(show), extra = lv >= 5 && s.extra ? show(s.extra) : null;
+      const pool = words.concat(extra ? [extra] : []), n = words.length;
+      let order;
+      do { order = G.rng.shuffle(pool.map((_, i) => i)); } while (order.slice(0, n).every((c, j) => c === j) && pool.length > 1);     /* never already right */
+      const cards = order.map(i => pool[i]), want = words.map((_, j) => order.indexOf(j)), fact = m => (m <= 1 ? 1 : m * fact(m - 1));
+      return { k: [s.t, cards.join(' ')], text: s.t, words, cards, want, extra: extra ? order.indexOf(n) : -1, scene: s.sc, end: s.end, answer: 'ok', opts: null, build: 1,
+        chance: 1 / (fact(pool.length) / fact(pool.length - n)), n, lower: lower ? 1 : 0, ext: extra ? 1 : 0 };
+    },
+    itemOf() { return null; },
+    hard(q) { return (q.n - 3) + q.lower + q.ext * 1.5; },
+    /* sizes that fit: the slots in one row (with the end mark), the cards in one row (two when they must) */
+    fit(st) {
+      const Lx = L(), q = st.q, maxS = Lx ? 900 : 640, maxT = Lx ? 800 : 660, gap = 14, endW = 46;
+      let h = Lx ? 50 : 46, ws, sw, rows = 1;
+      for (; ; h -= 2) {
+        ws = st.w100.map(w => Math.max(96, Math.round(w * h / 100) + 30)); sw = Math.max(...ws);
+        const tw = ws.reduce((a, b) => a + b, 0) + gap * (ws.length - 1), slotsW = q.n * sw + (q.n - 1) * gap + endW + gap;
+        if (slotsW <= maxS && tw <= maxT) break;
+        if (h <= 34) { rows = tw > maxT ? 2 : 1; break; }
+      }
+      return { h, ws, sw, ch: 96, gap, endW, rows };
+    },
+    async present(st) {
+      const q = st.q;
+      st.peeked = false;
+      st.picEl = ZX.thing(st, 170, 170, 5, 'card'); st.picEl.classList.add('pic'); st.picEl.style.pointerEvents = 'none'; st.picEl.appendChild(Scene.node(q.scene, 140));
+      st.frame = ZX.thing(st, 10, 10, 4, 'item'); st.frame.style.pointerEvents = 'none';
+      st.slotEls = q.words.map(() => { const d = ZX.thing(st, 10, 10, 6, 'item'); Object.assign(d.style, { border: '5px dashed rgba(43,33,24,.55)', borderRadius: '18px', background: 'rgba(255,255,255,.55)', boxSizing: 'border-box', pointerEvents: 'none' }); return d; });
+      st.endEl = ZX.thing(st, 10, 10, 6, 'item'); Object.assign(st.endEl.style, { display: 'flex', alignItems: 'flex-end', justifyContent: 'center', font: '900 64px system-ui,sans-serif', color: INK, pointerEvents: 'none', lineHeight: '1' }); st.endEl.textContent = q.end;
+      st.w100 = q.cards.map(w => Number(Glyph.word(w, 100).getAttribute('width')));
+      st.fitN = null;
+      const cards = q.cards.map(w => { const c = ZX.thing(st, 10, 10, 12, 'card'); c.style.background = '#FFF6D8'; c._w = w; return c; });
+      st.S = W4X.slots(st, { cards, n: q.n, slot: s => this.slotRect(st, s), tray: i => this.trayRect(st, i),
+        full: order => this.full(st, order), hear: i => this.hear(st, i), look: (i, s) => { cards[i].style.background = s >= 0 ? '#FFFFFF' : '#FFF6D8'; } });
+      st.opts = q.cards.slice();
+      this.place(st);
+      K.pop(st, st.picEl); K.pop(st, st.frame, 100);
+      K.say(st, '拼出一句话！');
+    },
+    geom(st) {
+      const Lx = L(), F = this.fit(st), q = st.q, n = q.n, slotsW = n * F.sw + (n - 1) * F.gap + F.gap + F.endW, sy = Lx ? 340 : 404, cx = Lx ? 540 : 352;
+      return Object.assign(F, { Lx, cx, sy, x0: cx - slotsW / 2, slotsW, ty: Lx ? 514 : 640, tcx: Lx ? 600 : 352 });
+    },
+    slotRect(st, s) { const g = this.geom(st); return { x: Math.round(g.x0 + s * (g.sw + g.gap)), y: g.sy, w: g.sw, h: g.ch }; },
+    trayRect(st, i) {
+      const g = this.geom(st), m = st.q.cards.length, per = g.rows > 1 ? Math.ceil(m / 2) : m, row = Math.floor(i / per), idx = i - row * per, inRow = Math.min(per, m - row * per);
+      const ids = Array.from({ length: inRow }, (_, j) => row * per + j), tw = ids.reduce((a, j) => a + g.ws[j], 0) + g.gap * (inRow - 1);
+      let x = g.tcx - tw / 2; for (let j = 0; j < idx; j++) x += g.ws[ids[j]] + g.gap;
+      return { x: Math.round(x), y: g.ty + row * (g.ch + 18), w: g.ws[i], h: g.ch };
+    },
+    place(st) {
+      if (!st.S) return;
+      const g = this.geom(st), q = st.q;
+      if (st.fitN !== g.h) {               /* the words at this size */
+        st.fitN = g.h;
+        st.S.cards.forEach((c, i) => { c.innerHTML = ''; const gl = Glyph.word(c._w, g.h); gl.style.pointerEvents = 'none'; c.appendChild(gl); });
+      }
+      place(st.picEl, Math.round(g.cx - 80), g.Lx ? 92 : 144, 160, 160);
+      st.slotEls.forEach((d, s) => place(d, Math.round(g.x0 + s * (g.sw + g.gap)), g.sy, g.sw, g.ch));
+      place(st.endEl, Math.round(g.x0 + q.n * (g.sw + g.gap)), g.sy, g.endW, g.ch - 14);
+      /* the robot: its body round the slots, a head on top, two legs */
+      const fx = g.x0 - 22, fy = g.sy - 70, fw = g.slotsW + 44, fh = g.ch + 110;
+      place(st.frame, Math.round(fx), Math.round(fy), Math.round(fw), Math.round(fh));
+      const hx = fw / 2;
+      st.frame.innerHTML = '<svg viewBox="0 0 ' + Math.round(fw) + ' ' + Math.round(fh) + '" width="100%" height="100%" style="overflow:visible">'
+        + '<rect x="' + (hx - 52) + '" y="2" width="104" height="58" rx="16" fill="#9AA7B8" stroke="#2B2118" stroke-width="5"/><circle cx="' + (hx - 22) + '" cy="30" r="10" fill="#FFF" stroke="#2B2118" stroke-width="4"/><circle cx="' + (hx + 22) + '" cy="30" r="10" fill="#FFF" stroke="#2B2118" stroke-width="4"/>'
+        + '<g class="eyes"><circle cx="' + (hx - 22) + '" cy="31" r="4" fill="#2B2118"/><circle cx="' + (hx + 22) + '" cy="31" r="4" fill="#2B2118"/></g>'
+        + '<rect x="4" y="56" width="' + (fw - 8) + '" height="' + (g.ch + 24) + '" rx="26" fill="#C9D3DF" stroke="#2B2118" stroke-width="5"/>'
+        + '<circle cx="20" cy="72" r="5" fill="#8A96A8"/><circle cx="' + (fw - 20) + '" cy="72" r="5" fill="#8A96A8"/><circle cx="20" cy="' + (g.ch + 64) + '" r="5" fill="#8A96A8"/><circle cx="' + (fw - 20) + '" cy="' + (g.ch + 64) + '" r="5" fill="#8A96A8"/>'
+        + '<rect x="' + (hx - 70) + '" y="' + (g.ch + 80) + '" width="34" height="26" rx="8" fill="#9AA7B8" stroke="#2B2118" stroke-width="5"/><rect x="' + (hx + 36) + '" y="' + (g.ch + 80) + '" width="34" height="26" rx="8" fill="#9AA7B8" stroke="#2B2118" stroke-width="5"/></svg>';
+      st.S.layout();
+    },
+    decor(G) { const a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L() ? 90 : 80, L() ? 698 : 1016, L() ? 200 : 150); },
+    /* HOLD a card: it is said - and this question earns no star ("卡不念") */
+    hear(st, i) { st.peeked = true; st.noStar = true; Voice.sayNow(st.q.cards[i], { tag: 'peek' }); },
+    full(st, order) {
+      const q = st.q, bad = order.findIndex((c, s) => c !== q.want[s]);
+      st.order = order.slice();
+      if (bad < 0) { Session.submit(st, 'ok'); return; }
+      st.badSlot = bad; st.tapped = order[bad]; Session.submit(st, 'bad');
+    },
+    /* right: every slot holds the card of its word (the order made, checked once more) */
+    evaluate(st, ans) { const w = st.q.want; return ans === 'ok' && !!st.order && st.order.length === w.length && st.order.every((c, s) => c === w[s]); },
+    onGesture(st, name, p) { if (!st.S) return false; return st.S.gesture(name, p); },
+    async reveal(st) {
+      const q = st.q; Sfx.reveal();
+      const eyes = st.frame.querySelector('.eyes'); if (eyes) eyes.setAttribute('fill', '#FFE14A');
+      st.scope.anim(st.frame, [{ transform: 'translateY(0)' }, { transform: 'translateY(-26px)' }, { transform: 'translateY(0)' }], { duration: 500 });
+      st.S.cards.forEach((c, i) => st.scope.timeout(() => K.hop(st, c, 18), 70 * i));
+      const a = st.G.actors[this.chars[0]]; if (a) a.cheer();
+      const b = box(st.frame), car = ZX.thing(st, 120, 82, 30, 'objpop'); car.innerHTML = carSVG('#FFC93C'); place(car, b.x + b.w / 2 - 60, b.y + b.h - 70, 120, 82);
+      st.scope.anim(car, [{ transform: 'translateX(0) scale(.2)', opacity: 0 }, { transform: 'translateX(0) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translateX(' + (Stage.W - b.x) + 'px) scale(1)', opacity: 1 }], { duration: 1400, easing: 'ease-in', fill: 'forwards' });
+      Voice.say(q.text, { tag: 'summary' });
+      await st.scope.guard(Voice.afterSay(200));
+    },
+    /* the factual line: the first card in a wrong place belongs further on (or, level 5's extra card, nowhere) */
+    wrongLine(st) { return st.tapped === st.q.extra ? '这个词用不上' : '这个词在后面'; },
+    /* explain: 1 the first card out of place in blue (its line was just said); 2 the cards go to their places one by one (a beat);
+       3 the robot stands up in gold and the sentence is read */
+    async explain(st) {
+      const q = st.q, S = st.S;
+      const ring = EX.ring(st, S.cards[st.tapped], 'chosen');
+      await EX.wait(st, 600);
+      if (ring) ring.remove();
+      await W4X.exBeat(st, async () => {
+        const wrong = S.cards.map((c, i) => i).filter(i => S.where[i] >= 0 && S.where[i] !== q.want.indexOf(i));
+        await Promise.all(wrong.map(i => S.back(i, 200)));
+        for (let s = 0; s < q.n; s++) if (S.at[s] !== q.want[s]) await S.put(q.want[s], s, 220);
+      }, 200);
+      const eyes = st.frame.querySelector('.eyes'); if (eyes) eyes.setAttribute('fill', '#FFE14A');
+      EX.outline(st, st.frame); K.hop(st, st.frame, 18);                 /* the robot itself in gold (the cards are in it: no ring round them all) */
+      await EX.say(st, [q.text]);
+      await EX.wait(st, 250);
+    },
+    /* the 2nd hint (real help, no star after it): the card of the first word that is not in its place yet lights up */
+    gestureHint(st, reteach) {
+      if (!st.S) return;
+      const S = st.S;
+      if (reteach) { S.cards.forEach((c, i) => st.scope.timeout(() => K.hop(st, c, 14), 90 * i)); return; }
+      const s = S.at.findIndex((k, j) => k !== st.q.want[j]); if (s < 0) return;
+      const c = S.cards[st.q.want[s]]; c.classList.add('glow'); K.hop(st, c, 18); st.scope.timeout(() => c.classList.remove('glow'), 1600);
+    },
+    next(st, strat) { return st.S ? st.S.next(st.q.want, strat) : null; },
+    workEls(st) { return st.S ? st.S.cards : []; },
+    snap(st) { return { opts: st.opts || null, at: st.S ? st.S.at.slice() : null, peeked: !!st.peeked }; },
+    iconNode() { const d = el('div'); Object.assign(d.style, { display: 'flex', gap: '3px', alignItems: 'center' }); ['I', 'can', 'run'].forEach(w => { const c = el('div', '', d); Object.assign(c.style, { background: '#FFF6D8', borderRadius: '6px', boxShadow: '0 0 0 2px #2B2118', padding: '2px 3px', lineHeight: '0' }); c.appendChild(Glyph.word(w, 20)); }); return W4X.icon(d); },
+  };
+
+  /* ---------------------------------------------------------------- ⑨-4 挑战 「变！」 加一笔，变一变 (one stroke more = another character)
+     A changing machine: A at its door, a "+" lamp blinking (which stroke is not shown); five boxes come out, a character in each.
+     Which one is A with ONE stroke more? (W4D.add1: the writing modes' families, proved on the stroke data; W4D.near1 holds every
+     pair that is - or could be taken for - one stroke apart, and none of them is ever a wrong box: exactly one right box.) Only
+     characters the child knows. Levels: 1 the others nothing like A; 2 A itself and A minus a stroke among them; 3 the other way:
+     B given, "减一笔" - which is B with a stroke less; 4 characters two or three strokes longer than A among them; 5 two machines,
+     two characters, one box each (both right). A random tap is right 1 time in 5 (two: 1 in 20). */
+  const SC = k => (STROKE_NAMES[k] || '').split(' ').filter(Boolean).length;
+  const near = (a, b) => W4D.near1.includes(a + b);
+  const Add = {
+    rule: 'add-one-stroke', kind0: 'quiz', verb: '变！', intro: '加一笔，变一变！', props: [],
+    gen(G, o) {
+      const lv = o.level, kn = W4X.known(G), rev = lv === 3, two = lv >= 5;
+      const P = W4D.add1.filter(x => kn.includes(x.a) && kn.includes(x.b));
+      const key = x => x.a + x.b, k1 = bagFrom(G, 'ad' + lv, P.map(key)), p1 = P.find(x => key(x) === k1);
+      const pairs = [p1];
+      if (two) { const ok = P.filter(x => x.a !== p1.a && x.b !== p1.b && x.a !== p1.b && x.b !== p1.a && !near(p1.a, x.b) && !near(x.a, p1.b)); pairs.push(ok.length ? G.rng.pick(ok) : P.find(x => x !== p1) || p1); }
+      const shown = pairs.map(x => (rev ? x.b : x.a)), right = pairs.map(x => (rev ? x.a : x.b));
+      /* a box may never be another right one: not B' with A + stroke = B' (nor A' with A' + stroke = B the other way) */
+      const fine = k => !right.includes(k) && pairs.every(x => (rev ? !near(k, x.b) : !near(x.a, k)));
+      const others = [], got = { self: 0, minus: 0, more: 0 };
+      const add = (k, tag) => { if (others.length < 5 - right.length && !others.includes(k) && kn.includes(k) && ITEM[k] && fine(k)) { others.push(k); if (tag) got[tag]++; } };
+      const like = k => pairs.some(x => [x.a, x.b].some(c => (LOOK[c] || '').includes(k) || (LOOK[k] || '').includes(c)));
+      const unlike = k => !like(k) && !pairs.some(x => near(k, x.a) || near(x.a, k) || near(k, x.b) || near(x.b, k)) && right.every(r => Math.abs(SC(k) - SC(r)) >= 2);
+      if (lv === 2 || lv >= 4) shown.forEach(a => add(a, 'self'));                                       /* A itself */
+      if (lv === 2) shown.forEach(a => G.rng.shuffle(kn.filter(k => near(k, a))).forEach(k => add(k, 'minus')));      /* A minus a stroke */
+      if (rev) { shown.forEach(b => add(b, 'self')); shown.forEach(b => G.rng.shuffle(kn.filter(k => near(b, k))).forEach(k => add(k, 'minus'))); }     /* B itself, B plus a stroke */
+      if (lv >= 4) shown.forEach(a => G.rng.shuffle(kn.filter(k => [2, 3].includes(SC(k) - SC(a)))).sort((x, y) => (like(y) ? 1 : 0) - (like(x) ? 1 : 0)).slice(0, 2).forEach(k => add(k, 'more')));
+      G.rng.shuffle(kn.filter(unlike)).forEach(k => add(k));
+      G.rng.shuffle(kn).forEach(k => add(k));
+      const opts = W4X.put(G, others.concat(right.slice(1)), right[0]);
+      return { k: [pairs.map(key).join(','), opts.join('')], pairs: pairs.map(x => ({ a: x.a, b: x.b, add: x.add })), shown, right, rev: rev ? 1 : 0, two: two ? 1 : 0,
+        answer: two ? 'all' : right[0], seq: two ? right.slice() : null, opts, item: right[0], self: got.self, minus: got.minus, more: got.more };
+    },
+    itemOf(st) { return st.q.right[0]; },
+    itemsOf(st) { return st.q.right.slice(1); },
+    hard(q) { return q.self * 0.6 + q.minus * 0.6 + q.rev * 1.6 + q.more * 1.4 + q.two * 4; },
+    async present(st) {
+      const q = st.q;
+      st.ix = 0; st.done = [];
+      st.mach = q.shown.map((k, j) => {
+        const m = ZX.thing(st, 10, 10, 5, 'item'); m.style.pointerEvents = 'none';
+        m.innerHTML = '<svg viewBox="0 0 300 260" width="100%" height="100%" preserveAspectRatio="none"><rect x="6" y="40" width="288" height="200" rx="30" fill="#3A6FD0" stroke="#2B2118" stroke-width="7"/><rect x="230" y="96" width="58" height="88" rx="14" fill="#2B4E96" stroke="#2B2118" stroke-width="5"/><path d="M246 140H274M262 128L274 140L262 152" stroke="#FFE14A" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="224" r="8" fill="#FFE14A"/><circle cx="266" cy="224" r="8" fill="#FFE14A"/></svg>';
+        const plate = m._plate = el('div', '', m); Object.assign(plate.style, { position: 'absolute', left: '7%', top: '24%', width: '66%', height: '64%', background: '#FFFDF6', borderRadius: '18px', boxShadow: '0 0 0 5px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center' });
+        const g = m._glyph = Glyph.zh(k, 100); g.setAttribute('width', '86%'); g.setAttribute('height', '86%'); plate.appendChild(g);
+        const lamp = m._lamp = el('div', '', m); Object.assign(lamp.style, { position: 'absolute', left: '36%', top: '-4%', width: '22%', aspectRatio: '1', borderRadius: '50%', background: '#FFE14A', boxShadow: '0 0 0 5px #2B2118', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '900 40px system-ui,sans-serif', color: INK });
+        lamp.innerHTML = '<svg viewBox="0 0 40 40" width="70%" height="70%"><path d="M8 20H32' + (q.rev ? '' : 'M20 8V32') + '" stroke="#2B2118" stroke-width="7" stroke-linecap="round"/></svg>';
+        st.scope.anim(lamp, [{ filter: 'none' }, { filter: 'drop-shadow(0 0 14px #FFD23C) brightness(1.15)' }, { filter: 'none' }], { duration: 1000, iterations: Infinity });
+        K.pop(st, m, 120 * j);
+        return m;
+      });
+      K.cards(st, q.opts.map(k => Glyph.zh(k, 96)), q.opts.slice(), Object.assign({ size: 128, gap: 22 }, this.cardSpot()));
+      st.cards.forEach(c => { c.style.background = '#F7E3B5'; c.style.borderColor = '#B07A3A'; });
+      this.place(st); this.mark(st);
+      K.say(st, q.rev ? '减一笔，变成什么？' : '加一笔，变成什么？');
+    },
+    cardSpot() { return L() ? { cx: 772, cy: 330, cols: 3, gap: 22 } : { cx: 352, cy: 700, cols: 3, gap: 24 }; },
+    machRect(st, j) {
+      const n = st.mach.length;
+      if (L()) return n > 1 ? { x: 150, y: j ? 372 : 116, w: 340, h: 236 } : { x: 120, y: 150, w: 410, h: 330 };
+      return n > 1 ? { x: j ? 364 : 20, y: 150, w: 320, h: 260 } : { x: 170, y: 150, w: 364, h: 300 };
+    },
+    place(st) {
+      if (!st.mach) return;
+      st.mach.forEach((m, j) => { const r = this.machRect(st, j); place(m, r.x, r.y, r.w, r.h); });
+      K.cardsPlace(st, this.cardSpot());
+      (st.done || []).forEach(([j, d]) => { const r = this.machRect(st, j); place(d, r.x + r.w - 92, r.y + r.h - 78, 88, 88); });
+      if (st.pen) this.penPlace(st);
+    },
+    decor(G) { const a = G.actors[this.chars[0]]; this.chars.forEach(id => hideActor(G.actors[id])); if (a) showActor(a, L() ? 90 : 80, L() ? 698 : 1016, L() ? 200 : 150); },
+    /* two machines: the one to answer now has a gold edge */
+    mark(st) { if (st.mach.length < 2) return; st.mach.forEach((m, j) => { m.style.filter = j === st.ix ? 'drop-shadow(0 0 0 #000) drop-shadow(0 0 10px #FFD23C)' : 'saturate(.7) brightness(.95)'; }); },
+    onGesture(st, name, p) {
+      if (name !== 'tap' || st.submitted) return false;
+      const i = K.cardIndex(p.id); if (i < 0) return false;
+      const q = st.q, want = q.right[st.ix];
+      if ((st.done || []).some(d => d[2] === i)) return false;
+      st.tapped = i; Sfx.tap();
+      if (st.opts[i] !== want) { Session.submit(st, st.opts[i]); return 'ok'; }
+      if (st.ix + 1 < q.right.length) {                 /* the first machine done: its character comes out at its side */
+        const r = this.machRect(st, st.ix), d = ZX.thing(st, 88, 88, 8, 'card'); d.style.pointerEvents = 'none'; d.style.background = '#FFF3C4'; d.appendChild(Glyph.zh(want, 68));
+        st.done.push([st.ix, d, i]); place(d, r.x + r.w - 92, r.y + r.h - 78, 88, 88); K.pop(st, d); K.hop(st, st.cards[i], 16); Sfx.place();
+        st.ix++; this.mark(st);
+        return 'ok';
+      }
+      Session.submit(st, q.two ? 'all' : want);
+      return 'ok';
+    },
+    /* a Writer without a grid over machine j's plate, writing B (the explanation, the 2nd hint) */
+    pen(st, j) {
+      if (st.pen && st.pen.j === j) return st.pen.W;
+      if (st.pen) st.pen.W.el.remove();
+      const pr = st.q.pairs[j], W = new Writer(st, { kind: 'zh', glyph: pr.b, level: 1, x: 0, y: 0, size: 100, bare: true, z: 36 });
+      st.pen = { j, W }; this.penPlace(st);
+      return W;
+    },
+    penPlace(st) { const m = st.mach[st.pen.j], b = m._plate.getBoundingClientRect(), a = Stage.toStage(b.left + b.width / 2, b.top + b.height / 2), s = Math.min(b.width, b.height) / (Stage.s || 1) * 0.86; st.pen.W.place(a.x, a.y, s); },
+    async brush(st, W, i, color) {
+      const sk = W.strokes[i]; if (!sk) return;
+      const dur = clamp(sk.L / W.S * 800, 280, 560), bs = W.box.w * 0.26, br = ZX.thing(st, bs, bs, 37, 'objpop');
+      ZX.pic('assets/props/brush.png', br);
+      const pts = Geo.resample(sk.med, 10).map(q => W.toStage(q)), at = q => ({ left: (q.x - bs * 0.18) + 'px', top: (q.y - bs * 0.92) + 'px' });
+      place(br, pts[0].x - bs * 0.18, pts[0].y - bs * 0.92, bs, bs);
+      W.ink(i, color, dur); Sfx.nz(0, dur / 1000, 1400, 900, 0.6, 0.05);
+      await st.scope.anim(br, pts.map(at), { duration: dur, easing: 'linear', fill: 'forwards' });
+      br.remove();
+    },
+    async reveal(st) {
+      const q = st.q; Sfx.reveal();
+      q.right.forEach(k => K.hop(st, st.cards[st.opts.indexOf(k)], 28));
+      st.mach.forEach(m => st.scope.anim(m, [{ transform: 'scale(1)' }, { transform: 'scale(1.06,.94)' }, { transform: 'scale(1)' }], { duration: 360 }));
+      const a = st.G.actors[this.chars[0]]; if (a) a.react('hop');
+      q.pairs.forEach(x => Voice.say(q.rev ? x.b + '减一笔是' + x.a : x.a + '加一笔是' + x.b, { tag: 'summary' }));
+      this.cheerAll(st);
+      await st.scope.guard(Voice.afterSay(200));
+    },
+    /* explain: 1 his box in blue with its picture ("这是田" was just said); 2 on the machine the brush writes the stroke in gold - A
+       becomes B (the other way: the stroke goes - B becomes A) - a beat; 3 the right box in gold: "日加一笔是目" / "天减一笔是大" */
+    async explain(st, ans) {
+      const q = st.q, j = Math.min(st.ix, q.pairs.length - 1), pr = q.pairs[j], k = q.right[j], iR = st.opts.indexOf(k), m = st.mach[j];
+      W4X.exChosen(st, st.cards[st.tapped], ans);
+      await EX.wait(st, 650);
+      if (st.hintEl) st.hintEl.remove();
+      const W = this.pen(st, j);
+      await W4X.exBeat(st, async () => {
+        st.scope.anim(m._glyph, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });
+        W.strokes.forEach((s, i) => { if (i !== pr.add) W.ink(i, INK, 120); });
+        await EX.tick(st, 280);
+        if (q.rev) { W.ink(pr.add, EX_GOLD, 120); await EX.tick(st, 500); const p = W.gDone.lastChild; if (p) await st.scope.anim(p, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }); }
+        else await this.brush(st, W, pr.add, EX_GOLD);
+      }, 300);
+      await W4X.exRight(st, st.cards[iR], k, [q.rev ? pr.b + '减一笔是' + pr.a : pr.a + '加一笔是' + pr.b]);
+    },
+    /* the 2nd hint (real help, no star after it): A takes B's shape and a dashed line shows where the stroke goes (the other way:
+       the stroke to take away is dashed) */
+    gestureHint(st, reteach) {
+      if (!st.mach) return;
+      if (reteach) { st.cards.forEach((c, i) => st.scope.timeout(() => K.hop(st, c, 16), 90 * i)); return; }
+      if (st.hintDone) return; st.hintDone = true;
+      const j = st.ix, pr = st.q.pairs[j], W = this.pen(st, j), m = st.mach[j];
+      m._glyph.style.opacity = 0;
+      W.strokes.forEach((s, i) => { if (i !== pr.add) W.ink(i, INK, 200); });
+      const sk = W.strokes[pr.add]; if (!sk) return;
+      st.hintEl = svg('path', { d: W.dOf(sk.med), fill: 'none', stroke: '#E8862B', 'stroke-width': 64, 'stroke-linecap': 'round', 'stroke-dasharray': '60 50', opacity: 0.9 }, W.gCue);
+      W.gCue.style.opacity = 1;
+    },
+    next(st, strat) {
+      if (!st.cards || !st.mach) return null;
+      const want = st.q.right[st.ix], used = (st.done || []).map(d => d[2]);
+      const i = strat === 'wrong' ? st.opts.findIndex((k, x) => k !== want && !used.includes(x)) : st.opts.indexOf(want);
+      return { g: 'tap', p: { id: 'card' + i } };
+    },
+    workEls(st) { return st.cards || []; },
+    snap(st) { return { opts: st.opts || null, ix: st.ix || 0 }; },
+    iconNode() {
+      const d = el('div'); Object.assign(d.style, { display: 'flex', alignItems: 'center', gap: '2px' });
+      d.appendChild(Glyph.zh('口', 30)); const p = el('div', '', d); p.textContent = '+'; Object.assign(p.style, { font: '900 22px system-ui,sans-serif', color: '#E8414B' }); d.appendChild(Glyph.zh('日', 30));
+      return W4X.icon(d);
+    },
+  };
+
+  /* ---------------------------------------------------------------- ⑨-2 写字 工 厂 (W4X.Write as it is): the finishing shows of
+     §12.5 laid over it - 工: the toolbox's wrench turns; 厂: the factory's gear turns */
+  const GEAR = '<svg viewBox="0 0 60 60" width="100%" height="100%"><path d="M30 4l5 8 9-3 1 9 9 2-4 8 6 7-8 4 1 9-9-1-4 8-6-7-8 4-3-9-9-2 4-8-5-7 8-4-1-9 9 1 4-8z" fill="#FFC93C" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/><circle cx="30" cy="30" r="8" fill="#fff" stroke="#2B2118" stroke-width="3"/></svg>';
+  const WRENCH = '<svg viewBox="0 0 60 60" width="100%" height="100%"><path d="M40 6a12 12 0 0 0-11 16L8 43a5 5 0 0 0 7 7l21-21a12 12 0 0 0 16-11l-8 5-6-6 5-8a12 12 0 0 0-3-3z" fill="#BFC6D0" stroke="#2B2118" stroke-width="3" stroke-linejoin="round"/></svg>';
+  const WX = {
+    async reveal(st) {
+      await WriteBase.reveal.call(this, st);
+      const k = st.q.answer, p = st.alivePic; if (!p || !p.isConnected || (k !== '工' && k !== '厂')) return;
+      const b = box(p), s = Math.round(b.w * 0.42), d = ZX.thing(st, s, s, 33, 'objpop'); d.innerHTML = k === '工' ? WRENCH : GEAR;
+      place(d, Math.round(b.x + b.w * (k === '工' ? 0.52 : 0.6)), Math.round(b.y + b.h * (k === '工' ? 0.1 : 0.04)), s, s);
+      Sfx.zap();
+      await st.scope.anim(d, [{ transform: 'rotate(0) scale(.3)', opacity: 0 }, { transform: 'rotate(180deg) scale(1)', opacity: 1, offset: 0.4 }, { transform: 'rotate(' + (k === '工' ? 360 : 540) + 'deg) scale(1)', opacity: 1 }], { duration: 1100, easing: EASE.glide });
+    },
+  };
+
+  w4Island('robot4', [Track, Build, Add, WX]);
 })();
 
 W4X.loaded();

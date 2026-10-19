@@ -28,6 +28,7 @@ run v2r2      tests/test_v2r2.py
 run v2r3      tests/test_v2r3.py
 run pointer   tests/test_pointer.py
 run strokes   tests/test_strokes.py
+run wmodes    tests/test_writemodes.py
 run layout    tests/test_layout.py
 run voiceflow tests/test_voiceflow.py
 run w3new     tests/test_w3new.py
