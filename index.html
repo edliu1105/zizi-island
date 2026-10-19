@@ -6859,6 +6859,8 @@ const QFrame = Object.assign({}, ReadHint, {
    paint. Levels: 1 three pots; 2 four; 3 five; 4 a phrase (红衣 · 白云 · 绿叶 · 黄花); 5 two phrases - paint both, in order. */
 const PAINT_NOUN = ['衣', '云', '叶', '花'];
 const COLORS_X = { 紫: '#9B3FC8', 棕: '#8B5A2B', 黑: '#2B2118' };          /* pots that are none of the five colours (levels 1-2) */
+/* (the paint / command counter is st.seqI - st.step is the engine's 一步一步 flag: a counter there made a wrong second step
+   in auto mode wait for a 下一步 button that is not there, 2026-10-18) */
 const QPaint = Object.assign({}, ReadHint, {
   kind0: 'paint', verb: '涂！', intro: '涂颜色！', rule: 'read-colour-paint', props: [],
   gen(G, o) {
@@ -6874,7 +6876,7 @@ const QPaint = Object.assign({}, ReadHint, {
   itemsOf(st) { return st.q.seq.slice(1); },
   async present(st) {
     const q = st.q;
-    st.peeked = false; st.step = 0;
+    st.peeked = false; st.seqI = 0;
     W3X.readCard(st, q.text, q.two ? 100 : 120); K.pop(st, st.readEl);
     st.shapes = q.nouns.map((nn, i) => { const sh = ZX.thing(st, 220, 250, 6, 'item'); sh._kind = nn || 'balloon'; sh.appendChild(W3X.svgShape(sh._kind, '#E9E4DA')); K.pop(st, sh, 120 + 80 * i); return sh; });
     st.shape = st.shapes[0];
@@ -6895,11 +6897,11 @@ const QPaint = Object.assign({}, ReadHint, {
     if (name !== 'tap' || st.submitted) return false;
     if (p.id === 'read') { W3X.peek(st); return 'ok'; }
     const i = K.cardIndex(p.id); if (i < 0) return false;
-    const q = st.q, want = q.seq[st.step];
+    const q = st.q, want = q.seq[st.seqI];
     if (q.opts[i] !== want) { st.tapped = i; Sfx.tap(); Session.submit(st, 'bad:' + q.opts[i]); return 'ok'; }
-    if (q.two) { this.paint(st, st.step, want); Sfx.splash(); K.hop(st, st.cards[i], 20); }
-    st.step++;
-    if (st.step >= q.seq.length) Session.submit(st, q.answer);
+    if (q.two) { this.paint(st, st.seqI, want); Sfx.splash(); K.hop(st, st.cards[i], 20); }
+    st.seqI++;
+    if (st.seqI >= q.seq.length) Session.submit(st, q.answer);
     return 'ok';
   },
   async reveal(st) {
@@ -6913,18 +6915,18 @@ const QPaint = Object.assign({}, ReadHint, {
   /* explain: the shape takes the chosen paint for a moment (blue ring on that pot: this is what it makes); then the right pot in
      gold and the shape takes ITS paint, the card is said */
   async explain(st) {
-    const q = st.q, k = q.opts[st.tapped], step = Math.min(st.step || 0, q.seq.length - 1), want = q.seq[step], c = COLORS[k] || COLORS_X[k];
+    const q = st.q, k = q.opts[st.tapped], step = Math.min(st.seqI || 0, q.seq.length - 1), want = q.seq[step], c = COLORS[k] || COLORS_X[k];
     const sh = st.shapes[step];
     await EX.cards(st, want, { right: want, pics: false, lines: [q.noun ? q.text.split('，')[step] + '！' : ITEM[want].line],
       chosen: async () => { if (!sh || !c) return; sh.innerHTML = ''; sh.appendChild(W3X.svgShape(sh._kind, c)); await EX.wait(st, 500); },
       why: async () => { this.paint(st, step, want); if (st.readEl) EX.ring(st, st.readEl, 'right', 6); } });
   },
   next(st, strat) {           /* the pot for the shape to paint now (right) or another pot (wrong) */
-    const q = st.q, c = q.seq[st.step || 0]; if (!st.cards) return null;
+    const q = st.q, c = q.seq[st.seqI || 0]; if (!st.cards) return null;
     const i = q.opts.findIndex(k => (strat === 'wrong') !== (k === c));
     return i < 0 ? null : { g: 'tap', p: { id: 'card' + i } };
   },
-  snap(st) { return { opts: st.opts || null, step: st.step || 0, peeked: !!st.peeked }; },
+  snap(st) { return { opts: st.opts || null, step: st.seqI || 0, peeked: !!st.peeked }; },
   iconNode() { return W3X.pot('#E8413A'); },
 });
 
@@ -7029,7 +7031,7 @@ const QDo = Object.assign({}, ReadHint, {
   itemsOf(st) { return st.q.seq.slice(1); },
   async present(st) {
     const q = st.q;
-    st.step = 0; st.peeked = false;
+    st.seqI = 0; st.peeked = false;
     W3X.readCard(st, q.seq.join('，'), q.seq.length > 2 ? 96 : 110); K.pop(st, st.readEl);
     K.cards(st, q.opts.map(k => { const i = img(OBJURL(ITEM[k].obj), ''); Object.assign(i.style, { width: '88%', height: '88%', objectFit: 'contain', pointerEvents: 'none' }); return i; }), q.opts, Object.assign({ size: 160, gap: 24, cls: 'pic' }, this.cardSpot()));
     this.place(st);
@@ -7042,25 +7044,25 @@ const QDo = Object.assign({}, ReadHint, {
     if (p.id === 'read') { W3X.peek(st); return 'ok'; }
     const i = K.cardIndex(p.id); if (i < 0) return false;
     const q = st.q;
-    if (q.opts[i] !== q.seq[st.step]) { st.tapped = i; Session.submit(st, 'bad:' + q.opts[i]); return 'ok'; }
-    st.step++; Sfx.place(); K.hop(st, st.cards[i], 26); st.cards[i].classList.add('hi');
+    if (q.opts[i] !== q.seq[st.seqI]) { st.tapped = i; Session.submit(st, 'bad:' + q.opts[i]); return 'ok'; }
+    st.seqI++; Sfx.place(); K.hop(st, st.cards[i], 26); st.cards[i].classList.add('hi');
     const a = st.G.actors.hawkeye; if (a) a.react('aim');
-    if (st.step >= q.seq.length) Session.submit(st, q.answer);
+    if (st.seqI >= q.seq.length) Session.submit(st, q.answer);
     return 'ok';
   },
   async reveal(st) { Sfx.reveal(); st.q.seq.forEach(k => Voice.say(ITEM[k].line, { tag: 'summary' })); this.cheerAll(st); await st.scope.guard(Voice.afterSay(200)); },
   async feedback(st) { const e = st.cards[st.tapped]; if (e) K.wiggle(st, e); const k = st.q.opts[st.tapped]; if (ITEM[k]) Voice.say(ITEM[k].line, { tag: 'wrong' }); await st.scope.wait(900); },
   /* explain: the chosen picture in blue (its line was just said); the picture doing the command due now in gold, said */
   async explain(st) {
-    const want = st.q.seq[Math.min(st.step || 0, st.q.seq.length - 1)];
+    const want = st.q.seq[Math.min(st.seqI || 0, st.q.seq.length - 1)];
     await EX.cards(st, st.q.opts[st.tapped], { right: want, pics: false, lines: ['对的是这张', ITEM[want].line], why: async () => { if (st.readEl) EX.ring(st, st.readEl, 'right', 6); } });
   },
   next(st, strat) {
     if (!st.cards) return null;
-    const want = st.q.seq[st.step || 0], i = strat === 'wrong' ? st.q.opts.findIndex(k => k !== want) : st.q.opts.indexOf(want);
+    const want = st.q.seq[st.seqI || 0], i = strat === 'wrong' ? st.q.opts.findIndex(k => k !== want) : st.q.opts.indexOf(want);
     return { g: 'tap', p: { id: 'card' + i } };
   },
-  snap(st) { return { opts: st.opts || null, step: st.step || 0, peeked: !!st.peeked }; },
+  snap(st) { return { opts: st.opts || null, step: st.seqI || 0, peeked: !!st.peeked }; },
   iconNode() { const d = el('div'); d.style.display = 'flex'; d.appendChild(Glyph.zh('走', 50)); return d; },
 });
 
