@@ -453,4 +453,4 @@ ALL_ISL().forEach(id => {
 function writeDecor(G) { const L = K.L(), a = G.actors[this.chars[0]]; if (a) showActor(a, L ? 96 : 600, L ? 698 : 330, L ? 190 : 140); }
 /* practice (the treasure book): any learned character / letter, written freely */
 ['zh', 'up', 'lo'].forEach(kind => writeGame({ id: 'practice:' + kind, world: '', lang: kind === 'zh' ? 'zh' : kind, bg: '', chars: [], host: 'peppa', title: '练字', intro: '练一练！', verb: '练！',
-  gen(G) { return { k: [G.item.k], answer: G.item.k }; }, bgOf: G => G.world + '_write' }));
+  gen(G) { return { k: [G.item.k], answer: G.item.k }; }, bgOf: G => (ISL[G.world] && ISL[G.world].bgs ? ISL[G.world].bgs[1] : G.world + '_write') }));

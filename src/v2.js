@@ -366,6 +366,8 @@ const WriteFallback = {
    sentence each; a tap on a character says it, the speaker reads the page (bedtime: read it to a parent) */
 const Books = {
   open() { return BOOKS.filter(b => flagged(b.after) || Store.s.all); },
+  /* 自己读 when the child knows every character of it, else 一起读 (worked out now, never scored - plan A.3, W4 §4.4) */
+  self(b) { return Array.from(b.title + b.pages.map(p => p[0]).join('')).every(c => /[。！？，]/.test(c) || (ITEM[c] && (learned(c) || Mem.passed(c) || (Mem.get(c) && Mem.get(c).b > 0)))); },
   show(id) {
     const b = BOOKS.find(x => x.id === id); if (!b) return;
     let pg = 0;
@@ -379,7 +381,7 @@ const Books = {
     const render = () => {
       page.innerHTML = '';
       const [text, sc] = b.pages[pg], vw = window.innerWidth, vh = window.innerHeight, S = Math.min(vw * 0.8, vh * 0.5);
-      const t = el('div', '', page); t.textContent = b.title + ' · ' + (pg + 1) + ' / ' + b.pages.length; Object.assign(t.style, { font: '800 22px system-ui,sans-serif', color: '#8A6A3A', textAlign: 'center', marginBottom: '8px' });
+      const t = el('div', '', page); t.textContent = b.title + ' · ' + (pg + 1) + ' / ' + b.pages.length + (this.self(b) ? '' : ' · 一起读'); Object.assign(t.style, { font: '800 22px system-ui,sans-serif', color: '#8A6A3A', textAlign: 'center', marginBottom: '8px' });
       const card = el('div', '', page); Object.assign(card.style, { background: '#fff', borderRadius: '28px', boxShadow: '0 0 0 5px #2B2118, 0 10px 0 rgba(43,33,24,.25)', padding: '10px', display: 'flex', justifyContent: 'center' }); card.appendChild(Scene.node(sc, S));
       const row = Sent.node(text, Math.min(96, vw / (text.length + 2)), -1, true); row.style.margin = '22px auto 0'; row.style.width = 'fit-content'; page.appendChild(row);
       $$('[data-ch]', row).forEach(c => tapify(c, () => { const it = ITEM[c.dataset.ch]; Voice.sayNow(it ? it.line : c.dataset.ch, { tag: 'story' }); c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2)' }, { transform: 'scale(1)' }], { duration: 300 }); }));
@@ -390,17 +392,28 @@ const Books = {
     render();
     Voice.sayNow(b.title, { tag: 'story' });
   },
+  /* one shelf: the story books, and 神笔海's rhyme and poem scrolls (W4 §4.4.7) - every one on the screen at once, the tiles
+     as big as fit (never under 120 px) */
   shelf() {
-    const list = this.open();
+    const list = this.open(), scrolls = typeof W4X.scrollItems === 'function' ? W4X.scrollItems() : [];
+    const items = BOOKS.map(b => ({ b, on: list.includes(b) })).concat(scrolls);
     const ov = el('div', '', document.body); ov.id = 'shelf';
-    Object.assign(ov.style, { position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(12,44,74,.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '36px', flexWrap: 'wrap' });
+    Object.assign(ov.style, { position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(12,44,74,.72)', display: 'flex', alignItems: 'center', justifyContent: 'center' });
     tapify(ov, () => ov.remove(), { silent: true });
-    BOOKS.forEach(b => {
-      const on = list.includes(b), c = el('div', 'btn', ov);
-      Object.assign(c.style, { position: 'relative', width: '220px', height: '260px', background: on ? '#FFF6E2' : 'rgba(255,255,255,.4)', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' });
-      const sc = Scene.node(b.cover || b.pages[0][1], 150); if (!on) sc.style.filter = 'grayscale(1) brightness(.6)'; c.appendChild(sc);
-      const t = el('div', '', c); t.textContent = b.title; Object.assign(t.style, { font: '900 30px system-ui,sans-serif', color: INK });
-      tapify(c, () => { if (!on) { Voice.sayNow('插了旗就能读', { tag: 'map' }); return; } ov.remove(); this.show(b.id); });
+    const vw = window.innerWidth, vh = window.innerHeight, n = items.length, G = 22;
+    let best = { cols: 1, s: 0 };
+    for (let cols = 1; cols <= n; cols++) { const rows = Math.ceil(n / cols), s = Math.min(220, (vw - 40 - (cols - 1) * G) / cols, (vh - 60 - (rows - 1) * G) / rows / 1.18); if (s > best.s) best = { cols, s }; }
+    const S = Math.max(120, Math.floor(best.s)), grid = el('div', '', ov);
+    Object.assign(grid.style, { display: 'grid', gridTemplateColumns: 'repeat(' + best.cols + ',' + S + 'px)', gap: G + 'px', pointerEvents: 'none' });
+    items.forEach(it => {
+      const on = it.on, c = el('div', 'btn', grid);
+      Object.assign(c.style, { position: 'relative', width: S + 'px', height: Math.round(S * 1.18) + 'px', background: on ? (it.scroll ? '#F6EEDC' : '#FFF6E2') : 'rgba(255,255,255,.4)', borderRadius: '22px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', pointerEvents: 'auto' });
+      c.dataset.shelf = it.scroll ? it.scroll.id : it.b.id;
+      const sc = it.scroll ? it.cover(Math.round(S * 0.7)) : Scene.node(it.b.cover || it.b.pages[0][1], Math.round(S * 0.66)); if (!on) sc.style.filter = 'grayscale(1) brightness(.6)'; c.appendChild(sc);
+      const t = el('div', '', c); t.textContent = it.scroll ? it.scroll.title : it.b.title; Object.assign(t.style, { font: '900 ' + Math.round(S * 0.13) + 'px system-ui,sans-serif', color: INK, whiteSpace: 'nowrap' });
+      const w4 = !it.scroll && it.b.after && ISL[it.b.after] && ISL[it.b.after].w === 'w4', tag = it.scroll ? it.kind : on && w4 ? (this.self(it.b) ? '自己读' : '一起读') : '';
+      if (tag) { const g = el('div', '', c); g.textContent = tag; Object.assign(g.style, { position: 'absolute', top: '6px', right: '6px', font: '800 ' + Math.max(13, Math.round(S * 0.08)) + 'px system-ui,sans-serif', color: '#fff', background: tag === '自己读' ? '#3E9E4E' : '#C8762A', borderRadius: '10px', padding: '2px 7px' }); }
+      tapify(c, () => { if (!on) { Voice.sayNow('插了旗就能读', { tag: 'map' }); return; } ov.remove(); if (it.scroll) W4X.showScroll(it.scroll.id); else this.show(it.b.id); });
     });
     Voice.sayNow('故事书', { tag: 'map' });
   },
@@ -411,7 +424,9 @@ const Books = {
    one fixed order. A flag also turns one card. No chance, no streak, nothing lost by missing a day. */
 const CARDS = ['ultraman', 'optimus', 'ironman', 'spiderman', 'captain', 'bumblebee', 'zero', 'hulk', 'thor', 'wukong', 'panther', 'miles',
   'gourd1', 'gourd2', 'gourd3', 'gourd4', 'gourd5', 'gourd6', 'gourd7', 'catboy', 'owlette', 'gekko', 'widow', 'hawkeye',
-  'chase', 'marshall', 'rubble', 'ryder', 'bajie', 'shaseng', 'dragon_horse', 'peppa', 'george', 'bluey', 'bingo', 'kaiju1'];
+  'chase', 'marshall', 'rubble', 'ryder', 'bajie', 'shaseng', 'dragon_horse', 'peppa', 'george', 'bluey', 'bingo', 'kaiju1',
+  /* 神笔海 (docs/W4-DESIGN.md §10.7): 15 more, all pictures as they are (no new drawing) - the ones already turned stay turned */
+  'daddy_pig', 'mummy_pig', 'bandit', 'chilli', 'grandpa', 'tangseng', 'kaiju2', 'skye', 'rocky', 'zuma', 'luna_girl', 'romeo', 'pj_robot', 'snake', 'scorpion'];
 const Keys = {
   avail() { const k = Store.s.key; return k.day !== DAY(); },
   /* the key round: the most overdue items first (A.13); a long break -> the first day back is free */
@@ -513,13 +528,12 @@ const Report = {
   export() { return btoa(unescape(encodeURIComponent(JSON.stringify(Store.s)))); },
   import(txt) { const o = JSON.parse(decodeURIComponent(escape(atob(txt.trim())))); Store.s = Store.validate(o); Store.save(); },
 };
-/* the parent's red dot: the child has reached the last installed world, or less than 14 days of new islands left at the
-   pace of the last week (A.22) */
+/* the parent's red dot: fewer than 7 islands left without their flag, or less than 14 days of new islands left at the pace of
+   the last week (A.22). (It used to light up when the child entered the last installed world - with 神笔海 open right after
+   晨光海 that would be at once, docs/W4-DESIGN.md §10.5) */
 const Supply = {
   low() {
-    const last = Object.keys(ORDER).slice(-1)[0];
-    if (ORDER[last].some(id => Store.w(id).unlocked)) return true;
     const d = DAY(), recent = (Store.s.flagDays || []).filter(x => x > d - 7).length, left = ALL_ISL().filter(id => !flagged(id)).length;
-    return recent > 0 && left / (recent / 7) < 14;
+    return left < 7 || (recent > 0 && left / (recent / 7) < 14);
   },
 };

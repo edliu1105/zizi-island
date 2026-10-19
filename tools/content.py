@@ -329,6 +329,298 @@ OBJ = {
 for _o in 'strawberry banana whale dino polarbear eat drink look walk come bat fan pan map mop top web jam log'.split():
     OBJ.setdefault(_o, 'see tools/w3_batches.py')
 
+# ================================================================ world 4 · 神笔海 (docs/W4-DESIGN.md): following the 2024
+# 统编一上 order (学而思 L1's weekly form). Package 0 writes ALL of its data here once; the island files (src/w4/<id>.js)
+# only read it. tools/build.py puts the islands that are live (tools/w4_live.json) on the first screen and the big tables
+# into the lazily loaded assets/js/w4.js (W4D).
+W4 = [
+    dict(id='ultra4', name='天地岛', host='ultraman', crew=['ultraman', 'zero', 'kaiju1'], color='#E23B3B', color2='#4FA3E8', hi='守护天和地！', base=2, write='天土',
+         chars=[('天', '天，天空的天！', 'sky', 'sky'), ('地', '地，地球的地！', 'earth', 'earth'), ('金', '金，金子的金！', 'gold', 'gold'), ('土', '土，泥土的土！', 'soil', 'soil'), ('川', '川，山川的川！', 'river', 'river')], letters=[]),
+    dict(id='peppa4', name='小医院', host='peppa', crew=['peppa', 'george', 'mummy_pig', 'daddy_pig'], color='#FF8DB3', color2='#7BC8F6', hi='佩奇看医生！', base=2, write='耳头',
+         chars=[('耳', '耳，耳朵的耳！', 'ear', 'ear'), ('足', '足，足球的足！', 'foot', 'foot'), ('头', '头，大头的头！', 'head', 'head'), ('牙', '牙，牙齿的牙！', 'tooth', 'tooth'), ('心', '心，爱心的心！', 'heart', 'heart')], letters=[]),
+    dict(id='pj4', name='月光乐园', host='catboy', crew=['catboy', 'owlette', 'gekko'], color='#3A5CC0', color2='#FFD23C', hi='月光下出发！', base=2, write='坐飞',
+         chars=[('坐', '坐，坐下的坐！', 'sit', 'sit'), ('站', '站，站好的站！', 'stand', 'stand'), ('飞', '飞，飞机的飞！', 'plane', 'fly'), ('说', '说，说话的说！', 'talk', 'talk'), ('听', '听，听歌的听！', 'listen', 'listen')], letters=[]),
+    dict(id='xiyou4', name='水帘洞', host='wukong', crew=['wukong', 'tangseng', 'bajie', 'shaseng'], color='#F5B324', color2='#3FAE9A', hi='水帘洞见！', base=2, write='虫对',
+         chars=[('对', '对，做对的对！', 'check', 'correct'), ('雪', '雪，下雪的雪！', 'snow', 'snow'), ('虫', '虫，小虫的虫！', 'insect', 'bug'), ('鱼', '鱼，小鱼的鱼！', 'fish', 'fish'), ('草', '草，小草的草！', 'grass', 'grass')], letters=[]),
+    dict(id='huluwa4', name='葫芦洞', host='gourd2', crew=['gourd2', 'grandpa', 'gourd3', 'gourd6'], color='#46C27A', color2='#A0522D', hi='葫芦洞开啦！', base=2, write='开关',
+         chars=[('多', '多，多少的多！', 'many', 'many'), ('少', '少，多少的少！', 'few', 'few'), ('开', '开，打开的开！', 'chest_open', 'open'), ('关', '关，关上的关！', 'chest_shut', 'shut'), ('去', '去，出去的去！', 'goaway', 'go')], letters=[]),
+    dict(id='paw4', name='十字路口', host='chase', crew=['chase', 'ryder', 'marshall', 'rubble'], color='#E8554A', color2='#2E6FD8', hi='路口出动！', base=2, write='左右',
+         chars=[('左', '左，左边的左！', 'leftsign', 'left'), ('右', '右，右边的右！', 'rightsign', 'right'), ('中', '中，中间的中！', 'middle', 'middle'), ('前', '前，前面的前！', 'front', 'front'), ('后', '后，后面的后！', 'back', 'back')], letters=[]),
+    dict(id='bluey4', name='大家庭', host='bluey', crew=['bluey', 'bingo', 'bandit', 'chilli'], color='#6BB9F2', color2='#F59A4A', hi='全家都来啦！', base=2, write='女子',
+         chars=[('爷', '爷，爷爷的爷！', '@grandpa', 'grandpa'), ('奶', '奶，奶奶的奶！', 'grandma', 'grandma'), ('妹', '妹，妹妹的妹！', '@bingo', 'little sister'), ('女', '女，女孩的女！', 'girl', 'girl'), ('子', '子，孩子的子！', 'baby', 'child')], letters=[]),
+]
+# §4.1: read, not written (the island writes its two `write` characters; the other three are read, as in 彩虹海)
+NOWRITE4 = '地金川足牙心站说听雪鱼草多少去中前后爷奶妹'
+# the grandma picture may be swapped for milk by the parent (§13.5): both lines are recorded, the data picks one
+NAI_MILK = ('奶，牛奶的奶！', 'milk')
+# §3.3: the four slots' games, their friends on the stage (host first) and the sounds of the island
+CASTS4 = {'ultra4': ['ultraman', 'zero'], 'peppa4': ['peppa', 'george'], 'pj4': ['catboy', 'owlette'], 'xiyou4': ['wukong', 'tangseng'],
+          'huluwa4': ['gourd2', 'grandpa'], 'paw4': ['chase', 'ryder'], 'bluey4': ['bluey', 'bingo']}
+AMB4 = {'ultra4': 'city', 'peppa4': 'rain', 'pj4': 'crickets', 'xiyou4': 'falls', 'huluwa4': 'wind', 'paw4': 'city', 'bluey4': 'crickets'}
+SKIN4 = {'ultra4': 'avengers', 'peppa4': 'peppa', 'pj4': 'avengers', 'xiyou4': 'xiyou', 'huluwa4': 'huluwa', 'paw4': 'paw', 'bluey4': 'bluey'}
+# §8.3: the fallback of every picture (used by tools/build.py while the new one is not there yet)
+FALLBACK4 = {
+    'bg/map_w4': 'bg/map_w3', 'isl/gate4': 'isl/gate3', 'isl/brush4': 'props/brush', 'isl/fest4': 'isl/fest1', 'bg/finale_w4': 'bg/finale_w1',
+    'isl/ultra4': 'isl/ultra', 'isl/peppa4': 'isl/peppa2', 'isl/pj4': 'isl/pj', 'isl/xiyou4': 'isl/xiyou', 'isl/huluwa4': 'isl/huluwa2', 'isl/paw4': 'isl/paw', 'isl/bluey4': 'isl/bluey2',
+    'ultra4': ('hulk3_find', 'ultra_write', 'ultra2_abc', 'ultra2_quiz'), 'peppa4': ('peppa2_find', 'peppa2_write', 'peppa2_abc', 'peppa2_quiz'),
+    'pj4': ('pj_find', 'pj_write', 'pj_abc', 'pj_quiz'), 'xiyou4': ('xiyou_find', 'xiyou_write', 'xiyou_abc', 'xiyou_quiz'),
+    'huluwa4': ('huluwa2_find', 'huluwa2_write', 'huluwa2_abc', 'huluwa2_quiz'), 'paw4': ('paw_find', 'paw_write', 'paw_abc', 'paw_quiz'),
+    'bluey4': ('bluey2_find', 'bluey2_write', 'bluey2_abc', 'bluey2_quiz'),
+    'obj/soil': 'props/mound',
+}
+
+
+# ---------------------------------------------------------------- scenes of world 4 (§4.4): sky / water / ground / two groups
+def sky(o, k=.42): return [('sky', .5, .5, .96), (o, .5, .4, k)]
+def water(o, k=.42): return [('river', .5, .55, .94), (o, .5, .5, k)]
+def ground(o, k=.46): return [('soil', .5, .76, .62), (o, .5, .42, k)]
+def split(a, na, b, nb):
+    """na of a on the left half, nb of b on the right half (鸟多，鱼少)"""
+    def half(o, n, x0):
+        cols = 2 if n > 2 else 1; rows = (n + cols - 1) // cols; k = .18 if n > 2 else .24
+        return [(o, round(x0 + (.12 if cols > 1 else 0) * (1 if i % cols else -1) * (cols > 1), 3), round(.55 + (i // cols - (rows - 1) / 2) * .2, 3), k) for i in range(n)]
+    return half(a, na, .27) + half(b, nb, .73)
+
+
+# 读一读 (§4.4.1): 14 new sentences, the right picture and four that are clearly NOT it (one relation or one thing differs)
+READ4 = [
+    ('鱼在水中。', water('fish'), [on('fish', 'mountain'), water('bird'), on('fish', 'tree'), on('fish', 'car')]),
+    ('鸟飞上天。', sky('bird'), [ground('bird'), sky('fish'), sky('cow'), water('bird')]),
+    ('山上有雪。', on('snow', 'mountain'), [under('snow', 'mountain'), on('fire', 'mountain'), on('snow', 'car'), on('grass', 'mountain')]),
+    ('地上有草。', ground('grass'), [sky('grass'), ground('snow'), ground('fire'), ground('fish')]),
+    ('小虫在草上。', on('insect', 'grass'), [on('insect', 'cup'), on('bird', 'grass'), on('insect', 'snow'), on('insect', 'door')]),
+    ('牛在左，马在右。', pair('cow', 'horse'), [pair('horse', 'cow'), pair('cow', 'cow'), pair('sheep', 'horse'), pair('cow', 'sheep')]),
+    ('我坐下。', alone('sit', .8), [alone('stand', .8), alone('walk', .8), alone('talk', .8), alone('listen', .8)]),
+    ('我站在门口。', [('stand', .32, .6, .62), ('door', .74, .54, .5)], [[('sit', .32, .66, .5), ('door', .74, .54, .5)], [('stand', .32, .6, .62), ('car', .74, .62, .44)],
+                                                                   [('walk', .32, .6, .62), ('door', .74, .54, .5)], [('stand', .32, .6, .62), ('mountain', .74, .5, .5)]]),
+    ('我去山上。', [('goaway', .3, .62, .6), ('mountain', .72, .42, .5)], [[('come', .3, .62, .6), ('mountain', .72, .42, .5)], [('goaway', .3, .62, .6), ('water', .72, .5, .44)],
+                                                                      [('sit', .5, .74, .44), ('mountain', .5, .34, .56)], [('look', .3, .62, .6), ('mountain', .72, .42, .5)]]),
+    ('门开了。', alone('door_open'), [alone('door'), alone('chest_open'), alone('umbrella'), alone('lamp')]),
+    ('门关了。', alone('door'), [alone('door_open'), alone('chest_shut'), alone('umbrella'), alone('car')]),
+    ('鸟多，鱼少。', split('bird', 5, 'fish', 2), [split('bird', 2, 'fish', 5), split('bird', 3, 'fish', 3), split('bird', 5, 'cow', 2), split('bird', 1, 'fish', 1)]),
+    ('妹妹有鱼。', who('bingo', 'fish'), [who('peppa', 'fish'), who('bingo', 'bird'), who('george', 'fish'), who('bingo', 'umbrella')]),
+    ('爷爷有车。', who('grandpa', 'car'), [who('daddy_pig', 'car'), who('grandpa', 'umbrella'), who('george', 'car'), who('grandpa', 'horse')]),
+]
+# story books (§4.4.4): 自己读 / 一起读 is worked out from the characters the child knows (Books.self, src/v2.js)
+BOOKS4 = [
+    dict(id='b7', title='天上地下', after='ultra4', cover=sky('sun'), pages=[
+        ('天上有日。', sky('sun')), ('天上有月。', sky('moon')), ('天上有云。', sky('cloud', .5)),
+        ('地上有山。', [('grass', .5, .82, .9), ('mountain', .5, .44, .64)]), ('地上有水。', alone('river', .82)), ('山下有金！', under('gold', 'mountain'))]),
+    dict(id='b8', title='我的头', after='peppa4', pages=[      # (not 小医院: 医 院 are not taught - the book could never be 自己读)
+        ('这是我的头。', alone('head')), ('这是我的耳。', alone('ear')), ('这是我的口。', alone('mouth')),
+        ('这是我的牙。', alone('tooth')), ('这是我的手。', alone('hand')), ('这是我的足！', alone('foot'))]),
+    dict(id='b9', title='开门关门', after='huluwa4', pages=[
+        ('门开了。', alone('door_open')), ('牛来了。', [('door_open', .3, .55, .6), ('cow', .74, .64, .4)]), ('牛多了。', many('cow', 5)),
+        ('门关了。', alone('door')), ('牛去了。', [('door', .3, .55, .6), ('cow', .76, .7, .26)]), ('牛少了！', many('cow', 2))]),
+    dict(id='b10', title='一家人', after='bluey4', pages=[
+        ('这是爷爷。', who('grandpa')), ('这是奶奶。', alone('grandma', .8)), ('这是妹妹。', who('bingo')),
+        ('爷爷坐下。', [('@grandpa', .5, .58, .8)]), ('奶奶坐下。', alone('grandma', .8)),
+        ('我们一家人！', [('@grandpa', .18, .6, .5), ('grandma', .4, .6, .5), ('person', .62, .64, .44), ('@bingo', .83, .68, .36)])]),
+]
+# 儿歌卷 7 (one an island, after its flag) + 古诗卷 3 (after ③ ⑤ ⑦): read together, never scored. A line of the scroll is a
+# breath (said as one recording, <= 8 characters); the picture is composed from things the app already has
+SCROLLS4 = [
+    dict(id='r1', kind='rhyme', title='金木水火土', after='ultra4', pic=[('sun', .28, .3, .3), ('moon', .72, .3, .3), ('mountain', .5, .7, .56)],
+         lines=['一二三四五，', '金木水火土。', '天地分上下，', '日月照今古。']),
+    dict(id='r2', kind='rhyme', title='五官歌', after='peppa4', pic=[('head', .5, .45, .6), ('heart', .82, .78, .26)],
+         lines=['头，点点头。', '耳，听一听。', '牙，白又白。', '足，走一走。', '心，好开心！']),
+    dict(id='r3', kind='rhyme', title='站如松', after='pj4', pic=[('stand', .3, .55, .56), ('sit', .72, .6, .5)],
+         lines=['站如松，', '坐如钟。', '行如风，', '卧如弓。']),
+    dict(id='r4', kind='rhyme', title='对韵歌', after='xiyou4', pic=[('cloud', .25, .25, .3), ('rain', .72, .25, .3), ('snow', .25, .7, .28), ('insect', .72, .7, .26)],
+         lines=['云对雨，', '雪对风。', '花对树，', '鸟对虫。', '山清对水秀，', '柳绿对桃红。']),
+    dict(id='r5', kind='rhyme', title='大小多少', after='huluwa4', pic=[('cow', .3, .52, .46), ('duck', .74, .6, .3)],
+         lines=['一个大，', '一个小，', '一头黄牛一只猫。', '一边多，', '一边少，', '一群鸭子一只鸟。']),
+    dict(id='r6', kind='rhyme', title='影子', after='paw4', pic=[('walk', .38, .55, .6), ('dog', .74, .66, .34)],
+         lines=['影子在前，', '影子在后，', '影子常常跟着我，', '就像一条小黑狗。', '影子在左，', '影子在右，', '影子常常陪着我，', '它是我的好朋友。']),
+    dict(id='r7', kind='rhyme', title='一家人', after='bluey4', pic=[('@grandpa', .16, .6, .46), ('grandma', .38, .6, .46), ('@daddy_pig', .62, .6, .46), ('@mummy_pig', .84, .6, .46)],
+         lines=['爷爷奶奶，', '爸爸妈妈，', '哥哥姐姐，', '弟弟妹妹，', '我们是一家。']),
+    dict(id='p1', kind='poem', title='咏鹅', after='pj4', pic=[('river', .5, .6, .9), ('goose', .5, .46, .46)],
+         lines=['鹅，鹅，鹅，', '曲项向天歌。', '白毛浮绿水，', '红掌拨清波。']),
+    dict(id='p2', kind='poem', title='画', after='huluwa4', pic=[('mountain', .3, .4, .46), ('river', .7, .66, .5), ('flower', .22, .78, .26), ('bird', .74, .28, .24)],
+         lines=['远看山有色，', '近听水无声。', '春去花还在，', '人来鸟不惊。']),
+    dict(id='p3', kind='poem', title='静夜思', after='bluey4', pic=[('bed', .5, .7, .6), ('moon', .72, .24, .3)],
+         lines=['床前明月光，', '疑是地上霜。', '举头望明月，', '低头思故乡。']),
+]
+SCROLL_KIND = {'rhyme': '儿歌卷', 'poem': '古诗卷'}
+
+# ---------------------------------------------------------------- English (§4.3, plan A.5): word families, sight words, sentences
+# (word, picture, clear): clear = a 4-year-old names the picture with this very word (used where the word is read silently)
+WORDS4 = [('cat', 'cat', 1), ('hat', 'hat', 1), ('bat', 'bat', 1), ('mat', 'mat', 1), ('rat', 'rat', 1),
+          ('fan', 'fan', 1), ('pan', 'pan', 1), ('van', 'van', 1), ('man', 'man', 1), ('can', 'tincan', 1),
+          ('map', 'map', 1), ('cap', 'cap', 1), ('pig', 'pig', 1), ('wig', 'wig', 1), ('fig', 'fig', 0),
+          ('bug', 'insect', 1), ('rug', 'rug', 1), ('mug', 'mug', 1), ('jug', 'jug', 0),
+          ('mop', 'mop', 1), ('top', 'top', 0), ('hop', 'hop', 0), ('pen', 'pen', 1), ('hen', 'hen', 1), ('ten', 'num10', 0),
+          ('net', 'net', 0), ('jet', 'jet', 1), ('sun', 'sun', 1), ('bun', 'bun', 1), ('run', 'run', 0),
+          ('box', 'box', 1), ('fox', 'fox', 1), ('dog', 'dog', 1), ('log', 'log', 1), ('bed', 'bed', 1)]
+# real consonant-vowel-consonant words (变身换字母: a word the child makes is said when it is one; otherwise "这个不是词")
+DICT4 = ('bad bag ban bat bed beg bet bib bid big bin bit bog bop box bud bug bun bus but cab can cap cat cob cod cog cop cot cub cup cut dad dam den did dig dim din dip dog dot dug fad fan fat fed fen fig fin fit fix '
+         'fog fox fun fur gap gas get gig gum gun gut had ham has hat hen hid him hip his hit hog hop hot hug hum hut jab jam jet jig job jog jot jug jut kid kin kit lab lad lag lap led leg let lid lip lit log lot mad man map mat '
+         'men met mid mix mob mom mop mud mug nab nag nap net nip nod not nun nut pad pal pan pat peg pen pet pig pin pit pod pop pot pub pug pun pup put rag ram ran rap rat red rib rid rig rim rip rob rod rot rub rug rum run rut '
+         'sad sag sap sat set sip sit sob sod sun tab tag tan tap ten tin tip top tub tug van vat vet wag web wet wig win wit yak yam yap yet zap zip').split()
+# Dolch pre-primer sight words (+ at, under, by: the design's own games read them - ③-3 a / at, ⑦-3 under / by)
+SIGHT4 = ('I a the see my is it in on up go can look me we and you big little down come not one two three red blue yellow here said play'
+          ' at under by').split()
+# 中英对对碰 (§6 ⑤-3): the sight words that mean a character the child knows, and a picture for level 1
+BRIDGE4 = [('big', '大', 'big'), ('little', '小', 'small'), ('up', '上', 'up'), ('down', '下', 'down'), ('go', '去', 'goaway'), ('come', '来', 'come'),
+           ('look', '看', 'look'), ('I', '我', None), ('you', '你', None), ('is', '是', None), ('not', '不', None), ('one', '一', 'num1'),
+           ('two', '二', 'num2'), ('three', '三', 'num3'), ('red', '红', 'strawberry'), ('blue', '蓝', 'whale'), ('yellow', '黄', 'banana')]
+# sentences to read (point-as-read ③-3; flash words ④-3): <= 6 words, every word known (WORDS3 / WORDS4 / SIGHT4, a plural s)
+ESENT4 = [
+    ('I see.', alone('look', .8)), ('I can hop.', alone('hop')), ('I can run.', alone('run')), ('Look up!', [('look', .4, .62, .66), ('sun', .78, .2, .3)]),
+    ('A big pig.', big('pig')), ('A red hat.', alone('hat')), ('Come and play!', alone('come', .8)), ('A little rat.', small('rat')),
+    ('I see a cat.', [('look', .3, .6, .6), ('cat', .75, .62, .4)]), ('The pig is big.', big('pig')), ('The sun is up.', on('sun', 'mountain')),
+    ('My hat is red.', alone('hat')), ('Look at the hen.', alone('hen')), ('The cup is blue.', alone('cup')), ('Here is my cap.', alone('cap')),
+    ('I see a big jet.', [('look', .28, .62, .56), ('jet', .72, .34, .5)]), ('A bug is on the rug.', on('insect', 'rug')),
+    ('The cat is on the box.', on('cat', 'box')), ('I can see a man.', [('look', .3, .62, .56), ('man', .72, .6, .5)]),
+    ('It is on the box.', on('fox', 'box')), ('Is it a hen?', alone('hen')), ('The rat is little.', small('rat')),
+    ('A cat can hop.', alone('cat')), ('Go, dog, go!', alone('dog')), ('Run, man, run!', alone('man')), ('Hop, hop, hop!', alone('hop')),
+    ('A pig and a hen.', pair('pig', 'hen')), ('The cat and the dog.', pair('cat', 'dog')), ('We can play in the sun.', alone('sun')),
+    ('My mug is on the mat.', on('mug', 'mat')), ('I see three red hats.', many('hat', 3)), ('Look, a fox on a box!', on('fox', 'box')),
+    ('The hen is not big.', small('hen')), ('Two cats and a dog.', [('cat', .2, .6, .32), ('cat', .45, .6, .32), ('dog', .76, .6, .38)]),
+    ('Come and see my map.', alone('map')), ('The jet is up, up, up!', alone('jet')),
+]
+# 对不对 (§6 ⑥-3): one picture, statements true (1) or not (0); lv: 1 a phrase, 2 the X is Y, 3 how many, 4 not, 5 where
+TF4 = [
+    dict(lv=1, pic=big('pig'), s=[('A big pig.', 1), ('I see a pig.', 1), ('A little pig.', 0), ('A blue pig.', 0)]),
+    dict(lv=1, pic=small('cat'), s=[('A little cat.', 1), ('I see a cat.', 1), ('A big cat.', 0), ('A red cat.', 0)]),
+    dict(lv=1, pic=alone('hat'), s=[('A red hat.', 1), ('I see a hat.', 1), ('A blue hat.', 0), ('A yellow hat.', 0)]),
+    dict(lv=1, pic=alone('cup'), s=[('A blue cup.', 1), ('I see a cup.', 1), ('A red cup.', 0), ('A yellow cup.', 0)]),
+    dict(lv=1, pic=big('dog'), s=[('A big dog.', 1), ('I see a dog.', 1), ('A little dog.', 0), ('A big hen.', 0)]),
+    dict(lv=2, pic=big('pig'), s=[('The pig is big.', 1), ('It is a pig.', 1), ('The pig is little.', 0), ('It is a dog.', 0)]),
+    dict(lv=2, pic=alone('sun'), s=[('The sun is yellow.', 1), ('It is the sun.', 1), ('The sun is blue.', 0), ('It is a bun.', 0)]),
+    dict(lv=2, pic=alone('cup'), s=[('The cup is blue.', 1), ('It is a cup.', 1), ('The cup is red.', 0), ('It is a cap.', 0)]),
+    dict(lv=2, pic=small('hen'), s=[('The hen is little.', 1), ('It is a hen.', 1), ('The hen is big.', 0), ('It is a pen.', 0)]),
+    dict(lv=3, pic=many('cat', 3), s=[('I see three cats.', 1), ('I see cats.', 1), ('I see two cats.', 0), ('I see one cat.', 0)]),
+    dict(lv=3, pic=many('hat', 2), s=[('I see two hats.', 1), ('I see hats.', 1), ('I see three hats.', 0), ('I see one hat.', 0)]),
+    dict(lv=3, pic=many('dog', 1), s=[('I see one dog.', 1), ('I see a dog.', 1), ('I see two dogs.', 0), ('I see three dogs.', 0)]),
+    dict(lv=3, pic=many('cup', 3), s=[('I see three cups.', 1), ('I see cups.', 1), ('I see one cup.', 0), ('I see two cups.', 0)]),
+    dict(lv=4, pic=small('cat'), s=[('The cat is not big.', 1), ('It is not a dog.', 1), ('The cat is not little.', 0), ('It is not a cat.', 0)]),
+    dict(lv=4, pic=big('pig'), s=[('The pig is not little.', 1), ('It is not a hen.', 1), ('The pig is not big.', 0), ('It is not a pig.', 0)]),
+    dict(lv=4, pic=alone('hat'), s=[('The hat is not blue.', 1), ('It is not a cap.', 1), ('The hat is not red.', 0), ('It is not a hat.', 0)]),
+    dict(lv=4, pic=alone('cup'), s=[('The cup is not red.', 1), ('It is not a mug.', 1), ('The cup is not blue.', 0), ('It is not a cup.', 0)]),
+    dict(lv=5, pic=on('cat', 'box'), s=[('The cat is on the box.', 1), ('The cat is not in the box.', 1), ('The cat is in the box.', 0), ('The cat is under the box.', 0)]),
+    dict(lv=5, pic=pair('cat', 'box', .44, .5), s=[('The cat is by the box.', 1), ('The cat is not on the box.', 1), ('The cat is on the box.', 0), ('The cat is in the box.', 0)]),
+    dict(lv=5, pic=on('hat', 'bed'), s=[('The hat is on the bed.', 1), ('The hat is not under the bed.', 1), ('The hat is under the bed.', 0), ('The hat is in the box.', 0)]),
+    dict(lv=5, pic=under('dog', 'bed'), s=[('The dog is under the bed.', 1), ('The dog is not on the bed.', 1), ('The dog is on the bed.', 0), ('The dog is in the box.', 0)]),
+]
+# 照句子摆一摆 (§6 ⑦-3): five things, three places, four relations; every place a thing can really be put
+PLACE4_THINGS = [('cat', 'cat'), ('dog', 'dog'), ('hat', 'hat'), ('cup', 'cup'), ('bug', 'insect')]
+PLACE4_SPOTS = [('in', 'box'), ('on', 'bed'), ('on', 'box'), ('on', 'mat'), ('under', 'bed'), ('by', 'bed'), ('by', 'box'), ('by', 'mat')]
+PLACE4 = ['The %s is %s the %s.' % (t, p, s) for t, _ in PLACE4_THINGS for p, s in PLACE4_SPOTS]
+
+# ---------------------------------------------------------------- Chinese words, sentences and relations of the challenges
+# 摘桃找词 (§6 ④-1): real words; (word, picture or '') - level 1 asks only words with a picture
+WORDS_ZH4 = [('天上', ''), ('地上', ''), ('天下', ''), ('地下', ''), ('山上', ''), ('山下', ''), ('上天', ''), ('大地', ''), ('土地', 'soil'), ('天地', ''), ('山川', ''),
+             ('金鱼', 'fish'), ('大鱼', ''), ('小鱼', ''), ('鱼头', ''), ('小虫', 'insect'), ('草地', 'grass'), ('小草', ''), ('雪地', ''), ('大雪', 'snow'), ('小雪', ''), ('雪山', 'mountain'), ('水草', ''),
+             ('火山', 'volcano'), ('山水', ''), ('大火', 'fire'), ('门口', ''), ('人口', ''), ('山口', ''), ('石头', 'stone'), ('木头', 'log'), ('牛头', ''), ('马头', ''), ('大头', 'head'),
+             ('手心', 'hand'), ('小心', ''), ('人心', ''), ('月牙', 'moon'), ('坐下', 'sit'), ('听说', ''),
+             ('上下', ''), ('大小', ''), ('日月', 'bright'), ('牛马', ''), ('大人', ''), ('小人', ''), ('多少', ''), ('开关', ''), ('开门', 'door_open'), ('关门', 'door'),
+             ('大门', ''), ('小门', ''), ('左手', ''), ('右手', ''), ('左右', ''), ('前后', ''), ('爷爷', '@grandpa'), ('奶奶', 'grandma'), ('妹妹', '@bingo'), ('下山', ''), ('上山', ''),
+             ('对门', ''), ('不对', ''), ('对了', '')]
+# level 5: three characters (the others differ in one character or the order)
+WORDS_ZH4_3 = [('小金鱼', 'fish'), ('大金鱼', ''), ('大雪山', 'mountain'), ('小雪山', ''), ('小草地', 'grass'), ('大草地', ''), ('大火山', 'volcano'), ('小火山', ''),
+               ('大石头', 'stone'), ('小石头', ''), ('大木头', 'log'), ('小木头', '')]
+# 哪句说得通 (§6 ⑦-4): a first half, the ending that makes sense, four that are impossible (funny, not just unusual; only harmless
+# impossible places - never fire or danger, never true in some season, never 虫牙 - package C's review 2026-10-18). subj: the
+# picture of the first half; ENDPIC4: what an ending's place looks like (the funny picture of a wrong sentence is composed)
+SENSE4 = [
+    # only 晨光海 + 神笔海 characters (no 在 是 的 了)
+    dict(pre='鸟飞', ok='上天。', no=['上牙。', '上米。', '上月。', '下石中。'], subj='bird'),
+    dict(pre='马去', ok='山上。', no=['天上。', '牙上。', '耳中。', '米中。'], subj='horse'),
+    dict(pre='爷爷', ok='坐下。', no=['坐牙上。', '站米上。', '坐耳上。', '坐月上。'], subj='@grandpa'),
+    dict(pre='鱼', ok='去水中。', no=['去米中。', '去山上。', '坐车上。', '飞上月。'], subj='fish'),
+    dict(pre='牛', ok='站地上。', no=['站天上。', '站月上。', '站米上。', '站牙上。'], subj='cow'),
+    dict(pre='奶奶', ok='坐车上。', no=['坐月上。', '站米上。', '坐牙上。', '坐耳中。'], subj='grandma'),
+    dict(pre='羊', ok='站山上。', no=['站米上。', '站月上。', '站牙上。', '站耳中。'], subj='sheep'),
+    dict(pre='小虫', ok='去草中。', no=['去月上。', '去日上。', '去金中。', '去石中。'], subj='insect'),
+    dict(pre='妹妹', ok='站门口。', no=['站月上。', '站米上。', '站牙上。', '站耳中。'], subj='@bingo'),
+    dict(pre='小鸟', ok='站木上。', no=['站米上。', '站月上。', '站耳中。', '站石中。'], subj='bird'),
+    dict(pre='车', ok='去山下。', no=['去天上。', '去月上。', '去米中。', '去牙中。'], subj='car'),
+    dict(pre='小马', ok='去草地。', no=['去月上。', '去米中。', '去牙中。', '去耳中。'], subj='horse'),
+    dict(pre='大牛', ok='去水中。', no=['飞上天。', '去米中。', '坐牙上。', '站耳上。'], subj='cow'),
+    dict(pre='爷爷坐', ok='车上。', no=['米上。', '月上。', '牙上。', '耳中。'], subj='@grandpa'),
+    dict(pre='小鸟飞', ok='上天。', no=['上牙。', '上米。', '上月。', '下石中。'], subj='bird'),
+    dict(pre='小鱼去', ok='水中。', no=['米中。', '天上。', '山上。', '牙上。'], subj='fish'),
+    # with the characters of 星光海 / 彩虹海 (asked only once they are known)
+    dict(pre='鱼在', ok='水中。', no=['天上。', '米中。', '牙上。', '石中。'], subj='fish'),
+    dict(pre='牛在', ok='地上。', no=['天上。', '米中。', '牙上。', '耳中。'], subj='cow'),
+    dict(pre='小虫在', ok='草上。', no=['月上。', '金中。', '日上。', '石中。'], subj='insect'),
+    dict(pre='鸟在', ok='天上。', no=['米中。', '牙中。', '耳中。', '金中。'], subj='bird'),
+    dict(pre='门', ok='开了。', no=['飞了。', '说了。', '听了。', '坐了。'], subj='door'),
+    dict(pre='雪是', ok='白的。', no=['红的。', '绿的。', '蓝的。', '金的。'], subj='snow'),
+    dict(pre='爸爸', ok='喝汤。', no=['喝石头。', '喝门。', '喝车。', '喝伞。'], subj='@daddy_pig'),
+    dict(pre='妈妈', ok='吃饭。', no=['吃石头。', '吃门。', '吃车。', '吃伞。'], subj='@mummy_pig'),
+    dict(pre='我', ok='看书。', no=['喝书。', '吃车。', '坐牙上。', '坐耳中。'], subj='look'),
+    dict(pre='兔子', ok='吃草。', no=['吃车。', '吃石头。', '吃门。', '吃伞。'], subj='rabbit'),
+    dict(pre='我坐', ok='车上。', no=['米上。', '月上。', '牙上。', '耳中。'], subj='sit'),
+    dict(pre='小狗', ok='在地上。', no=['在月上。', '在米上。', '在牙上。', '在耳中。'], subj='dog'),
+    dict(pre='弟弟', ok='在门口。', no=['在月上。', '在米中。', '在牙中。', '在耳上。'], subj='@george'),
+    dict(pre='小鸡', ok='吃米。', no=['吃车。', '吃门。', '吃伞。', '吃灯。'], subj='chicken'),
+]
+ENDPIC4 = {'伞': 'umbrella', '灯': 'lamp', '天': 'sky', '火': 'fire', '牙': 'tooth', '耳': 'ear', '石': 'stone', '日': 'sun', '月': 'moon', '金': 'gold', '山': 'mountain', '水': 'river',
+           '地': 'soil', '草': 'grass', '车': 'car', '门': 'door', '木': 'tree', '书': 'book', '饭': 'ricebowl', '汤': 'soup', '米': 'rice'}
+# 笔顺小老师 (§6 ②-4): (character, the stroke written first, the other one (1-based, GF 0023-2020 order), the rule, the level it
+# comes in). Checked against tests/data/stroke_order.json (codes and where each stroke starts) by tests/test_w4.py
+ORDER_RULES = ['先横后竖', '从上到下', '先撇后捺', '从左到右', '先中间后两边', '先外后内', '先进去后关门']
+ORDER_PAIRS = [
+    ('十', 1, 2, '先横后竖', 1), ('土', 1, 2, '先横后竖', 1), ('木', 1, 2, '先横后竖', 1), ('耳', 1, 2, '先横后竖', 1), ('草', 1, 2, '先横后竖', 1), ('地', 1, 2, '先横后竖', 1),
+    ('去', 1, 2, '先横后竖', 1), ('禾', 2, 3, '先横后竖', 1), ('车', 3, 4, '先横后竖', 1), ('米', 3, 4, '先横后竖', 1), ('手', 3, 4, '先横后竖', 1), ('坐', 5, 6, '先横后竖', 1),
+    ('林', 1, 2, '先横后竖', 1), ('来', 4, 5, '先横后竖', 1), ('走', 1, 2, '先横后竖', 1), ('在', 4, 5, '先横后竖', 1),
+    ('天', 1, 2, '从上到下', 1), ('开', 1, 2, '从上到下', 1), ('云', 1, 2, '从上到下', 1), ('二', 1, 2, '从上到下', 1), ('三', 2, 3, '从上到下', 1), ('上', 2, 3, '从上到下', 1),
+    ('羊', 3, 4, '从上到下', 1), ('牛', 2, 3, '从上到下', 1), ('手', 2, 3, '从上到下', 1), ('关', 3, 4, '从上到下', 1), ('耳', 4, 5, '从上到下', 1),
+    ('人', 1, 2, '先撇后捺', 2), ('大', 2, 3, '先撇后捺', 2), ('天', 3, 4, '先撇后捺', 2), ('木', 3, 4, '先撇后捺', 2), ('禾', 4, 5, '先撇后捺', 2), ('米', 5, 6, '先撇后捺', 2),
+    ('火', 3, 4, '先撇后捺', 2), ('关', 5, 6, '先撇后捺', 2), ('足', 6, 7, '先撇后捺', 2), ('八', 1, 2, '先撇后捺', 2), ('从', 3, 4, '先撇后捺', 2), ('走', 6, 7, '先撇后捺', 2),
+    ('川', 1, 2, '从左到右', 2), ('小', 2, 3, '从左到右', 2), ('火', 1, 2, '从左到右', 2), ('坐', 2, 3, '从左到右', 2), ('林', 4, 5, '从左到右', 2), ('从', 2, 3, '从左到右', 2),
+    ('小', 1, 2, '先中间后两边', 3), ('水', 1, 2, '先中间后两边', 3), ('少', 1, 2, '先中间后两边', 3), ('山', 1, 2, '先中间后两边', 3), ('光', 1, 2, '先中间后两边', 3),
+    ('月', 2, 3, '先外后内', 3), ('目', 2, 3, '先外后内', 3), ('田', 2, 3, '先外后内', 3), ('日', 2, 3, '先外后内', 3), ('肉', 2, 3, '先外后内', 3), ('风', 2, 3, '先外后内', 3),
+    ('四', 2, 3, '先外后内', 3), ('白', 3, 4, '先外后内', 3),
+    ('日', 3, 4, '先进去后关门', 4), ('目', 4, 5, '先进去后关门', 4), ('田', 4, 5, '先进去后关门', 4), ('四', 4, 5, '先进去后关门', 4), ('白', 4, 5, '先进去后关门', 4),
+    ('牛', 2, 4, '先横后竖', 4), ('车', 1, 4, '先横后竖', 4), ('羊', 3, 6, '先横后竖', 4), ('土', 1, 3, '从上到下', 4), ('羊', 3, 5, '从上到下', 4), ('耳', 1, 4, '从上到下', 4),
+    ('目', 3, 5, '先进去后关门', 4), ('田', 3, 5, '先进去后关门', 4),
+    ('川', 2, 3, '从左到右', 5), ('耳', 2, 3, '从左到右', 5), ('草', 2, 3, '从左到右', 5), ('心', 3, 4, '从左到右', 5), ('坐', 1, 3, '从左到右', 5), ('多', 1, 4, '从上到下', 5),
+    ('林', 1, 5, '从左到右', 5), ('竹', 1, 4, '从左到右', 5), ('雪', 5, 7, '从左到右', 5), ('雪', 5, 6, '从上到下', 5),
+]
+# 送字回家 (§6 ④-4): one kind a character (the disputable ones are left out)
+KIND4 = {'天上': '天日月云雨电雪', '地上': '地土山石田草川禾木竹', '动物': '牛羊马鸟鱼虫龙兔狗鸡', '身体': '口目手耳足头牙心', '动作': '坐站飞说听吃喝看走来去', '家人': '爸妈哥姐弟爷奶妹'}
+KIND4_LINE = {'天上': '这是天上的', '地上': '这是地上的', '动物': '这是动物', '身体': '这是身体', '动作': '这是动作', '家人': '这是家人'}
+KIND4_WORDS = [('金鱼', '动物'), ('小鸟', '动物'), ('小虫', '动物'), ('雪山', '地上'), ('草地', '地上'), ('石头', '地上'), ('大雪', '天上'), ('月牙', '天上'),
+               ('手心', '身体'), ('大头', '身体'), ('坐下', '动作'), ('听说', '动作'), ('爷爷', '家人'), ('奶奶', '家人'), ('妹妹', '家人'), ('爸爸', '家人')]
+# 用什么来做 (§6 ③-4): the action and the part of the body it is done with; the picture of the action (levels 1 / hint)
+BODY4 = [('听', '耳', 'listen'), ('说', '口', 'talk'), ('站', '足', 'stand'), ('看', '目', 'look'), ('吃', '口', 'eat'), ('喝', '口', 'drink'), ('走', '足', 'walk')]
+# 跷跷板 (§6 ⑤-4): opposites (both characters known), and the words of level 5
+OPP4 = ['大小', '上下', '多少', '开关', '来去', '左右', '前后', '天地']
+OPP4_WORDS = [('上山', '下山'), ('开门', '关门'), ('大门', '小门'), ('天上', '地下'), ('左手', '右手')]
+# the parent panel's 上课对照 (§1.6): 统编一上 (2024) lesson -> 神笔海 (only data: a real 学而思 syllabus replaces it)
+LESSONS4 = [
+    ('识字 1 天地人', '① 天 地'), ('识字 2 金木水火土', '① 金 土；① 儿歌卷《金木水火土》'), ('识字 3 口耳目手足、站如松', '② 耳 足；③ 站 坐；③ 儿歌卷《站如松》'),
+    ('识字 4 日月山川（图配古字）', '① 川；① 挑战"古字变今字"'), ('语文园地一 书写提示、《咏鹅》', '② 挑战"笔顺小老师"；古诗卷《咏鹅》'),
+    ('语文园地二《画》（旧版识字 6）', '③ 听；古诗卷《画》'), ('第三单元 鱼鸭乌鸦', '④ 鱼'), ('第四单元 开雪夜色美、蓝云草原、去年', '⑤ 开 去；④ 雪 草'),
+    ('第五单元 秋天、雪地里的小画家、四季', '③ 飞 说；② 牙'), ('语文园地五 男女关正反先后', '⑦ 女；⑤ 关；⑥ 后'), ('识字 5 对韵歌', '④ 对 虫；④ 儿歌卷《对韵歌》'),
+    ('识字 6 日月明', '② 心；① 金'), ('识字 7 小书包 / 旧版 大小多少', '⑤ 少 多；⑤ 儿歌卷《大小多少》；⑤ 挑战"跷跷板"'), ('识字 8 升国旗', '⑥ 中'),
+    ('课文 影子', '⑥ 前 左 右；⑥ 儿歌卷《影子》；⑥ 挑战"看路牌开车"'), ('课文 两件宝', '② 头'), ('语文园地七 爷奶叔姐妹', '⑦ 爷 奶 妹；⑦ 儿歌卷《一家人》'),
+    ('字词句子', '⑦ 子'),
+]
+# §9.3: look-alikes (only known ones are ever offered), characters that hold the answer, and pairs too close in meaning
+LOOK4 = {'天': '大开', '地': '他', '土': '上', '川': '三小', '耳': '目', '足': '走是', '心': '小', '飞': '风', '听': '吃', '雪': '雨', '虫': '中电', '少': '小',
+         '开': '天关', '关': '开天', '去': '云', '左': '右在', '右': '左有石', '中': '虫', '爷': '爸', '奶': '妈', '妹': '姐妈', '子': '了'}
+LOOK4_BACK = {'大': '天', '上': '土', '小': '少', '风': '飞', '雨': '雪', '云': '去', '在': '左', '有': '右', '石': '右', '了': '子', '走': '足', '是': '足', '目': '耳',
+              '爸': '爷', '妈': '奶妹', '姐': '妹', '电': '虫', '吃': '听', '他': '地'}
+HOLDS4 = {'大': '天', '土': '地在坐去', '口': '足听中右后', '人': '坐金', '小': '少', '日': '草', '雨': '雪', '中': '虫', '天': '关', '女': '奶妹妈姐', '田': '鱼'}
+SAMEPIC4 = {'川': '水', '水': '川'}
+# what the new characters do when they come alive after writing (§6 写字): kinds of src/games.js ZX.alive
+# (each checked against its meaning, 2026-10-18: 左 slides left, 右 right; 前 comes towards the child, 后 and 去 go away; 坐 goes down,
+# 站 stands up; 开 opens big, 关 closes small; 雪 falls; 天 rises)
+MOTION4 = {'sky': 'up', 'soil': 'hop', 'ear': 'sway', 'head': 'sway', 'sit': 'down', 'stand': 'up', 'plane': 'fly', 'insect': 'fly', 'check': 'grow',
+           'chest_open': 'grow', 'chest_shut': 'shrink', 'leftsign': 'left', 'rightsign': 'right', 'front': 'grow', 'back': 'shrink', 'girl': 'sway', 'baby': 'sway',
+           'earth': 'spin', 'gold': 'grow', 'river': 'sway', 'snow': 'down', 'grass': 'sway', 'goaway': 'shrink', 'heart': 'grow', 'tooth': 'hop', 'foot': 'hop',
+           'talk': 'sway', 'listen': 'sway', 'grandma': 'sway', 'middle': 'hop', 'many': 'hop', 'few': 'hop'}
+for _o in ('sky earth gold soil river ear foot head tooth heart sit stand plane talk listen check snow grass chest_open chest_shut goaway leftsign grandma girl baby '
+           'mat rat man cap wig fig rug mug jug hop hen net run door_open goose mole').split():
+    OBJ.setdefault(_o, 'see tools/w4_batches.py')
+for _o in 'many few middle front back rightsign tincan jet bun'.split():
+    OBJ.setdefault(_o, 'composed by tools/compose_w4.py / copied from 点点岛')
+WORLDS.append(('w4', '神笔海', W4))
+
 LETTER_NAME = {c: c for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'}
 
 

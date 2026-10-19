@@ -11,7 +11,8 @@ from cutout import cutout
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 A = os.path.join(ROOT, 'assets'); R = os.path.join(ROOT, 'raw')
 NO_MATTE = {'egg', 'cloud', 'sheep', 'rice', 'ricebowl', 'spoon', 'towel', 'milk', 'book', 'notebook', 'scroll', 'unicorn', 'cow', 'zebra', 'yogurt',
-            'tent', 'tile', 'block', 'card', 'stone_tablet', 'bed', 'quilt', 'house', 'window', 'satchel', 'soup', 'lamp', 'light', 'bus', 'mouth', 'eye'}
+            'tent', 'tile', 'block', 'card', 'stone_tablet', 'bed', 'quilt', 'house', 'window', 'satchel', 'soup', 'lamp', 'light', 'bus', 'mouth', 'eye',
+            'check'}
 
 
 def save_png(im, path, maxs):

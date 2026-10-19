@@ -24,7 +24,7 @@ for base, dirs, names in os.walk(os.path.join(ROOT, 'assets')):
     if rel.split('/')[-1] in SKIP_DIRS:
         continue
     for n in sorted(names):
-        if n.endswith('.json') and n not in ('bank.json', 'hanzi.json'):      # the voice bank list is part of the version (offline voice)
+        if n.endswith('.json') and n not in ('bank.json', 'hanzi.json', 'hanzi_extra.json'):      # the voice bank list is part of the version (offline voice); hanzi_extra: 神笔海's scrolls
             continue
         if TRACKED is not None and rel + '/' + n not in TRACKED:
             continue

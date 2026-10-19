@@ -21,13 +21,14 @@ function needPick(G, pool, bag) {
   return bagFrom(G, bag || 'ans', rest.length ? rest : rest2.length ? rest2 : pool);
 }
 /* characters read but not written: the plan writes none over 8 strokes in the first two worlds (A.4) - 是 has 9 */
-const NOWRITE = ['是'].concat(NOWRITE3.split(''));      /* world 3 writes 2 characters an island; the others are read (A.4) */
+const NOWRITE = ['是'].concat(NOWRITE3.split(''), NOWRITE4.split(''));      /* worlds 3 and 4 write 2 characters an island; the others are read (A.4) */
 /* characters that hold another one inside (明 holds 月): never a look-alike option for it */
 const HOLDS = { 月: '明', 日: '明喝', 木: '林休本果杯床', 人: '从休', 口: '叶吃喝哥', 火: '灯', 田: '果', 目: '看', 马: '妈' };
 /* the characters / letters the child can be asked about here (this island + the islands before it, for review) */
 function poolOf(G, kind, review) {
   const isl = G.W, mine = kind === 'zh' ? isl.chars.map(c => c.c) : isl.letters.map(l => l.l);
   if (!review) return mine;
+  if (isl.w === 'w4' && kind === 'zh') return W4X.known(G);       /* 神笔海: only what the child really knows (docs/W4-DESIGN.md §5.3) */
   const before = ALL_ISL().slice(0, ALL_ISL().indexOf(G.world)).map(id => ISL[id]);
   const old = before.flatMap(w => kind === 'zh' ? w.chars.map(c => c.c) : w.letters.map(l => l.l)).filter(k => kind === 'zh' || /[a-z]/.test(k) === /[a-z]/.test(mine[0]));
   return mine.concat(old);
@@ -43,16 +44,18 @@ function optsFor(G, kind, level, n, answer) {
   const known = poolOf(G, kind, true), holds = HOLDS[answer] || '', same = k => ITEM[k] && (kind === 'zh' ? ITEM[k].kind === 'zh' : ITEM[k].kind === ITEM[answer].kind && !!ITEM[k].isl);
   const lookAll = ((kind === 'zh' ? LOOK : LOOKEN)[answer] || '').split('').filter(k => same(k) && !holds.includes(k));
   const look = lookAll.filter(k => known.includes(k));      /* R2-04 */
-  const cand = [];
-  if (level >= 3) look.forEach(k => cand.push(k));
+  /* only usable ones go in (never the answer, never one that holds it, never twice): the count below is what can really be
+     offered (2026-10-18: 女's holders 奶 妹 used to be counted, and an unknown character filled the gap) */
+  const cand = [], add = k => { if (k !== answer && !holds.includes(k) && !cand.includes(k)) cand.push(k); };
+  if (level >= 3) look.forEach(add);
   /* old characters among them (DESIGN §3) - also on islands with enough characters of their own (W3R1-01): level 3 one (an
      old look-alike counts), level 4 two, level 5 three */
-  if (level >= 3) { const have = cand.filter(k => rev.includes(k)).length; G.rng.shuffle(rev.filter(k => !holds.includes(k) && k !== answer && !cand.includes(k))).slice(0, Math.max(0, level - 2 - have)).forEach(k => cand.push(k)); }
-  G.rng.shuffle(own).forEach(k => cand.push(k));
-  if (level >= 4 || cand.length < n + 1) G.rng.shuffle(rev).forEach(k => cand.push(k));
-  lookAll.forEach(k => cand.push(k));
-  G.rng.shuffle(ITEMS.filter(x => same(x.k) && !x.fw === !(ITEM[answer] && ITEM[answer].fw)).map(x => x.k)).forEach(k => cand.push(k));
-  const others = cand.filter((k, i) => k !== answer && cand.indexOf(k) === i && !holds.includes(k)).slice(0, n - 1);
+  if (level >= 3) { const have = cand.filter(k => rev.includes(k)).length; G.rng.shuffle(rev.filter(k => !holds.includes(k) && k !== answer && !cand.includes(k))).slice(0, Math.max(0, level - 2 - have)).forEach(add); }
+  G.rng.shuffle(own).forEach(add);
+  if (level >= 4 || cand.length < n - 1) G.rng.shuffle(rev).forEach(add);          /* the known characters of earlier islands first */
+  lookAll.forEach(add);                                                              /* then a look-alike not met yet (the very first island) */
+  if (cand.length < n - 1) G.rng.shuffle(ITEMS.filter(x => same(x.k) && !x.fw === !(ITEM[answer] && ITEM[answer].fw)).map(x => x.k)).forEach(add);
+  const others = cand.slice(0, n - 1);
   const pos = PICK(G, 'pos' + n, Array.from({ length: n }, (_, i) => i));
   const out = G.rng.shuffle(others); out.splice(Math.min(pos, out.length), 0, answer);
   return out;
@@ -89,8 +92,10 @@ const ZX = {
       spin: [{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }],
       up: [{ transform: 'translateY(0)' }, { transform: 'translateY(-90px)' }, { transform: 'translateY(0)' }],
       down: [{ transform: 'translateY(0)' }, { transform: 'translateY(70px)' }, { transform: 'translateY(0)' }],
+      left: [{ transform: 'translateX(0)' }, { transform: 'translateX(-80px)' }, { transform: 'translateX(-80px)', offset: 0.6 }, { transform: 'translateX(0)' }],      /* 神笔海 左: the arrow slides left */
+      right: [{ transform: 'translateX(0)' }, { transform: 'translateX(80px)' }, { transform: 'translateX(80px)', offset: 0.6 }, { transform: 'translateX(0)' }],     /* 右: right */
     }[mo];
-    if (mo === 'swim' || mo === 'fly') Sfx.whoosh(0.4); else if (mo === 'flicker') Sfx.fire(); else if (mo === 'drive') Sfx.boing(); else Sfx.hop();
+    if (mo === 'swim' || mo === 'fly' || mo === 'left' || mo === 'right') Sfx.whoosh(0.4); else if (mo === 'flicker') Sfx.fire(); else if (mo === 'drive') Sfx.boing(); else Sfx.hop();
     await st.scope.anim(d, kf, { duration: mo === 'spin' ? 800 : 900, easing: EASE.glide });
     return d;
   },

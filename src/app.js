@@ -12,7 +12,7 @@ const CHARS = {
   hulk: ['绿巨人', 'smash'], thor: ['雷神', 'zap'], panther: ['黑豹', 'pounce'], widow: ['黑寡妇', 'flip'], hawkeye: ['鹰眼', 'aim'],
 };
 /* an item's picture: an object (assets/obj) or, with '@', one of the client's own character pictures as it is (world 3's family words) */
-const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + o) + '.png';
+const OBJURL = o => (o && o[0] === '@' ? 'assets/chars/' + o.slice(1) : 'assets/obj/' + (OBJ_ALIAS[o] || o)) + '.png';      /* OBJ_ALIAS: a 神笔海 picture not drawn yet -> its fallback (tools/build.py) */
 /* after a wrong answer and its explanation a NEW question comes: the closing line says so (OX1-04) - never "再试一次" */
 const NEXTQ = ['再来一题！', '下一题！'];      /* not 再来一个！: that opens the missed-item card, which can come right after (OX2-01) */
 const PRAISE = ['真棒！', '对啦！', '你真厉害！', '好样的！', '太棒啦！', '一点不错！', '你答对啦！', '认得真准！'];
@@ -25,7 +25,7 @@ const Glyph = {
   /* a character from its outlines (楷体 of the stroke data) */
   zh(ch, size, color) {
     const s = svg('svg', { viewBox: '0 0 1024 1024', width: size, height: size, class: 'gly' });
-    const d = Hanzi.data && Hanzi.data[ch];
+    const d = (Hanzi.data && Hanzi.data[ch]) || (Hanzi.extra && Hanzi.extra[ch]);      /* extra: shown, never written (神笔海's scrolls and books) */
     const g = svg('g', { transform: 'translate(0,900) scale(1,-1)' }, s);
     if (d) d.s.forEach(o => svg('path', { d: o, fill: color || INK }, g));
     return s;
@@ -66,9 +66,9 @@ const Glyph = {
 
 /* ---------------------------------------------------------------- storage (versioned, corruption tolerant) */
 const KEY = 'zzi.v1', VER = 1;
-const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || []);
+const ALL_ISL = () => ORDER.w1.concat(ORDER.w2, ORDER.w3 || [], ORDER.w4 || []);
 function defIsl(id) { return { unlocked: id === ORDER.w1[0], gstars: {}, played: [], visits: 0, sessions: 0, stars: 0, story: 0 }; }
-function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
+function defState() { const w = {}; ALL_ISL().forEach(id => { w[id] = defIsl(id); }); return { v: VER, worlds: w, learned: {}, met: {}, flags: [], fin: { w1: '', w2: '', w3: '', w4: '' }, gate2: false, w2seen: false, gate3: false, w3seen: false, w4: false, w4seen: false, w4from: 'w1', mapSet: 'w1', settings: { en: true, mins: 15, wgate: false, ex: 'auto' }, all: false,
     mem: {}, ev: [], days: {}, key: { day: -1, got: 0, short: false }, album: { n: 0, src: [] }, stat: { clean: 0, wfDown: 0, traced: 0 }, flagDays: [], lastDay: 0, checks: [], missNext: [], lastG: null, teach: null, v2: 1 }; }
 const Store = {
   s: null,
@@ -96,8 +96,10 @@ const Store = {
     if (o.learned && typeof o.learned === 'object') for (const k in o.learned) if (ITEM[k]) { const x = o.learned[k] || {}; d.learned[k] = { w: num(x.w, 0, 0, 1e6), p: num(x.p, 0, 0, 1e6) }; }
     if (o.met && typeof o.met === 'object') for (const k in o.met) if (ITEM[k] && o.met[k] === true) d.met[k] = true;
     d.flags = Array.isArray(o.flags) ? o.flags.filter(x => !!ISL[x]) : [];
-    ['w1', 'w2', 'w3'].forEach(w => { const f = o.fin && o.fin[w]; d.fin[w] = f === 'due' || f === 'seen' ? f : ''; });
-    d.gate2 = o.gate2 === true; d.w2seen = o.w2seen === true; d.gate3 = o.gate3 === true; d.w3seen = o.w3seen === true; d.mapSet = ['w2', 'w3'].includes(o.mapSet) ? o.mapSet : 'w1'; d.all = o.all === true;
+    ['w1', 'w2', 'w3', 'w4'].forEach(w => { const f = o.fin && o.fin[w]; d.fin[w] = f === 'due' || f === 'seen' ? f : ''; });
+    d.gate2 = o.gate2 === true; d.w2seen = o.w2seen === true; d.gate3 = o.gate3 === true; d.w3seen = o.w3seen === true; d.mapSet = ['w2', 'w3', 'w4'].includes(o.mapSet) ? o.mapSet : 'w1'; d.all = o.all === true;
+    /* 神笔海 (docs/W4-DESIGN.md §10): opened once = open for good; the one-time flight; the sea it was entered from */
+    d.w4 = o.w4 === true; d.w4seen = o.w4seen === true; d.w4from = ['w2', 'w3'].includes(o.w4from) ? o.w4from : 'w1';
     if (o.settings && typeof o.settings === 'object') { d.settings.en = o.settings.en !== false; if ([0, 10, 15, 20, 30].includes(o.settings.mins)) d.settings.mins = o.settings.mins; d.settings.wgate = o.settings.wgate === true; if (['off', 'auto', 'step'].includes(o.settings.ex)) d.settings.ex = o.settings.ex; }
     /* v2 memory (docs/PLAN-v2.md): per item {b box, due, last, up, seen, pass, n, ok}; kept only for real items */
     if (o.mem && typeof o.mem === 'object') for (const k in o.mem) if (ITEM[k] && o.mem[k] && typeof o.mem[k] === 'object') { const m = o.mem[k]; d.mem[k] = { b: num(m.b, 0, 0, 7), due: num(m.due, 0, 0, 1e7), last: num(m.last, 0, 0, 1e7), up: num(m.up, -1, -1, 1e7), seen: num(m.seen, 0, 0, 1e7), pass: Array.isArray(m.pass) ? m.pass.filter(x => typeof x === 'string').slice(-4) : [], n: num(m.n, 0, 0, 1e6), ok: num(m.ok, 0, 0, 1e6) }; if (typeof m.evd === 'number') d.mem[k].evd = m.evd; }
@@ -138,15 +140,16 @@ const Prog = {
   gamesDone(i) { return ISL[i].games.every(g => this.gameDone(i, g)); },
   islandDone(i) { return this.gamesDone(i) && (Store.w(i).pok || ISL[i].chars.every(c => Mem.passed(c.c))); },
   worldDone(w) { return ORDER[w].every(i => this.islandDone(i)); },
-  worldOpen(w) { return w === 'w1' || Store.s.all || (w === 'w2' ? this.worldDone('w1') : this.worldDone('w2')); },
+  worldOpen(w) { return w === 'w4' ? W4X.open() : w === 'w1' || Store.s.all || (w === 'w2' ? this.worldDone('w1') : this.worldDone('w2')); },
   /* the difficulty now: the island's start + its game's boost + one step for every 5 stars earned in it */
   level(i, g) { return clamp(ISL[i].base + ((GAMES[g] && GAMES[g].boost) || 0) + Math.floor(this.stars(i, g) / 5), 1, 5); },
   learnedCount() { return ITEMS.filter(x => learned(x.k)).length; },      /* the book cover's characters + letters, by the same learned() (read-only characters that passed count too: W3R2-06) */
   /* opens what is due (show: the map plays the cloud show for a new island) */
   check(show) {
     let any = false;
-    ['w1', 'w2', 'w3'].forEach(w => {
-      if (!this.worldOpen(w)) return;
+    if (W4X.open() && !Store.s.w4) { Store.s.w4 = true; any = true; }      /* sticky: once open, never shut again (§10.2) */
+    ['w1', 'w2', 'w3', 'w4'].forEach(w => {
+      if (!this.worldOpen(w) || !ORDER[w].length) return;
       ORDER[w].forEach((id, k) => {
         const ws = Store.w(id); if (ws.unlocked) return;
         if (Store.s.all || ORDER[w].slice(0, k).every(x => this.islandDone(x))) { ws.unlocked = true; if (show) ws.justOpened = true; any = true; }
@@ -159,6 +162,7 @@ const Prog = {
 const flagged = id => Prog.islandDone(id);
 const FLAG_HTML = id => {
   const W = ISL[id], two = W.w === 'w2', three = W.w === 'w3', ink = '#2B2118';
+  if (W.w === 'w4') return W4X.flag(W);                /* 神笔海: a hanging scroll (§3.2) */
   const cloth = three ? '<path d="M2 3Q30 -2 58 5Q54 21 58 37Q30 44 2 39Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>' + ['#E8413A', '#FFC93C', '#5CC46E', '#4FB3FF'].map((c, i) => '<path d="M3.5 ' + (28 + 2.4 * i) + 'Q30 ' + (33 + 2.4 * i) + ' 56.5 ' + (27.5 + 2.4 * i) + '" stroke="' + c + '" stroke-width="2.6" fill="none"/>').join('')
     : two ? '<path d="M2 3H58L47 21L58 39H2Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/><path d="M3.5 4.5H10V37.5H3.5Z" fill="' + W.color2 + '"/>'
     : '<path d="M2 3Q30 -2 58 5Q54 21 58 37Q30 44 2 39Z" fill="' + W.color + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/><path d="M3.5 31Q30 36 56.5 30.5L57 35.6Q30 42.4 3.5 37.7Z" fill="' + W.color2 + '"/>';
@@ -294,6 +298,11 @@ const Session = {
   host(G) { const h = G && G.actors && G.actors[G.game.host || G.W.host]; return h && !h.dead && h.x > 0 && h.x < Stage.W ? h : null; },
   async start(islandId, gameId, opt) {
     opt = opt || {};
+    if (ISL[islandId] && ISL[islandId].w === 'w4' && !W4Lazy.loaded) {      /* 神笔海's games come in their own file (§11.1) */
+      if (this.G) this.teardown(this.G);
+      if (!(await W4Lazy.load())) { Voice.sayNow('等一下哦', { tag: 'map' }); return; }
+      if (this.G || Screens.cur !== 'map' && Screens.cur !== 'book') return;
+    }
     if (this.G) this.teardown(this.G);
     const W = ISL[islandId], ws = Store.w(islandId), game = GAMES[gameId];
     const T1 = Teach.on, teach = !opt.practice && !opt.key && T1 && T1.isl === islandId && T1.game === gameId ? T1.drop : 0;
@@ -672,18 +681,19 @@ const MapView = {
     if (this.built) { this.closePanel(true); $('#islands').innerHTML = ''; this.isl = {}; this.built = false; Loops.sweep(); this.build(); }
     this.tint();
   },
-  tint() { $('#mapbg').style.backgroundImage = 'url(assets/bg/' + WORLDS_INFO[this.set].map + '.jpg)'; },
+  tint() { const WI = WORLDS_INFO[this.set], m = $('#mapbg'); m.style.backgroundImage = 'url(assets/bg/' + WI.map + '.jpg)'; m.style.filter = WI.mapInk ? 'grayscale(.7) sepia(.32) brightness(1.08) contrast(.92)' : ''; },      /* mapInk: 神笔海's own map not there yet - 彩虹海's, washed into ink (§8.3) */
   build() {
     if (this.built) return;
     this.built = true;
     this.tint();
     const root = $('#islands'), WI = WORLDS_INFO[this.set];
     const soon = WI.partial ? Array.from({ length: Math.max(0, 7 - this.ids().length) }, (_, i) => 'soon' + i) : [];
-    this.ids().concat(soon, WI.partial ? ['gate'] : ['fest', 'gate']).forEach(id => {
-      const sp = id === 'fest' || id === 'gate' || /^soon/.test(id);
+    const brush = this.set !== 'w4' && W4X.open() ? ['brush'] : [];      /* 神笔海's own entrance, always at the same place (§10.3) */
+    this.ids().concat(soon, WI.partial ? ['gate'] : ['fest', 'gate'], brush).forEach(id => {
+      const sp = id === 'fest' || id === 'gate' || id === 'brush' || /^soon/.test(id);
       const d = el('div', 'isl', root);
       const glow = el('div', '', d); Object.assign(glow.style, { position: 'absolute', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,247,190,.95), rgba(255,247,190,0) 68%)', opacity: 0 });
-      const land = img('assets/isl/' + (id === 'fest' ? WI.fest : id === 'gate' ? WI.gate : /^soon/.test(id) ? 'fest2' : id) + '.png', 'land', d);
+      const land = img(id === 'brush' ? WORLDS_INFO.w4.brush : 'assets/isl/' + (id === 'fest' ? WI.fest : id === 'gate' ? WI.gate : /^soon/.test(id) ? 'fest2' : ISL[id].img || id) + '.png', 'land', d);
       if (/^soon/.test(id)) { land.style.filter = 'grayscale(1) brightness(1.4) opacity(.35)'; d.classList.add('locked', 'soon'); }
       const hero = img(sp ? 'assets/props/ui_star.png' : 'assets/chars/' + ISL[id].host + '.png', 'hero', d);
       const cloud = el('div', 'cloudcover', d);
@@ -699,29 +709,32 @@ const MapView = {
       if (sp) { lan.remove(); big.remove(); flag.remove(); }
       if (/^soon/.test(id)) { const sl = WI.soon || []; hero.src = 'assets/chars/' + (sl[Number(id.slice(4)) % Math.max(1, sl.length)] || 'peppa') + '.png'; hero.style.filter = 'brightness(0) opacity(.55)'; }
       if (id === 'gate') d.classList.add('gate');
+      if (id === 'gate' && WI.gateInk) d.classList.add('ink');
+      if (id === 'brush') { d.classList.add('brush'); if (!WORLDS_INFO.w4.brushNew) d.classList.add('fb'); hero.style.display = 'none'; }
     });
     this.layout();
     this.update();
     this.idle();
   },
-  pos(id) { const P = (window.innerHeight > window.innerWidth * 1.02) ? MAPPOS.port : MAPPOS.land; if (/^soon/.test(id)) return P[ORDER[this.set].length + Number(id.slice(4))]; return id === 'fest' || id === 'gate' ? P[id] : P[ORDER[this.set].indexOf(id)]; },
+  pos(id) { const P = (window.innerHeight > window.innerWidth * 1.02) ? MAPPOS.port : MAPPOS.land; if (/^soon/.test(id)) return P[ORDER[this.set].length + Number(id.slice(4))]; return id === 'fest' || id === 'gate' || id === 'brush' ? P[id] : P[ORDER[this.set].indexOf(id)]; },
   layout() {
     if (!this.built) return;
     const vw = window.innerWidth, vh = window.innerHeight, port = vh > vw * 1.02;
     const S = Math.round(Math.min(vw, vh) * (port ? 0.27 : 0.25));
     const pts = [];
     Object.keys(this.isl).forEach(id => {
-      const I = this.isl[id], [px, py] = this.pos(id), x = vw * px / 100, y = vh * py / 100, sp = id === 'fest' || id === 'gate', s = id === 'fest' ? S * 0.9 : id === 'gate' ? S * 0.8 : S;
+      const I = this.isl[id], [px, py] = this.pos(id), x = vw * px / 100, y = vh * py / 100, sp = id === 'fest' || id === 'gate' || id === 'brush', s = id === 'fest' ? S * 0.9 : id === 'gate' ? S * 0.8 : id === 'brush' ? Math.max(120, S * 0.62) : S;
       Object.assign(I.d.style, { left: x + 'px', top: y + 'px' });
       Object.assign(I.land.style, { width: s + 'px' });
       Object.assign(I.glow.style, { width: s * 1.5 + 'px', height: s * 1.5 + 'px', left: -s * 0.75 + 'px', top: -s * 0.75 + 'px' });
       Object.assign(I.hero.style, { height: (sp ? s * 0.28 : s * 0.46) + 'px', left: (sp ? -s * 0.14 : s * 0.02) + 'px', top: (sp ? -s * 0.62 : -s * 0.5) + 'px' });
       if (id === 'gate') Object.assign(I.cloud.style, { width: s * 1.1 + 'px', height: s * 0.68 + 'px', top: '50%' });
       else Object.assign(I.cloud.style, { width: s * 0.86 + 'px', height: s * 0.54 + 'px', top: '62%' });
-      Object.assign(I.hit.style, { width: s * 0.95 + 'px', height: s * 0.95 + 'px', left: -s * 0.475 + 'px', top: -s * 0.5 + 'px' });
+      if (id === 'brush') Object.assign(I.hit.style, { width: '110px', height: '110px', left: '-55px', top: '-55px' });      /* 110 x 110 px at every size (§10.3) */
+      else Object.assign(I.hit.style, { width: s * 0.95 + 'px', height: s * 0.95 + 'px', left: -s * 0.475 + 'px', top: -s * 0.5 + 'px' });
       Object.assign(I.deco.style, { left: (-s * 0.46) + 'px', top: (s * 0.02) + 'px', height: (s * 0.24) + 'px' });
       if (I.lan.isConnected) { I.lan.style.left = '0px'; I.lan.style.top = (s * 0.36) + 'px'; I.big.style.left = '0px'; I.big.style.top = (s * 0.36 + 64) + 'px'; I.flag.style.left = (s * 0.3) + 'px'; I.flag.style.top = Math.max(-s * 0.55, 24 - y) + 'px'; }
-      if (id !== 'gate') pts.push([x, y]);
+      if (id !== 'gate' && id !== 'brush') pts.push([x, y]);
     });
     const sv = $('#mapsvg'); sv.innerHTML = '';
     sv.setAttribute('viewBox', '0 0 ' + vw + ' ' + vh);
@@ -733,7 +746,8 @@ const MapView = {
   /* the gate: on the first sea it opens to the second (gold), on the second it goes back - or on to the third once that
      sea is open (gold); on the third it goes home to the first */
   gateOpen() { return this.set === 'w1' ? Prog.worldOpen('w2') && Store.s.gate2 : true; },
-  gateTo() { return this.set === 'w1' ? 'w2' : this.set === 'w2' ? (Prog.worldOpen('w3') && Store.s.gate3 ? 'w3' : 'w1') : 'w1'; },
+  /* 神笔海's moon gate goes back to the sea it was entered from (§10.3) */
+  gateTo() { return this.set === 'w4' ? (Prog.worldOpen(Store.s.w4from) ? Store.s.w4from : 'w1') : this.set === 'w1' ? 'w2' : this.set === 'w2' ? (Prog.worldOpen('w3') && Store.s.gate3 ? 'w3' : 'w1') : 'w1'; },
   recommend() {
     const w = this.set;
     if (Prog.worldDone(w)) return WORLDS_INFO[w].partial ? null : (w === 'w1' && Store.s.fin.w1 === 'seen' && !Prog.worldDone('w2')) || (w === 'w2' && Store.s.fin.w2 === 'seen' && Prog.worldOpen('w3')) ? 'gate' : 'fest';
@@ -759,6 +773,7 @@ const MapView = {
     const Gt = this.isl.gate, gOpen = this.gateOpen();
     if (Gt) { Gt.d.classList.toggle('locked', !gOpen); Gt.d.classList.toggle('sky', (this.set === 'w1' && gOpen) || (this.set === 'w2' && this.gateTo() === 'w3')); Gt.hero.style.opacity = gOpen ? 0 : 1; Gt.glow.style.opacity = rec === 'gate' ? 1 : 0; }
     MapV2.update();
+    W4X.mapUpdate(this);
     const F = this.isl.fest;
     if (F) { F.d.classList.toggle('locked', Store.s.fin[this.set] !== 'seen'); F.glow.style.opacity = rec === 'fest' ? 1 : 0; }
     $('.cnt', $('#bookbtn')).textContent = Prog.learnedCount();
@@ -771,7 +786,8 @@ const MapView = {
     });
   },
   tapIsland(id) {
-    if (/^soon/.test(id)) { this.isl[id].cloud.animate([{ transform: 'translate(-50%,-50%)' }, { transform: 'translate(-56%,-50%)' }, { transform: 'translate(-44%,-50%)' }, { transform: 'translate(-50%,-50%)' }], { duration: T(420) + 1 }); Voice.sayNow('新岛快来啦！', { tag: 'map' }); return; }
+    if (id === 'brush') { this.sail('w4'); return; }
+    if (/^soon/.test(id)) { this.isl[id].cloud.animate([{ transform: 'translate(-50%,-50%)' }, { transform: 'translate(-56%,-50%)' }, { transform: 'translate(-44%,-50%)' }, { transform: 'translate(-50%,-50%)' }], { duration: T(420) + 1 }); Voice.sayNow(this.set === 'w4' ? '新岛还在建哦！' : '新岛快来啦！', { tag: 'map' }); return; }
     if (id === 'gate' || id === 'fest') {
       const I = this.isl[id], fin = Store.s.fin[this.set];
       if (id === 'gate') {
@@ -813,9 +829,9 @@ const MapView = {
   openPanel(id, line) {
     this.closePanel(true);
     const W = ISL[id];
-    Voice.sayNow(line || W.hi, { tag: line ? 'unlock' : 'map' });
+    if (line !== '') Voice.sayNow(line || W.hi, { tag: line ? 'unlock' : 'map' });      /* '' = drawn again silently (神笔海's games just came) */
     const p = this.panel = el('div', '', $('#map'));
-    Object.assign(p.style, { position: 'absolute', inset: 0, zIndex: 30, background: this.set === 'w2' ? 'rgba(14,22,64,.74)' : this.set === 'w3' ? 'rgba(52,30,92,.66)' : 'rgba(12,44,74,.6)' });
+    Object.assign(p.style, { position: 'absolute', inset: 0, zIndex: 30, background: this.set === 'w2' ? 'rgba(14,22,64,.74)' : this.set === 'w3' ? 'rgba(52,30,92,.66)' : this.set === 'w4' ? 'rgba(38,34,28,.64)' : 'rgba(12,44,74,.6)' });
     tapify(p, () => this.closePanel(), { silent: true });
     const vw = window.innerWidth, vh = window.innerHeight, port = vh > vw * 1.02;
     /* the whole panel (host, island, games, stars, words) fits the screen and is centred: no head cut by the top (R1-06) */
@@ -823,7 +839,7 @@ const MapView = {
     const tall = s => 0.48 * s + 0.16 * s + Math.max(112, Math.round(s * 0.15)) / 2 + 34 + Math.round(Math.min(84, s * 0.1));
     if (tall(S) > vh - 32) S *= (vh - 32) / tall(S);
     const cx = vw / 2, cy = 16 + 0.48 * S + Math.max(0, (vh - 32 - tall(S)) / 2);
-    const land = img('assets/isl/' + id + '.png', '', p);
+    const land = img('assets/isl/' + (W.img || id) + '.png', '', p);
     Object.assign(land.style, { position: 'absolute', width: S * 0.4 + 'px', left: (cx - S * 0.2) + 'px', top: (cy - S * 0.38) + 'px', pointerEvents: 'none' });
     land.animate([{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: T(360) + 1, easing: EASE.pop });
     const heroA = img('assets/chars/' + W.host + '.png', '', p);
@@ -831,15 +847,16 @@ const MapView = {
     Loops.run(heroA, [{ transform: 'translateY(0)' }, { transform: 'translateY(-10px)' }, { transform: 'translateY(0)' }], { duration: 1400 });
     const rec = W.games.find(g => Prog.gameOpen(id, g) && !Prog.gameDone(id, g)) || (Prog.gamesDone(id) && !flagged(id) ? W.games[0] : W.games.filter(g => Prog.gameOpen(id, g)).slice(-1)[0]);
     const M = Math.max(112, Math.round(S * 0.15)), gap = Math.round(M * 0.26), FS = Math.round(M * 0.72);
-    const games = W.games.filter(g => GAMES[g]), x0 = cx - (games.length * (M + gap) + FS) / 2, y = cy + S * 0.16;
+    const games = W.games.filter(g => GAMES[g] || W.w === 'w4'), x0 = cx - (games.length * (M + gap) + FS) / 2, y = cy + S * 0.16;
     games.forEach((g, i) => {
       const x = x0 + i * (M + gap) + M / 2;
       const m = el('div', 'btn', p);
       m.dataset.game = g;
       Object.assign(m.style, { width: M + 'px', height: M + 'px', left: (x - M / 2) + 'px', top: (y - M / 2) + 'px', overflow: 'hidden', background: '#fff' });
-      const th = img('assets/bgthumb/' + GAMES[g].bg + '.jpg', '', m);
+      const lazy = !GAMES[g];      /* 神笔海 before its file has come: the button waits, grey, with a little spinner (§11.1) */
+      const th = img('assets/bgthumb/' + (lazy ? W.bgs[i] : GAMES[g].bg) + '.jpg', '', m);
       Object.assign(th.style, { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' });
-      const ic = el('div', '', m); ic.appendChild(GAMES[g].icon());
+      const ic = el('div', '', m); ic.appendChild(lazy ? W4X.spinner() : GAMES[g].icon());
       Object.assign(ic.style, { position: 'absolute', width: '64%', height: '64%', left: '18%', top: '18%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(255,253,246,.9)', boxShadow: '0 0 0 3px rgba(43,33,24,.18)', filter: 'drop-shadow(0 4px 0 rgba(43,33,24,.3))' });      /* a light round backing: the icon reads on any background (W3R1-05) */
       if (g === rec) { m.style.boxShadow = '0 0 0 4px #2B2118, 0 0 0 12px rgba(255,236,140,.95), 0 12px 30px rgba(255,210,60,.8)'; Loops.run(m, [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 1200, iterations: Infinity }); }
       m.animate([{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: T(320) + 1, delay: T(80 * i), easing: EASE.pop, fill: 'backwards' });
@@ -857,11 +874,14 @@ const MapView = {
         Object.assign(row.style, { position: 'absolute', left: (x - M / 2) + 'px', top: (y + M / 2 + 8) + 'px', width: M + 'px', display: 'flex', justifyContent: 'center', gap: '1px', pointerEvents: 'none' });
         for (let k = 0; k < 5; k++) { const s = img('assets/props/ui_star.png', '', row); Object.assign(s.style, { width: sz + 'px', height: sz + 'px', filter: k < n ? 'drop-shadow(0 2px 0 rgba(43,33,24,.35))' : 'grayscale(1) brightness(1.6) opacity(.55)' }); }
       }
+      if (lazy) th.style.filter = 'grayscale(1) brightness(.85)';
       tapify(m, () => {
+        if (lazy) { W4Lazy.load().then(ok => { if (!ok) Voice.sayNow('等一下哦', { tag: 'map' }); else if (this.panel === p) this.openPanel(id); }); return; }
         if (locked) { m.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)' }, { transform: 'translateX(0)' }], { duration: T(360) + 1 }); Voice.sayNow('先集满五颗星！', { tag: 'map' }); return; }
         this.closePanel(true); Session.start(id, g);
       });
     });
+    if (W.w === 'w4' && !W4Lazy.loaded) W4Lazy.load().then(ok => { if (ok && this.panel === p) { this.openPanel(id, ''); } });
     const has = flagged(id), fs = el('div', 'btn', p);
     Object.assign(fs.style, { width: FS + 'px', height: FS + 'px', left: (x0 + games.length * (M + gap)) + 'px', top: (y - FS / 2) + 'px', background: has ? '#FFF3C4' : 'rgba(255,255,255,.55)', boxShadow: has ? '0 0 0 4px #2B2118, 0 0 0 10px rgba(255,201,60,.9)' : '0 0 0 4px rgba(43,33,24,.45)', border: has ? '' : '3px dashed rgba(43,33,24,.35)', overflow: 'visible' });
     const fp = el('div', 'flagpole', fs); fp.innerHTML = FLAG_HTML(id);
@@ -932,6 +952,8 @@ const MapView = {
       if (live()) this.pointAt('gate');
       return true;
     }
+    /* the last of all: 神笔海 opened and never visited - the brush, "新世界开啦！", and off we fly, once (§10.4) */
+    if (w !== 'w4' && W4X.open() && !Store.s.w4seen && this.isl.brush) { await W4X.firstFlight(this, live); return true; }
     return false;
   },
   async plantFlag(id) {
@@ -955,25 +977,28 @@ const MapView = {
     await new Promise(r => setTimeout(r, T(1300)));
     this.update();
   },
-  async sail() {
+  async sail(dest) {
     if (this.sailing) return;
     this.sailing = true; this.liveTok(); this.closePanel(true);
-    const to = this.gateTo(), first = (to === 'w2' && !Store.s.w2seen) || (to === 'w3' && !Store.s.w3seen);
+    const from = this.set, to = dest || this.gateTo(), first = (to === 'w2' && !Store.s.w2seen) || (to === 'w3' && !Store.s.w3seen) || (to === 'w4' && !Store.s.w4seen), ink = to === 'w4' || from === 'w4';
     Sfx.reveal();
-    this.isl.gate.land.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: 'translate(-50%,-50%) scale(1.35) rotate(-4deg)' }], { duration: T(560) + 1, easing: EASE.pop, fill: 'forwards' });
+    const go = this.isl[to === 'w4' ? 'brush' : 'gate'];
+    if (go) go.land.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: 'translate(-50%,-50%) scale(1.35) rotate(-4deg)' }], { duration: T(560) + 1, easing: EASE.pop, fill: 'forwards' });
     const ov = el('div', '', $('#map'));
-    Object.assign(ov.style, { position: 'absolute', inset: 0, zIndex: 40, background: 'radial-gradient(circle at 50% 48%, #FFFFFF 0%, #E3D4FF 30%, #8E6CFF 75%, #4B2F9E 100%)' });
+    /* to and from 神笔海 the ink spreads over rice paper (§10.4); the other seas: the purple sky */
+    Object.assign(ov.style, { position: 'absolute', inset: 0, zIndex: 40, background: ink ? 'radial-gradient(circle at 50% 48%, #FFFDF6 0%, #EFE7D2 30%, #6F6A60 74%, #2B2118 100%)' : 'radial-gradient(circle at 50% 48%, #FFFFFF 0%, #E3D4FF 30%, #8E6CFF 75%, #4B2F9E 100%)' });
     const wait = (a, ms) => new Promise(r => { a.onfinish = r; setTimeout(r, ms); });
     await wait(ov.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T(560) + 1, fill: 'forwards' }), T(560) + 80);
     if (to === 'w2') { Store.s.w2seen = true; Store.s.gate2 = true; Prog.check(false); Store.save(); }
     if (to === 'w3') { Store.s.w3seen = true; Store.s.gate3 = true; Prog.check(false); Store.save(); }
+    if (to === 'w4') { Store.s.w4seen = true; Store.s.w4 = true; Store.s.w4from = from; Prog.check(false); Store.save(); }
     this.useSet(to); this.update();
     Object.keys(this.isl).forEach((id, i) => this.isl[id].d.animate([{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: T(420) + 1, delay: T(240 + 70 * i), easing: EASE.pop, fill: 'backwards' }));
     await wait(ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: T(520) + 1, fill: 'forwards' }), T(520) + 80);
     ov.remove(); this.sailing = false;
     if (Screens.cur !== 'map' || Session.G) return;
     if (first) { Sfx.fanfare(); Fx.confetti(30); }
-    Voice.sayNow(first ? (to === 'w3' ? '彩虹海到啦！' : '星光海到啦！') : to === 'w2' ? '去星光海！' : to === 'w3' ? '去彩虹海！' : '回到晨光海！', { tag: 'map' });
+    Voice.sayNow(W4X.sailLine(from, to, first) || (first ? (to === 'w3' ? '彩虹海到啦！' : '星光海到啦！') : to === 'w2' ? '去星光海！' : to === 'w3' ? '去彩虹海！' : '回到晨光海！'), { tag: 'map' });
     this.after(T(1000));
   },
   /* stars fly into the island's lantern (ten lamps; ten make one big star) */
@@ -1124,10 +1149,11 @@ const Parent = {
         const ws = Store.w(id), tr = el('tr', '', t), W = ISL[id];
         el('td', '', tr, { text: W.name });
         el('td', '', tr, { text: ws.unlocked ? (Prog.islandDone(id) ? '已插旗' : Prog.gamesDone(id) ? '四关已过，字还没过关' : '开放') : '未开放' });
-        el('td', '', tr, { text: W.games.map(g => GAMES[g].title + (Prog.gameDone(id, g) ? ' ✓' : Prog.gameOpen(id, g) ? ' ·' : ' 🔒') + Prog.stars(id, g) + '★ L' + Prog.level(id, g)).join('  ') });
+        el('td', '', tr, { text: W.games.map(g => (GAMES[g] ? GAMES[g].title : W4X.title(g)) + (Prog.gameDone(id, g) ? ' ✓' : Prog.gameOpen(id, g) ? ' ·' : ' 🔒') + Prog.stars(id, g) + '★ L' + Prog.level(id, g)).join('  ') });
         el('td', '', tr, { text: W.chars.map(c => c.c).concat(W.letters.map(l => l.l)).map(k => k + (learned(k) ? '✓' : '')).join(' ') });
       });
     });
+    if (ORDER.w4.length) W4X.parent(sh);
     ParentV2.sections(sh);
     el('h3', '', sh, { text: '声音' });
     const d = Voice.diag();
@@ -1184,7 +1210,7 @@ const Finale = {
         sc.timeout(() => sc.anim(im, [{ transform: 'translateX(-50%) translateY(0)' }, { transform: 'translateX(-50%) translateY(-14px)' }, { transform: 'translateX(-50%) translateY(0)' }], { duration: 520 + (i % 3) * 90, iterations: Infinity, delay: (i * 97) % 400 }), 1600);
       });
     });
-    Voice.say(w === 'w3' ? '彩虹大派对！' : w === 'w2' ? '星光大派对！' : '大家一起庆祝！', { tag: 'finale' });
+    Voice.say(w === 'w4' ? '神笔大庙会！' : w === 'w3' ? '彩虹大派对！' : w === 'w2' ? '星光大派对！' : '大家一起庆祝！', { tag: 'finale' });
     Sfx.fanfare();
     this.fireworks(sc);
     sc.timeout(() => { Voice.say('一起拍照，茄子！', { tag: 'finale' }); }, 3500);

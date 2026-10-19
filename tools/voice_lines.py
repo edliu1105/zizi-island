@@ -6,6 +6,7 @@ Chinese lines must stay within 8 characters (the client's rule). usage: python t
 import os, re, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content import W1, W2, W3, CVC, WORDS2, FW_SENTS, FW_SENTS3, READ, BOOKS, WORDS3
+import content as C4
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十', '二十一', '二十二', '二十三', '二十四', '二十五', '二十六', '二十七', '二十八', '二十九', '三十']
 CNQ = lambda n: '两' if n == 2 else CN[n]
@@ -17,10 +18,17 @@ EXTRA += ['这是师父']                                                       
 EXTRA += ['放不进去']                                                        # 缺了一笔: the chosen stroke does not go into the gap (OX1)
 
 
+W4FILES = sorted('w4/' + f for f in os.listdir(os.path.join(ROOT, 'src', 'w4')) if f.endswith('.js')) if os.path.isdir(os.path.join(ROOT, 'src', 'w4')) else []
+
+
 def literals():
     out = set()
-    for f in ('app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js', 'w3.js'):
+    for f in ['app.js', 'games.js', 'games2.js', 'writer.js', 'engine.js', 'v2.js', 'v2b.js', 'w3.js'] + W4FILES:
         s = open(os.path.join(ROOT, 'src', f), encoding='utf-8').read()
+        # 神笔海 (src/w4/*.js, README): the lines of an explanation EX.say(st, ['..', '..']) and lines said through variables,
+        # listed in W4X.lines(['..', ..])
+        for m in re.finditer(r"(?:EX\.say\(st,\s*|W4X\.lines\()\[([^\]]*)\]", s):
+            out |= set(re.findall(r"'([^'\\]+)'", m.group(1)))
         for m in re.finditer(r"(?:Voice\.say|Voice\.sayNow|K\.say\(st,|W2X\.say|say)\(\s*'([^'\\]+)'", s):
             out.add(m.group(1))
         for m in re.finditer(r"K\.say\(st,\s*'([^'\\]+)'\)", s):
@@ -104,8 +112,57 @@ def data_lines():
     return out
 
 
+def w4_lines():
+    """神笔海 (docs/W4-DESIGN.md §11.4): every line its data makes - for all seven islands at once, so an island's lines are
+    recorded before it goes live"""
+    out = set()
+    zh_all = [c for lst in (W1, W2, W3, C4.W4) for d in lst for c, _, _, _ in d['chars']]
+    for d in C4.W4:
+        out.add(d['hi'])
+        for c, line, obj, en in d['chars']:
+            out |= {line, '哪个是' + c + '？', c + '在哪里？', '这是' + c, '这个是' + c} | ({en} if en else set())
+    out.add(C4.NAI_MILK[0])
+    for c in zh_all:                                   # every character alone (②-1 says them one after another; taps)
+        out |= {c, '这是' + c, '这个是' + c}
+    out |= {'打' + c + '！' for c in zh_all}             # ① 地鼠 (kind0 'find'): its own characters and every one a review can ask
+    eng = set(w for w, _, _ in C4.WORDS4) | set(C4.SIGHT4) | set(C4.DICT4) | set(w for w, _, _ in WORDS3)
+    out |= eng | {w + '!' for w in eng}
+    for t, _ in C4.ESENT4:
+        out.add(t); out |= set(re.findall(r"[A-Za-z]+", t))
+    for d in C4.TF4:
+        for t, _ in d['s']:
+            out.add(t); out |= set(re.findall(r"[A-Za-z]+", t))
+    out |= set(C4.PLACE4)
+    for t in C4.PLACE4:
+        out |= set(re.findall(r"[A-Za-z]+", t))
+    for w, _ in C4.WORDS_ZH4 + C4.WORDS_ZH4_3:
+        out |= {w, '摘' + w + '！', '这是' + w}
+    for s in C4.SENSE4:
+        out.add(s['pre'])                                # the first half is a card to read: a tap says it
+        out.add(s['pre'] + s['ok'])
+        out |= {s['pre'] + x.replace('。', '？') for x in s['no']}
+    out |= set(C4.KIND4_LINE.values()) | set(C4.KIND4)
+    out |= {a + '用' + b for a, b, _ in C4.BODY4}
+    out |= {'就是' + z for _, z, _ in C4.BRIDGE4}
+    out |= {a + '，' + b + '！' for a, b in C4.OPP4} | {a + '，' + b + '！' for a, b in C4.OPP4_WORDS}
+    out |= set(C4.ORDER_RULES) | {'这一笔后写', '先写这一笔', '先写哪一笔？'}
+    out |= {r[0] for r in C4.READ4}
+    for b in C4.BOOKS4:
+        out.add(b['title']); out |= {t for t, _ in b['pages']}
+    show = ''
+    for s in C4.SCROLLS4:
+        out.add(s['title']); out |= set(s['lines']); show += s['title'] + ''.join(s['lines'])
+    out |= set(C4.SCROLL_KIND.values())
+    for b in C4.BOOKS4:
+        show += b['title'] + ''.join(t for t, _ in b['pages'])
+    out |= {c for c in show if re.match(r'[一-鿿]', c)}     # a tap on any character of a scroll / book says it
+    # the map and the gate (§11.4)
+    out |= {'新世界开啦！', '神笔海到啦！', '去神笔海！', '回到星光海！', '回到彩虹海！', '回到晨光海！', '神笔大庙会！', '新岛还在建哦！', '等一下哦'}
+    return out
+
+
 def main():
-    lines = sorted(t for t in (literals() | data_lines()) if t)
+    lines = sorted(t for t in (literals() | data_lines() | w4_lines()) if t)
     long_zh = [t for t in lines if re.search(r'[\u4e00-\u9fff]', t) and len(t) > 8]
     json.dump(lines, open(os.path.join(ROOT, 'raw', 'voice_lines.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
     print(len(lines), 'lines;', sum(1 for t in lines if not re.search(r'[\u4e00-\u9fff]', t)), 'English')

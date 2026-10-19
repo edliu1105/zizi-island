@@ -16,7 +16,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WHITE_T = 232      # min channel value to count as background white
 MARGIN = 6
 # props whose enclosed gaps (handle loops, fence interiors, bench gaps) show pure background white
-HOLES = {'cup', 'key', 'ring', 'can', 'satchel', 'yoyo', 'watch'}   # 字字岛: things with a real hole
+HOLES = {'cup', 'key', 'ring', 'can', 'satchel', 'yoyo', 'watch', 'jug'}   # 字字岛: things with a real hole
 
 
 def cutout(src, dst):
@@ -48,7 +48,7 @@ def cutout(src, dst):
     lab, n = ndimage.label(near_white)
     border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
     bg = np.isin(lab, list(border))
-    if os.path.basename(src)[:-4] in HOLES:
+    if os.path.basename(src)[:-4].replace('_white', '') in HOLES:   # process_art.on_white() saves <name>_white.png
         pure = (mn >= 248) & (spread <= 6)
         for i in range(1, n + 1):
             if i in border:

@@ -308,6 +308,10 @@ svg.lines{left:0;top:0;overflow:visible;pointer-events:none}
 #book .tile .lk{position:absolute;right:8px;bottom:8px;width:34px;height:34px}
 @media (orientation:portrait){ #book .meter{top:108px;right:50%;transform:translateX(50%)} #book .grid{top:calc(222px + var(--st))} }
 
+/* 神笔海 (W4): the brush entrance glows gold; while their own pictures are not there, the moon gate and map are 彩虹海's washed into ink */
+.isl.brush .land{filter:drop-shadow(0 0 8px rgba(255,214,90,.95)) drop-shadow(0 0 20px rgba(255,190,40,.75))}
+.isl.brush.fb .land{transform:translate(-50%,-50%) rotate(-18deg)}
+.isl.gate.ink .land{filter:grayscale(.75) sepia(.35) brightness(1.05)}
 </style>
 </head>
 <body>
