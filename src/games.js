@@ -927,7 +927,9 @@ const QConnect = {
   kind0: 'connect', verb: '连！', intro: '连一连！', props: [],
   gen(G, o) {
     const lv = o.level, n = lv <= 1 ? 2 : lv <= 3 ? 3 : 4;
-    const pool = poolOf(G, 'zh', lv >= 3), pick = G.rng.shuffle(poolOf(G, 'zh', false)).slice(0, Math.min(n, 4));
+    /* the island's characters still to pass are always among the pictures (they count when all is joined right: itemsOf) */
+    const own = poolOf(G, 'zh', false), need = (G.needPass || []).filter(k => own.includes(k));
+    const pool = poolOf(G, 'zh', lv >= 3), pick = G.rng.shuffle(G.rng.shuffle(need).concat(G.rng.shuffle(own.filter(k => !need.includes(k)))).slice(0, Math.min(n, 4)));
     while (pick.length < n) { const k = G.rng.pick(pool); if (!pick.includes(k)) pick.push(k); }
     /* five characters to choose from on the right at every level (client 2026-10-10): the pictures' own and others - look-alikes
        of them first - that belong to no picture here (a picture never has two characters that fit it) */
@@ -989,6 +991,8 @@ const QConnect = {
     const ri = strat === 'wrong' ? q.right.findIndex((k, i) => i !== want && !Object.values(st.pairs).includes(i)) : want;
     return { g: 'tap', p: { id: 'R' + ri } };
   },
+  /* every picture joined to its character at the first try: the island's characters among them were read right */
+  itemsOf(st) { const own = st.G.W.chars.map(c => c.c); return st.q.left.filter(k => own.includes(k)); },
   workEls(st) { return (st.lefts || []).concat(st.rights || []); },
   snap(st) { return { pairs: Object.keys(st.pairs || {}).length }; },
   iconNode() { return Glyph.zh('马', 56); },

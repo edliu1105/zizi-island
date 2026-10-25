@@ -287,6 +287,12 @@ const Review = {
     n = Math.min(n, Math.max(0, (G.rounds || 5) - (G.needPass || []).length));
     return { pos: [1, 3, 4].slice(0, n) };
   },
+  /* the island's characters still to pass that this session has not had right yet and may still ask (as needPick: at most
+     twice in a session, never twice in a row) - the ones asked least first */
+  needLeft(G) {
+    const asked = G.asked || [], last = asked[asked.length - 1], times = k => asked.filter(x => x === k).length;
+    return (G.needPass || []).filter(k => { const m = Mem.get(k); return !(m && m.pass.includes(G.sid)) && times(k) < 2 && k !== last; }).sort((a, b) => times(a) - times(b));
+  },
   fits(G, k) {
     const it = ITEM[k], g = G.game;
     if (g.kind0 === 'write') return g.lang === 'zh' ? it.kind === 'zh' && !NOWRITE.includes(k) : it.kind === g.lang;
@@ -298,8 +304,18 @@ const Review = {
     if (G.key) { const k = (G.keyItems || [])[G.round]; return k ? { k, form: 'card' } : null; }
     const g = G.game, used = G.rvUsed || (G.rvUsed = []);
     if (G.wfMode === 2) { const form = G.round % 2 ? 'trace' : 'card', its = G.W.chars.map(c => c.c).filter(c => form === 'card' || !NOWRITE.includes(c)), need = its.filter(k => !used.includes(k)); const k = need[0] || G.rng.pick(its); used.push(k); return { k, form, wf: true }; }
+    /* four ✓ but no flag yet ("再玩一局插旗子！"): every game must be able to plant it. The island's characters still to pass
+       come as a card: in a game that asks none of them itself (写字母, 补一笔 ...) from its 2nd round on; in the others in the
+       last rounds, for the ones it cannot ask (the read-only ones in 汉字 writing; the ones it did not ask in its last whole
+       session: ws.skip - 摘桃找词 has no word for 对 while 不 / 了 are unknown). No other card (an old character missed
+       before) takes a round they need - it waits for the next session (missNext) */
+    const left = G.flagNeed ? this.needLeft(G) : [], zhWrite = g.kind0 === 'write' && g.lang === 'zh', mine = G.ownAsked || new Set();
+    let can = [];
+    if (left.length && !zhWrite && G.round >= 1 && !mine.size) can = left;
+    else if (left.length) { const skip = (G.ws.skip && G.ws.skip[g.id]) || [], c = left.filter(k => !mine.has(k) && (skip.includes(k) || zhWrite && NOWRITE.includes(k))); if (c.length && G.rounds - G.round <= c.length) can = c; }
+    if (can.length) { const k = can[0]; used.push(k); return { k, form: 'card', need: true }; }
     const miss = (G.miss || []).find(m => m.at <= G.round && !m.done);
-    if (miss && g.kind0 !== 'write') { miss.done = true; return { k: miss.k, form: 'card', miss: true }; }
+    if (miss && g.kind0 !== 'write' && (left.includes(miss.k) || G.rounds - G.round > left.length)) { miss.done = true; return { k: miss.k, form: 'card', miss: true }; }
     if (!G.rv || !G.rv.pos.includes(G.round)) return null;
     const cand = Mem.due().filter(k => !used.includes(k) && this.fits(G, k) && !poolOf(G, ITEM[k].kind === 'zh' ? 'zh' : 'en', false).includes(k));
     const k = cand[0]; if (!k) return null;

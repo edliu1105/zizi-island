@@ -91,6 +91,7 @@ const Store = {
       t.played = Array.isArray(w.played) ? w.played.filter(g => ISL[id].games.includes(g)) : [];
       t.visits = num(w.visits, 0, 0, 1e6); t.sessions = num(w.sessions, 0, 0, 1e6); t.stars = num(w.stars, 0, 0, 1e6); t.story = num(w.story, 0, 0, 3);
       if (w.pok === true) t.pok = true;
+      if (w.skip && typeof w.skip === 'object') { t.skip = {}; ISL[id].games.forEach(g => { if (Array.isArray(w.skip[g])) t.skip[g] = w.skip[g].filter(k => typeof k === 'string' && ITEM[k]).slice(0, 8); }); }
       if (w.wf && typeof w.wf === 'object') t.wf = { s: num(w.wf.s, 0, 0, 99), m: num(w.wf.m, 0, 0, 2) };
     });
     if (o.learned && typeof o.learned === 'object') for (const k in o.learned) if (ITEM[k]) { const x = o.learned[k] || {}; d.learned[k] = { w: num(x.w, 0, 0, 1e6), p: num(x.p, 0, 0, 1e6) }; }
@@ -318,6 +319,7 @@ const Session = {
     G.bg = game.bgOf ? game.bgOf(G) : game.bg;
     if (!G.practice && !G.key) { Store.s.lastG = [islandId, gameId]; if (!G.teach) { ws.visits++; ws.sessions++; } Store.save(); }
     G.needPass = G.practice || G.key || G.teach ? [] : W.chars.map(c => c.c).filter(k => !Mem.passed(k));
+    G.flagNeed = G.needPass.length > 0 && Prog.gamesDone(islandId) && !flagged(islandId);      /* "再玩一局插旗子！": whatever game he plays, it counts (Review.slot) */
     G.rv = Review.plan(G);
     WriteFallback.start(G);
     { const gl = W.games, k = gl.indexOf(gameId); G.nx = k >= 0 ? gl[k + 1] || null : null; G.nxWas = G.nx ? Prog.gameOpen(islandId, G.nx) : true; }
@@ -437,6 +439,11 @@ const Session = {
     if (G.practice || G.teach) return;      /* 教一教: no memory, no miss, no writing fallback */
     Mem.today().q++;
     const g = st.game, k = g.itemOf ? g.itemOf(st) : (ITEM[st.q.answer] ? st.q.answer : null);
+    if (!st.review) {      /* the island's characters this game asked itself (Review.slot: the flag must come from any game) */
+      const own = G.W.chars.map(c => c.c), mine = G.ownAsked || (G.ownAsked = new Set()); let its = [];
+      try { its = g.itemsOf ? g.itemsOf(st) : []; } catch (e) {}
+      [k].concat(its).forEach(c => { if (own.includes(c)) mine.add(c); });
+    }
     if (st.tracing) { if (res === 'ok') { Store.s.stat.traced = (Store.s.stat.traced || 0) + 1; Store.save(); } WriteFallback.after(G, st, res); return; }     /* tracing practice: only 'traced' (A.4) */
     if (k && (res === 'ok' || res === 'wrong')) Mem.answer(k, res === 'ok' ? (helped(st) ? 'help' : 'ok') : 'wrong', G.sid);
     if (g.itemsOf && res === 'ok' && !st.noStar && !helped(st)) g.itemsOf(st).forEach(c => Mem.answer(c, 'ok', G.sid));
@@ -600,6 +607,8 @@ const Session = {
   async finish(G) {
     if (G.dead || this.G !== G) return;
     G.finishing = true;
+    /* four ✓, no flag: the characters still to pass this game did not ask itself in a whole session - next time they come as cards */
+    if (G.flagNeed) (G.ws.skip || (G.ws.skip = {}))[G.id] = G.needPass.filter(k => !(G.ownAsked && G.ownAsked.has(k)));
     if (!G.practice) { Mem.today().ms += Math.max(0, Clock.t() - G.t0); Store.s.lastDay = DAY(); if (!G.key && !G.teach) Store.s.missNext = (G.miss || []).filter(m => !m.done).map(m => m.k).slice(0, 2); Store.save(); }
     this.ffOn();
     const sc = G.scope;
@@ -1150,7 +1159,8 @@ const Parent = {
       ORDER[w].forEach(id => {
         const ws = Store.w(id), tr = el('tr', '', t), W = ISL[id];
         el('td', '', tr, { text: W.name });
-        el('td', '', tr, { text: ws.unlocked ? (Prog.islandDone(id) ? '已插旗' : Prog.gamesDone(id) ? '四关已过，字还没过关' : '开放') : '未开放' });
+        const still = W.chars.map(c => c.c).filter(k => !Mem.passed(k)).map(k => k + ' ' + ((Mem.get(k) || { pass: [] }).pass.length) + '/2').join('、');      /* 过关 = 两局里自己第一次就答对 */
+        el('td', '', tr, { text: ws.unlocked ? (Prog.islandDone(id) ? '已插旗' : Prog.gamesDone(id) ? '四关已过，还差这几个字各在两局里自己答对：' + still : '开放') : '未开放' });
         el('td', '', tr, { text: W.games.map(g => (GAMES[g] ? GAMES[g].title : W4X.title(g)) + (Prog.gameDone(id, g) ? ' ✓' : Prog.gameOpen(id, g) ? ' ·' : ' 🔒') + Prog.stars(id, g) + '★ L' + Prog.level(id, g)).join('  ') });
         el('td', '', tr, { text: W.chars.map(c => c.c).concat(W.letters.map(l => l.l)).map(k => k + (learned(k) ? '✓' : '')).join(' ') });
       });
