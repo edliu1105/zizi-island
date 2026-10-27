@@ -635,18 +635,25 @@ const WriteBase = {
   place(st) { if (!st.w) return; const g = this.geo(st); st.w.place(g.x, g.y, g.size); if (st.pic) place(st.pic, g.ox - g.os / 2, g.oy - g.os / 2, g.os, g.os); if (st.wmPlace) st.wmPlace(); },
   onGesture(st, name, p) {
     if (name !== 'stroke' || p.id !== 'paper' || !st.w || st.w.done) return false;
-    const r = st.w.stroke(p.pts || []);
-    if (!r) return false;
-    if (r.ok) {
-      Sfx.place(); Sfx.mar(Sfx.SCALE[Math.min(9, st.w.k)], 0, 0.3, 0.4);
-      if (this.lang === 'zh' && r.name) Voice.sayNow(r.name, { tag: 'stroke' });
-      if (r.done) this.written(st);
-    } else {
-      const sa = st.slipAt || (st.slipAt = []); if (!sa.includes(st.w.k)) sa.push(st.w.k);
-      Voice.sayNow(SLIP[r.why] || SLIP.shape, { tag: 'slip' });
-      if (st.level >= 4 || st.w.slips >= 2) { st.w.demo(st, st.w.k); }
-    }
+    const w = st.w;
+    w.onLate = rs => { if (Session.alive(st) && st.w === w) this.strokeRes(st, rs); };      /* a piece that waited for the finger (Writer.take) */
+    const rs = w.take(p.pts || [], p.cut);
+    if (!rs) return false;
+    this.strokeRes(st, rs);
     return 'ok';
+  },
+  strokeRes(st, rs) {
+    rs.forEach(r => {
+      if (r.ok) {
+        Sfx.place(); Sfx.mar(Sfx.SCALE[Math.min(9, st.w.k)], 0, 0.3, 0.4);
+        if (this.lang === 'zh' && r.name) Voice.sayNow(r.name, { tag: 'stroke' });
+        if (r.done) this.written(st);
+      } else {
+        const sa = st.slipAt || (st.slipAt = []); if (!sa.includes(st.w.k)) sa.push(st.w.k);
+        Voice.sayNow(SLIP[r.why] || SLIP.shape, { tag: 'slip' });
+        if (st.level >= 4 || st.w.slips >= 2) { st.w.demo(st, st.w.k); }
+      }
+    });
   },
   /* every stroke of his written: the brush finishes its own; a mode may go on (the next round of 描仿写, the difference of
      像不像); then it is finished - clean if no stroke slipped in any round */

@@ -831,7 +831,14 @@ const Input = {
   down(e) {
     Sfx.touch();
     const t = e.target.closest ? e.target.closest('[data-gid]') : null;
-    if (this.cur) return;                                    /* one finger at a time */
+    /* one finger at a time - but on the writing paper a touch resting still (the palm, a second finger) gives way to the
+       one coming down now: that one writes (误触, client 2026-10-26) */
+    if (this.cur) {
+      const c = this.cur;
+      if (!(c.spec.draw && t === c.el && e.pointerId !== c.pid && this.pathLen(c.path) < 24)) return;
+      this.cur = null; try { c.el.releasePointerCapture(c.pid); } catch (err) {}
+      c.spec.draw.cancel();
+    }
     if (!t || !t._spec) {
       if (e.target.closest && e.target.closest('#ff')) { gesture('skip', {}); }
       return;
@@ -841,7 +848,7 @@ const Input = {
     const p = this.pt(e);
     this.cur = { el: t, spec, id: spec.id, pid: e.pointerId, x0: p.x, y0: p.y, x: p.x, y: p.y, t0: now(), path: [p], moved: false, rot: null, acc: 0, units: 0, passed: [], rev: 0, lastDx: 0, holdT: 0, done: false };
     try { t.setPointerCapture(e.pointerId); } catch (err) {}
-    t.classList.add('press');
+    if (!spec.draw) t.classList.add('press');                /* the writing paper never shrinks under the finger: the ink must stay where it is written */
     Sfx.press();
     if (spec.hold) {
       const c = this.cur;
@@ -955,7 +962,8 @@ const Input = {
     c.el.classList.remove('press');
     if ((c.spec.drag || c.spec.follow) && c.moved) this.snapBack(c.el, c.z0);
     if (c.spec.hold && c.spec.onHoldEnd) c.spec.onHoldEnd(false);
-    if (c.spec.draw) c.spec.draw.cancel();
+    /* writing: the system took the finger away (iOS does, now and then) - what was written still counts, never a slip on its own */
+    if (c.spec.draw) { if (c.path.length > 1) gesture('stroke', { id: c.spec.id, pts: c.path.map(q => [Math.round(q.x * 10) / 10, Math.round(q.y * 10) / 10]), cut: true }); else c.spec.draw.cancel(); }
   },
   /* rotation / exit / teardown: drop any gesture in flight, objects spring home */
   abort() {

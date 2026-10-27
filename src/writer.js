@@ -308,20 +308,79 @@ class Writer {
     await sc.wait(320);
     this.paused = false; this.gCue.style.opacity = 1;
   }
-  /* the finger writes */
-  dStart(p) { if (this.done || this.paused || !this.armed) return; this.clearTrail(); this.trail = [this.toG(p)]; this.trailEl = svg('path', { d: '', fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); this.trailDraw(); }
+  /* the finger writes. A piece waiting (take) goes on when the finger comes down again near where it left, in time;
+     anywhere else it is settled first */
+  dStart(p) {
+    if (this.done || this.paused || !this.armed) return;
+    const q = this.toG(p), pd = this.pend;
+    this.touchT = Date.now();
+    if (pd) {
+      const e = pd.drawn[pd.drawn.length - 1];
+      if (this.touchT - pd.t <= liftMs() && Math.hypot(q[0] - e[0], q[1] - e[1]) < 0.15 * this.S) pd.cont = true;
+      else { this.pend = null; const r = this.settle(pd); if (r && this.onLate) this.onLate([r]); if (this.done || this.paused || !this.armed) return; }
+    }
+    this.clearTrail(); this.trail = [q]; this.trailEl = svg('path', { d: '', fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); this.trailDraw();
+  }
   dMove(p) { if (!this.trail) return; const q = this.toG(p), l = this.trail[this.trail.length - 1]; if (Math.hypot(q[0] - l[0], q[1] - l[1]) < this.S * 0.008) return; this.trail.push(q); this.trailDraw(); }
   trailDraw() { if (this.trailEl) this.trailEl.setAttribute('d', this.trail.length > 1 ? this.dOf(this.trail) : 'M' + this.trail[0][0] + ' ' + this.trail[0][1] + 'l0.1 0'); }
   clearTrail() { if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(260) + 1, fill: 'forwards' }).onfinish = () => t.remove(); } this.trail = null; }
-  /* a stroke in stage points (the gesture): judged; returns { ok, why, done } */
-  stroke(pts) {
+  /* a piece of a stroke in stage points (the gesture; cut: the system took the finger away - pointercancel). 误触 (client
+     2026-10-26: "he did not write it wrong, the finger only came off for a moment") - only a really wrong stroke is a slip:
+     - right: taken at once;
+     - too small to be a stroke (a tap, the palm, a finger landing: under 3.5 % of the frame): nothing happens, unless it is
+       the dot wanted there;
+     - the rest of the stroke just taken (the finger came off before its end and goes on from there at once): nothing happens;
+     - anything else waits a moment (liftMs): if the finger comes down again near where it left and goes on, the two pieces
+       are judged as one stroke; only when that is not right either, or no finger comes, is it a slip. A piece the system cut
+       is never a slip on its own.
+     Returns the results to show now ([{ ok, why, done, name }]); a result decided later comes through this.onLate */
+  take(pts, cut) {
     if (this.done || this.paused || !this.armed) return null;
-    const drawn = pts.map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
-    if (!this.trail) { this.trail = drawn; this.trailEl = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail); }
-    const sk = this.strokes[this.k];
-    const res = Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(this.k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en' });
-    if (this.trailEl) { const t = this.trailEl; this.trailEl = null; t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(res.ok ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
-    this.trail = null;
+    const S = this.S, now = Date.now(), t0 = this.touchT || now, LIFT = liftMs(), out = [];
+    this.touchT = 0;
+    const drawn = (pts || []).map(p => this.toG(Array.isArray(p) ? { x: p[0], y: p[1] } : p));
+    if (!drawn.length) return null;
+    const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.15 * S, end = a => a[a.length - 1];
+    let el = this.trailEl; this.trailEl = null; this.trail = null;          /* this piece's ink: it stays while the piece waits */
+    if (!el) el = svg('path', { d: this.dOf(drawn), fill: 'none', stroke: '#2E6FD8', 'stroke-width': this.kind === 'zh' ? 54 : 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }, this.gTrail);
+    const tiny = Geo.len(drawn) < 0.035 * S, pd = this.pend;
+    if (pd) {
+      this.pend = null;
+      if (t0 - pd.t <= LIFT && near(drawn[0], end(pd.drawn))) {
+        const both = pd.drawn.concat(drawn);
+        if (this.peek(both).ok) { this.fade(pd.el, true); this.fade(el, true); const k0 = this.k, r = this.commit(both); this.lastOk = { drawn: both, k: k0, t: now }; return [r]; }
+      }
+      if (tiny && !this.peek(drawn).ok) { this.fade(el); pd.t = now; this.wait(pd); return out; }      /* a tap meanwhile: the piece still waits */
+      const r0 = this.settle(pd); if (r0) out.push(r0);                  /* the waiting piece on its own */
+      if (this.done || this.paused || !this.armed) { this.fade(el); return out; }
+    }
+    if (this.peek(drawn).ok) { this.fade(el, true); const k0 = this.k, r = this.commit(drawn); this.lastOk = { drawn, k: k0, t: now }; return out.concat([r]); }
+    if (tiny) { this.fade(el); return out; }                                                          /* a tap, the palm */
+    const lo = this.lastOk;
+    if (lo && lo.k === this.k - 1 && t0 - lo.t <= LIFT && near(drawn[0], end(lo.drawn)) && this.peek(lo.drawn.concat(drawn), lo.k).ok) {
+      lo.drawn = lo.drawn.concat(drawn); lo.t = now; this.fade(el, true); return out;                  /* the rest of the stroke just taken */
+    }
+    if (LIFT > 0) { this.wait({ drawn, t: now, el, cut: !!cut }); return out; }
+    this.fade(el);
+    return cut ? out : out.concat([this.commit(drawn)]);
+  }
+  /* a piece waits liftMs for the finger to come back (dStart marks it cont when it does) */
+  wait(p) {
+    const tok = p.tok = {}; p.cont = false; this.pend = p;
+    setTimeout(() => { if (this.pend !== p || p.tok !== tok || p.cont || this.st.scope.dead) return; this.pend = null; const r = this.settle(p); if (r && this.onLate) this.onLate([r]); }, liftMs());
+  }
+  /* a waiting piece that nothing went on with: a slip - none if the system cut it */
+  settle(pd) { this.fade(pd.el); return pd.cut || this.done || !this.armed ? null : this.commit(pd.drawn); }
+  fade(t, quick) { if (t) t.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: T(quick ? 160 : 420) + 1, fill: 'forwards' }).onfinish = () => t.remove(); }
+  /* the judge for stroke k (default: the one to write now), nothing changed */
+  peek(drawn, k) {
+    k = k == null ? this.k : k;
+    const sk = this.strokes[k];
+    return Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en' });
+  }
+  /* a stroke (frame units) judged and taken: ink and the next stroke, or a slip */
+  commit(drawn) {
+    const sk = this.strokes[this.k], res = this.peek(drawn);
     if (res.ok) {
       this.ink(this.k, INK, 260);
       this.k++;
@@ -355,6 +414,8 @@ class Writer {
   expected(rev) { const sk = this.strokes[this.k]; if (!sk) return null; const m = Geo.resample(sk.med, 14).map(q => this.toStage(q)); return (rev ? m.reverse() : m).map(p => [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10]); }
   center() { return { x: this.box.x + this.box.w / 2, y: this.box.y + this.box.h / 2 }; }
 }
+/* how long a piece of a stroke that is not right waits for the finger to come back (Writer.take); none in the fast tests */
+const liftMs = () => (window.__liftMs != null ? window.__liftMs : fast() ? 0 : 650);
 /* the factual line for a slip (never "wrong") */
 const SLIP = { start: '从绿点开始写', back: '跟着箭头写', order: '先写这一笔', shape: '跟着箭头写' };
 /* the writing modes (docs/WRITE-MODES.md, client 2026-10-18: "writing is always the same") come in their own small file,
