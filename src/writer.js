@@ -65,45 +65,66 @@ const Geo = {
     return out;
   },
   mean(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += Math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]); return s / a.length; },
-  /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size) */
-  judge(drawn, want, S, others, opt) {
+  /* a finger's path without its shake: resampled and averaged twice over five points (ends kept). Lengths and turns are
+     measured on it - a trembling finger draws many tiny zigzags that made a right stroke "too long" (client 2026-11-01) */
+  smooth(p, S) {
+    if (p.length < 3) return p;
+    let r = this.resample(p, Math.max(6, Math.min(64, Math.round(this.len(p) / (0.012 * S)))));
+    for (let k = 0; k < 2; k++) r = r.map((q, i) => { if (i === 0 || i === r.length - 1) return q; let x = 0, y = 0, c = 0; for (let j = Math.max(0, i - 2); j <= Math.min(r.length - 1, i + 2); j++) { x += r[j][0]; y += r[j][1]; c++; } return [x / c, y / c]; });
+    return r;
+  },
+  /* which way round a closed shape goes (o, O, the bowl of d / g / q): the sign of its area */
+  turn(p) { const r = this.resample(p, 32); let a = 0; for (let i = 0; i < r.length; i++) { const u = r[i], v = r[(i + 1) % r.length]; a += u[0] * v[1] - v[0] * u[1]; } return a / 2; },
+  /* a drawn stroke against the stroke it should be (both in the frame's units; S = the frame's size; opt.prev: the strokes
+     already written). Client 2026-11-01: "a wobbly stroke that was traced right is still judged wrong - loosen it". Measured
+     on every stroke of every character and letter, drawn the way a child does (a little off, bigger or smaller, a slow wave,
+     a shake, short or long at the ends): a right stroke was refused 6 % of the time (a shaking finger 12 %, a sloppy one
+     21 %), now 0.7 % (0.4 %, 4 %); written backwards, the next or a later stroke, the right shape far away, the stroke
+     before again are still refused (0.1 % taken). The judge looks at the smoothed path, and allows more: the shape within
+     10 % .. 20 % of the frame, the start within 26 %, the length 0.4 .. 3.5 times, the dot within 20 % */
+  judge(raw, want, S, others, opt) {
     /* a hook (竖钩, 横折钩 ...) may be left off: the stroke without it is judged too - one rule for every hook (R3-03) */
-    const letter = !!(opt && opt.letter);                /* a letter's stroke (四线三格): see the tolerance and the end below */
+    const letter = !!(opt && opt.letter), prev = opt && opt.prev;     /* a letter's stroke (四线三格): see the tolerance and the end below */
     if (opt && opt.hook) {
-      const r = this.judge(drawn, want, S, others, { letter }), u = this.unhook(want);
-      return r.ok || u.length === want.length ? r : (this.judge(drawn, u, S, others, { letter }).ok ? { ok: true } : r);
+      const o2 = { letter, prev }, r = this.judge(raw, want, S, others, o2), u = this.unhook(want);
+      return r.ok || u.length === want.length ? r : (this.judge(raw, u, S, others, o2).ok ? { ok: true } : r);
     }
+    const drawn = this.smooth(raw, S);
     const L = this.len(want), Ld = this.len(drawn), short = L < 0.16 * S;
     const d0 = drawn[0], d1 = drawn[drawn.length - 1], w0 = want[0], w1 = want[want.length - 1];
     const ds = Math.hypot(d0[0] - w0[0], d0[1] - w0[1]), dsRev = Math.hypot(d0[0] - w1[0], d0[1] - w1[1]);
     const A = this.resample(drawn, 24), B = this.resample(want, 24), m = this.mean(A, B), mRev = this.mean(A, B.slice().reverse());
     /* the drawn stroke is clearly nearer one of the strokes still to come (a dot of 雨 for the one beside it): order */
     const closer = (others || []).some(o => { const d = this.mean(A, this.resample(o, 24)); return d < m * 0.75 && d < 0.15 * S; });
+    /* ... or very clearly nearer one already written (the upper 横 of 手 again for the lower one): not this stroke */
+    const again = (prev || []).some(o => { const d = this.mean(A, this.resample(o, 24)); return d < m * 0.6 && d < 0.1 * S; });
     /* which way it goes, left or right / up or down: a 撇 goes left, a 捺 / 点 right - the mirror one is another stroke (R2-02) */
     const vd = [d1[0] - d0[0], d1[1] - d0[1]], vw = [w1[0] - w0[0], w1[1] - w0[1]];
-    const sideOk = (a, b) => Math.abs(b) < 0.06 * S || Math.sign(a) === Math.sign(b) || Math.abs(a) < 0.025 * S;
+    const sideOk = (a, b) => Math.abs(b) < 0.06 * S || Math.sign(a) === Math.sign(b) || Math.abs(a) < 0.035 * S;
     const wayOk = sideOk(vd[0], vw[0]) && sideOk(vd[1], vw[1]);
     if (short) {                                     /* a dot-sized stroke: where, and which way */
       const c = drawn.reduce((a, q) => [a[0] + q[0] / drawn.length, a[1] + q[1] / drawn.length], [0, 0]);
-      const wc = [(w0[0] + w1[0]) / 2, (w0[1] + w1[1]) / 2], near = Math.hypot(c[0] - wc[0], c[1] - wc[1]) < 0.17 * S;
-      const dirOk = Ld < 0.05 * S || (vd[0] * vw[0] + vd[1] * vw[1] > 0 && wayOk);
-      if (near && dirOk && Ld < 0.45 * S && !closer) return { ok: true };
+      const wc = [(w0[0] + w1[0]) / 2, (w0[1] + w1[1]) / 2], near = Math.hypot(c[0] - wc[0], c[1] - wc[1]) < 0.2 * S;
+      const dirOk = Ld < (letter ? 0.08 : 0.05) * S || (vd[0] * vw[0] + vd[1] * vw[1] > 0 && wayOk);      /* the dot of i / j: any way; 点: its way */
+      if (near && dirOk && Ld < 0.5 * S && !closer && !again) return { ok: true };
       return { ok: false, why: closer ? 'order' : near && !dirOk ? 'back' : 'start' };
     }
-    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 8 % .. 17 % of the frame. A letter's
-       short line (the bars of I E F H A t f) gets the long strokes' 17 % too - a 4-year-old's bar may sit a little high or
+    /* the shape tolerance grows with the stroke (a long stroke may wander more), within 10 % .. 20 % of the frame. A letter's
+       short line (the bars of I E F H A t f) gets the long strokes' 20 % too - a 4-year-old's bar may sit a little high or
        low (OX1: 15 % of the frame off failed them) - and instead has to go the way of the line (within 35 deg): a stroke
        across a bar is not that bar, a bar written right to left still is not (the way check) */
-    const tol = letter ? 0.17 * S : Math.min(0.17 * S, Math.max(0.08 * S, 0.38 * L)), ratio = Ld / L;
+    const tol = letter ? 0.2 * S : Math.min(0.2 * S, Math.max(0.1 * S, 0.45 * L)), ratio = Ld / L;
     /* a letter's stroke is written to its end, with the start's tolerance: one Zaner-Bloser stroke may go back over itself
        (a: circle back, push up, pull down) and stopping before that last part is not the letter (a circle is not an a) */
     const endOk = !letter || Math.hypot(d1[0] - w1[0], d1[1] - w1[1]) < 0.22 * S;
     const lineOk = !letter || this.lineWay(drawn, want);
-    if (m < tol && ds < 0.22 * S && ratio > 0.45 && ratio < 3 && !closer && wayOk && endOk && lineOk && this.bendOk(drawn, want)) return { ok: true };
-    if (mRev < tol && dsRev < 0.22 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
-    if (m < tol && ds < 0.22 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
+    /* a closed shape written the other way round (o clockwise) is not it, however near it lies */
+    const tw = this.turn(want), roundOk = !this.bulge(this.resample(want, 32)).closed || Math.abs(tw) < 0.02 * L * L || Math.sign(this.turn(drawn)) === Math.sign(tw);
+    if (m < tol && ds < 0.26 * S && ratio > 0.4 && ratio < 3.5 && !closer && !again && wayOk && endOk && lineOk && roundOk && this.bendOk(drawn, want)) return { ok: true };
+    if (mRev < tol && dsRev < 0.26 * S) return { ok: false, why: 'back' };          /* the right line, the wrong way */
+    if (m < tol && ds < 0.26 * S && !closer) return { ok: false, why: 'shape' };     /* near, but not that stroke's turn or way */
     if (closer || this.which(drawn, others, S)) return { ok: false, why: 'order' };
-    if (ds >= 0.22 * S) return { ok: false, why: 'start' };
+    if (ds >= 0.26 * S) return { ok: false, why: 'start' };
     return { ok: false, why: 'shape' };
   },
   /* a stroke with a real turn (横折, the arch of n, the bowl of R) has to be written with a turn, on the same side and
@@ -124,10 +145,12 @@ const Geo = {
     const dot = (b[0] - a[0]) * (d[0] - c[0]) + (b[1] - a[1]) * (d[1] - c[1]), n = Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(d[0] - c[0], d[1] - c[1]);
     return n > 0 && dot / n > Math.cos(35 * Math.PI / 180);
   },
+  /* only a real turn is asked for (横折 about 0.35 deep; the gentle curve of a 撇 under 0.18 may be written straight), and
+     about a third as deep is enough */
   bendOk(drawn, want) {
     const w = this.bulge(this.resample(want, 32)), d = this.bulge(this.resample(drawn, 32));
     if (w.closed) return true;
-    const side = (wv, dv) => wv < 0.12 || dv >= 0.45 * wv;
+    const side = (wv, dv) => wv < 0.18 || dv >= 0.35 * wv;
     return side(w.pos, d.pos) && side(w.neg, d.neg);
   },
   /* the stroke without its hook: cut at the sharpest turn in its last 30 % (a hook is short and turns hard) */
@@ -376,7 +399,7 @@ class Writer {
   peek(drawn, k) {
     k = k == null ? this.k : k;
     const sk = this.strokes[k];
-    return Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en' });
+    return Geo.judge(drawn.length ? drawn : [[0, 0]], sk.med, this.S, this.strokes.slice(k + 1).map(s => s.med), { hook: /钩/.test(sk.name || ''), letter: this.kind === 'en', prev: this.strokes.slice(0, k).map(s => s.med) });
   }
   /* a stroke (frame units) judged and taken: ink and the next stroke, or a slip */
   commit(drawn) {
