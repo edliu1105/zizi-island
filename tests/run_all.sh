@@ -38,6 +38,7 @@ run w4open    tests/test_w4open.py
 run flag      tests/test_flag.py
 run lift      tests/test_lift.py
 run judge     tests/test_judge.py
+run sounds    tests/test_sounds.py
 echo "end $(date +%H:%M:%S)" >> "$OUT"
 if [ -n "$BAD" ]; then echo "ALL: FAIL -$BAD" >> "$OUT"; else echo "ALL: PASS" >> "$OUT"; fi
 cat "$OUT"

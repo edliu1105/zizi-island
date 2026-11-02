@@ -4,7 +4,8 @@ Chinese voice - the same voice as the counting numbers (tools/make_voice.py) - i
 list of recorded keys into assets/voice/bank.json (index.html: Bank). Only sentences without a recording are made, so
 re-running after new games costs only the new sentences.
 A line that begins with '~' is the same words said slowly (the '~' is not said).
-usage: python tools/voice_bank.py [lines.json]      (default raw/voice_lines.json, a JSON list of sentences)"""
+usage: python tools/voice_bank.py [lines.json] [--resay]      (default raw/voice_lines.json, a JSON list of sentences;
+--resay makes the lines SOUNDS changes again)"""
 import os, sys, json, struct, asyncio, subprocess, re
 import edge_tts
 
@@ -13,6 +14,18 @@ OUT = os.path.join(ROOT, 'assets', 'voice', 'v')
 TMP = os.path.join(ROOT, 'raw', 'voice', 'v')
 VOICE = 'zh-CN-XiaoyiNeural'
 VOICE_EN = 'en-US-JennyNeural'
+# A character with two sounds that the voice reads the wrong way in our lines (2026-11-01: 你能行的 came out as 你能航的):
+# the voice is given the same sound written with a character that has only that one sound. The key (the file name) stays
+# the line's own text. A line changed here keeps its old clip until it is made again (--resay); tests/test_sounds.py:
+# every line with 行 says one of the two (行 alone, a tap on it in 站如松, is its own first sound xing)
+SOUNDS = [('能行', '能形'), ('行如风', '形如风')]
+
+
+def spoken(text):
+    """what the voice is given for a line"""
+    for a, b in SOUNDS:
+        text = text.replace(a, b)
+    return text
 
 
 def key(text):
@@ -46,7 +59,7 @@ async def one(sem, text, stats):
                 slow = text.startswith('~')                     # '~banana': the same word said slowly (神笔海 ⑧-3 拍节拍)
                 say = text[1:] if slow else text
                 if re.search(r'[一-鿿]', say):
-                    await edge_tts.Communicate(say, VOICE, rate='-40%' if slow else '-6%', pitch='+4Hz').save(raw)
+                    await edge_tts.Communicate(spoken(say), VOICE, rate='-40%' if slow else '-6%', pitch='+4Hz').save(raw)
                 else:                                         # English: a clear American voice, a little slower
                     await edge_tts.Communicate(say, VOICE_EN, rate='-45%' if slow else '-12%').save(raw)
                 break
@@ -63,9 +76,14 @@ async def one(sem, text, stats):
 
 
 async def main():
-    src = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'raw', 'voice_lines.json')
+    args = [a for a in sys.argv[1:] if a != '--resay']
+    src = args[0] if args else os.path.join(ROOT, 'raw', 'voice_lines.json')
     lines = sorted(set(t.strip() for t in json.load(open(src, encoding='utf-8')) if t and t.strip()))
     os.makedirs(OUT, exist_ok=True); os.makedirs(TMP, exist_ok=True)
+    if '--resay' in sys.argv:
+        for t in lines:
+            if spoken(t) != t and os.path.exists(os.path.join(OUT, key(t) + '.mp3')):
+                os.remove(os.path.join(OUT, key(t) + '.mp3'))
     stats = {'have': 0, 'made': 0, 'fail': 0}
     sem = asyncio.Semaphore(6)
     await asyncio.gather(*(one(sem, t, stats) for t in lines))
