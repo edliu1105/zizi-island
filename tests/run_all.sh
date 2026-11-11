@@ -39,6 +39,7 @@ run flag      tests/test_flag.py
 run lift      tests/test_lift.py
 run judge     tests/test_judge.py
 run sounds    tests/test_sounds.py
+run moles     tests/test_moles.py
 echo "end $(date +%H:%M:%S)" >> "$OUT"
 if [ -n "$BAD" ]; then echo "ALL: FAIL -$BAD" >> "$OUT"; else echo "ALL: PASS" >> "$OUT"; fi
 cat "$OUT"

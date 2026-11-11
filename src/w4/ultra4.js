@@ -9,7 +9,10 @@
      is up; an empty hole does nothing; a mole with another character is this question's answer (wrong). Not tapping: the moles
      keep coming, X once a round (a bag; levels 1-2: in the first three of a round). Levels: 1 the picture on the task card, up
      3 s, the island's characters; 2 heard only, 2.6 s; 3 look-alikes + one old character, 2.4 s; 4 two moles at a time, two old
-     characters; 5 three at a time, three old, 2 s. A random tap is right 1 time in 5. */
+     characters; 5 three at a time, three old, 2 s. A random tap is right 1 time in 5.
+     A hit is the finger coming down on a mole he can see (spec.strike) - also one on its way down: it is caught and comes up
+     again. Waiting for X is the play, not being stuck: the 2nd hint (X's hole lights up, the star goes) comes only after X went
+     down twice without a tap (hintHold) - never for the time he waited (client 2026-11-10: "I hit it and never pass") */
   const MOLE_SVG = '<svg viewBox="0 0 120 110" width="100%" height="100%"><ellipse cx="60" cy="74" rx="40" ry="34" fill="#8B5E3C" stroke="#2B2118" stroke-width="5"/><ellipse cx="60" cy="84" rx="24" ry="20" fill="#C99A6B"/>'
     + '<circle cx="46" cy="62" r="6" fill="#2B2118"/><circle cx="74" cy="62" r="6" fill="#2B2118"/><circle cx="48" cy="60" r="2" fill="#fff"/><circle cx="76" cy="60" r="2" fill="#fff"/>'
     + '<ellipse cx="60" cy="74" rx="9" ry="7" fill="#FF8DB3" stroke="#2B2118" stroke-width="3"/><path d="M22 52C14 44 18 34 26 38M98 52C106 44 102 34 94 38" fill="#C99A6B" stroke="#2B2118" stroke-width="4" stroke-linecap="round"/></svg>';
@@ -30,7 +33,7 @@
       if (q.many == null) Object.assign(q, { pic: lv <= 1 ? 1 : 0, many: [1, 1, 1, 1, 2, 3][lv] || 1, show: [3000, 3000, 2600, 2400, 2400, 2000][lv] || 2600, early: lv <= 2 ? 1 : 0 });
       await ZX.meet(st, q.answer);
       if (!Session.alive(st)) return;
-      st.opts = q.opts.slice(); st.up = st.opts.map(() => false); st.at = st.opts.map(() => -1);
+      st.opts = q.opts.slice(); st.up = st.opts.map(() => false); st.seen = st.opts.map(() => false); st.at = st.opts.map(() => -1); st.missed = 0;
       /* the holes: the dark back, a box the mole rises in (it clips it below the rim), the front of the rim on top */
       st.holes = HOLES().map(() => {
         const back = ZX.thing(st, 176, 64, 4, 'item'); back.innerHTML = '<svg viewBox="0 0 176 64" width="100%" height="100%"><ellipse cx="88" cy="32" rx="84" ry="28" fill="#A0703F" stroke="#2B2118" stroke-width="5"/><ellipse cx="88" cy="32" rx="66" ry="18" fill="#3A2614"/></svg>'; back.style.pointerEvents = 'none';
@@ -43,7 +46,7 @@
         const m = el('div', '', d); Object.assign(m.style, { position: 'absolute', left: '8px', bottom: '-6px', width: (MW - 16) + 'px', height: '122px', pointerEvents: 'none' });
         const im = img('assets/props/mole.png', '', m); Object.assign(im.style, { width: '100%', height: '100%', objectFit: 'contain' }); im.onerror = () => { m.innerHTML = MOLE_SVG; };
         const s = ZX.sign(k, 96); Object.assign(s.style, { left: 'calc(50% - 48px)', top: '2px', background: '#FFF8EC' }); d.appendChild(s);
-        K.reg(st, 'card' + i, d, {});
+        K.reg(st, 'card' + i, d, { strike: true });
         return d;
       });
       this.place(st);
@@ -59,14 +62,14 @@
     /* one mole up in a hole / down again (it rises inside the hole's box: below the rim it is clipped away) */
     up(st, i, h) {
       const d = st.cards[i]; if (!d || st.up[i]) return;
-      st.holes[h].box.appendChild(d); st.up[i] = true; st.at[i] = h; d.style.visibility = '';
+      st.holes[h].box.appendChild(d); st.up[i] = true; st.seen[i] = true; st.at[i] = h; d.style.visibility = '';
       st.scope.anim(d, [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], { duration: 220, easing: EASE.out, commit: true });
     },
     async down(st, i) {
       const d = st.cards[i]; if (!d || !st.up[i]) return;
       st.up[i] = false;
       await st.scope.anim(d, [{ transform: 'translateY(0)' }, { transform: 'translateY(100%)' }], { duration: 200, easing: EASE.drop, fill: 'forwards' });
-      if (!st.up[i]) { d.style.visibility = 'hidden'; d.getAnimations().forEach(a => a.cancel()); }
+      if (!st.up[i]) { st.seen[i] = false; d.style.visibility = 'hidden'; d.getAnimations().forEach(a => a.cancel()); }
     },
     /* the moles keep coming until the answer is in: a bag of the five, X once a round */
     async cycle(st) {
@@ -86,17 +89,20 @@
         pick.forEach((i, j) => this.up(st, i, holes[j]));
         await this.hold(st, q.show);
         if (!Session.alive(st) || st.submitted || st.frozen) return;
+        if (pick.includes(ai)) st.missed++;        /* X was up and goes down again without a tap */
         pick.forEach(i => this.down(st, i));
         await this.hold(st, 420);
       }
     },
     /* a pause the tests' 'wait' gesture may cut short */
     hold(st, ms) { return new Promise(res => { st.skip = res; W4X.tick(st, ms).then(res); }); },
+    hintHold(st) { return (st.missed || 0) < 2; },
     onGesture(st, name, p) {
       if (st.submitted) return false;
       if (name === 'wait') { if (st.skip) st.skip(); return 'free'; }
       if (name !== 'tap') return false;
-      const i = K.cardIndex(p.id); if (i < 0 || !st.up[i]) return false;       /* an empty hole: nothing */
+      const i = K.cardIndex(p.id); if (i < 0 || !(st.up[i] || st.seen[i])) return false;       /* an empty hole: nothing */
+      if (!st.up[i]) { st.up[i] = true; st.cards[i].getAnimations().forEach(a => a.cancel()); }      /* hit on its way down: caught, it is up again */
       st.frozen = true; st.tapped = i; Sfx.tap(); Session.submit(st, st.opts[i]);
       return 'ok';
     },

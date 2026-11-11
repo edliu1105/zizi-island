@@ -831,6 +831,9 @@ const Input = {
   down(e) {
     Sfx.touch();
     const t = e.target.closest ? e.target.closest('[data-gid]') : null;
+    /* a thing that is hit (the moles, spec.strike): the finger coming down is the tap - by the time it goes up the mole may be
+       down again and the hit was lost (client 2026-11-10: "I hit it"). A finger resting somewhere else does not block it */
+    if (t && t._spec && t._spec.strike && !t._spec.disabled) { Sfx.press(); gesture('tap', { id: t._spec.id }); this.fails = 0; if (e.cancelable) e.preventDefault(); return; }
     /* one finger at a time - but on the writing paper a touch resting still (the palm, a second finger) gives way to the
        one coming down now: that one writes (误触, client 2026-10-26) */
     if (this.cur) {
@@ -1334,6 +1337,9 @@ const Hints = {
       st.scope.timeout(() => { if (st.hintLv === 1) this.glow(st); }, 450 * HS());
       return;
     }
+    /* a game where waiting is the play (the moles: he waits for X to come up) says when he is stuck - until then the clock stays
+       just before the 2nd hint, the one that costs the star (client 2026-11-10: "I hit it and never pass") */
+    if (st.hintLv < 2 && st.game.hintHold && st.game.hintHold(st)) { if (idle > 9000) st.idleFrom = t - 9000 * HS(); return; }
     if (st.hintLv < 2) { if (idle >= 10000) { st.hintLv = 2; this.mark(st, 'hint2'); this.cue(st, 'wave', 2, () => { if (st.game.gestureHint) st.game.gestureHint(st, false); }); } return; }
     if (st.hintLv < 3) { if (idle >= 15000) { st.hintLv = 3; this.mark(st, 'hint3'); this.cue(st, 'wave', 3, () => this.cheerUp(st)); } return; }
     /* client rule: the helper never does a step and never points at the answer - a kind word and the question again
